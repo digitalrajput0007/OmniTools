@@ -1,0 +1,59 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  Combine,
+  CopyPlus,
+  FileText,
+  Minimize,
+  QrCode,
+  Scale,
+  Scissors,
+} from 'lucide-react';
+
+export type Tool = {
+  name: string;
+  description: string;
+  path: string;
+  icon: LucideIcon;
+};
+
+export const tools: Tool[] = [
+  {
+    name: 'Image Compressor',
+    description: 'Reduce image file sizes with optimal quality.',
+    path: '/image-compressor',
+    icon: Minimize,
+  },
+  {
+    name: 'Image to PDF',
+    description: 'Convert your JPG, PNG, and other images to PDF.',
+    path: '/image-to-pdf',
+    icon: FileText,
+  },
+  {
+    name: 'PDF Merger',
+    description: 'Combine multiple PDF files into one single document.',
+    path: '/pdf-merger',
+    icon: CopyPlus,
+  },
+  {
+    name: 'PDF Splitter',
+    description: 'Extract pages from a PDF or save each page as a new PDF.',
+    path: '/pdf-splitter',
+    icon: Scissors,
+  },
+  {
+    name: 'QR Code Generator',
+    description: 'Create custom QR codes for URLs, text, and more.',
+    path: '/qr-code-generator',
+    icon: QrCode,
+  },
+  {
+    name: 'Unit Converter',
+    description: 'Quickly convert between different units of measurement.',
+    path: '/unit-converter',
+    icon: Scale,
+  },
+];
+
+export const AppLogo = Combine;
+export const AppName = 'OmniToolbox';
