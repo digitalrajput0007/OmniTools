@@ -11,12 +11,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { FileDown, UploadCloud, X } from 'lucide-react';
 
 export default function ImageToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isConverting, setIsConverting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [converted, setConverted] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -24,6 +27,9 @@ export default function ImageToPdfPage() {
       if (selectedFile.type.startsWith('image/')) {
         setFile(selectedFile);
         setPreview(URL.createObjectURL(selectedFile));
+        setConverted(false);
+        setProgress(0);
+        setIsConverting(false);
       } else {
         alert('Please select an image file.');
       }
@@ -33,31 +39,42 @@ export default function ImageToPdfPage() {
   const handleRemoveFile = () => {
     setFile(null);
     setPreview(null);
+    setConverted(false);
+    setProgress(0);
   };
 
-  const handleConvertToPdf = () => {
+  const downloadPdf = () => {
     if (!file || !preview) return;
-
-    setIsConverting(true);
     const img = new Image();
     img.src = preview;
     img.onload = () => {
-      // Create a new jsPDF instance.
-      // The orientation is determined by the image aspect ratio.
       const orientation = img.width > img.height ? 'l' : 'p';
       const pdf = new jsPDF(orientation, 'px', [img.width, img.height]);
-
-      // Add the image to the PDF.
       pdf.addImage(img, 'PNG', 0, 0, img.width, img.height);
-      
-      // Generate and download the PDF.
       pdf.save(`${file.name.replace(/\.[^/.]+$/, '')}.pdf`);
-      setIsConverting(false);
     };
     img.onerror = () => {
       alert('Failed to load image for PDF conversion.');
-      setIsConverting(false);
-    }
+    };
+  };
+
+  const handleConvertToPdf = () => {
+    if (!file) return;
+    setIsConverting(true);
+    setConverted(false);
+    setProgress(0);
+
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsConverting(false);
+          setConverted(true);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 300); // 3 seconds total
   };
 
   return (
@@ -119,20 +136,37 @@ export default function ImageToPdfPage() {
                     Size: {file ? (file.size / 1024).toFixed(2) : 0} KB
                   </p>
                 </div>
-                <Button
-                  onClick={handleConvertToPdf}
-                  disabled={isConverting}
-                  className="w-full"
-                >
-                  {isConverting ? (
-                    'Converting...'
-                  ) : (
+
+                <div className="space-y-4">
+                  {!isConverting && !converted && (
+                    <Button onClick={handleConvertToPdf} className="w-full">
+                      Convert to PDF
+                    </Button>
+                  )}
+                  {isConverting && (
                     <>
-                      <FileDown className="mr-2 h-4 w-4" />
-                      Convert & Download PDF
+                      <Progress value={progress} className="w-full" />
+                      <p className="text-center text-sm text-muted-foreground">
+                        Converting...
+                      </p>
                     </>
                   )}
-                </Button>
+                  {converted && (
+                    <div className="space-y-2 text-center">
+                      <p className="font-semibold text-green-600">
+                        Conversion Complete!
+                      </p>
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={downloadPdf}
+                      >
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Download PDF
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
