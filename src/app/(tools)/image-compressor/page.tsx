@@ -13,16 +13,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [compressedPreview, setCompressedPreview] = useState<string | null>(null);
+  const [compressedPreview, setCompressedPreview] = useState<string | null>(
+    null
+  );
   const [targetSize, setTargetSize] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [compressed, setCompressed] = useState(false);
   const [compressedSize, setCompressedSize] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -50,7 +54,8 @@ export default function ImageCompressorPage() {
 
   const compressImage = (
     file: File,
-    targetSizeKB: number
+    targetSizeKB: number,
+    onProgress: (p: number) => void
   ): Promise<{ compressedBlob: Blob; finalSizeKB: number }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -69,63 +74,52 @@ export default function ImageCompressorPage() {
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
 
-          let quality = 0.9;
-          let attempts = 10;
           let low = 0;
           let high = 1;
+          let quality = 0.9;
+          let bestBlob: Blob | null = null;
+          const maxAttempts = 10;
+          let attempts = 0;
 
-          const findBestQuality = () => {
-            if (attempts-- <= 0) {
-              // Failsafe to prevent infinite loops
-              canvas.toBlob(
-                (blob) => {
-                  if (blob) {
-                    resolve({
-                      compressedBlob: blob,
-                      finalSizeKB: blob.size / 1024,
-                    });
-                  } else {
-                    reject(new Error('Canvas to Blob conversion failed.'));
-                  }
-                },
-                file.type,
-                quality
-              );
-              return;
-            }
+          const search = () => {
+            attempts++;
+            onProgress((attempts / maxAttempts) * 90); // Update progress
 
-            quality = (low + high) / 2;
             canvas.toBlob(
               (blob) => {
-                if (blob) {
-                  const currentSizeKB = blob.size / 1024;
-                  const difference = currentSizeKB - targetSizeKB;
-                  
-                  // Update progress based on how close we are
-                  setProgress(prev => Math.min(prev + 10, 90));
-
-                  if (Math.abs(difference) < 10 || attempts <= 1) { // Within 10KB tolerance or last attempt
-                    resolve({
-                      compressedBlob: blob,
-                      finalSizeKB: currentSizeKB,
-                    });
-                  } else if (difference > 0) {
-                    high = quality;
-                    findBestQuality();
-                  } else {
-                    low = quality;
-                    findBestQuality();
-                  }
-                } else {
-                  reject(new Error('Canvas to Blob conversion failed.'));
+                if (!blob) {
+                  return reject(new Error('Canvas to Blob conversion failed.'));
                 }
+
+                const currentSizeKB = blob.size / 1024;
+                bestBlob = blob;
+
+                if (
+                  attempts >= maxAttempts ||
+                  Math.abs(currentSizeKB - targetSizeKB) < 10
+                ) {
+                  // Within 10KB tolerance or max attempts reached
+                  resolve({
+                    compressedBlob: bestBlob,
+                    finalSizeKB: bestBlob.size / 1024,
+                  });
+                  return;
+                }
+
+                if (currentSizeKB > targetSizeKB) {
+                  high = quality;
+                } else {
+                  low = quality;
+                }
+                quality = (low + high) / 2;
+                search();
               },
               file.type,
               quality
             );
           };
 
-          findBestQuality();
+          search();
         };
         img.onerror = () => {
           reject(new Error('Image failed to load.'));
@@ -138,17 +132,25 @@ export default function ImageCompressorPage() {
   };
 
   const handleCompress = async () => {
-    if (!file || !targetSize) return;
+    if (!file || !targetSize || isCompressing) return;
 
     const targetSizeKB = parseFloat(targetSize);
     if (isNaN(targetSizeKB) || targetSizeKB <= 0) {
-      alert('Please enter a valid target size.');
+      toast({
+        title: 'Invalid Target Size',
+        description: 'Please enter a valid target size in KB.',
+        variant: 'destructive',
+      });
       return;
     }
 
     const originalSizeKB = file.size / 1024;
     if (targetSizeKB >= originalSizeKB) {
-      alert('Target size must be smaller than the original size.');
+      toast({
+        title: 'Target Too Large',
+        description: 'Target size must be smaller than the original size.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -159,25 +161,36 @@ export default function ImageCompressorPage() {
     setCompressedPreview(null);
 
     try {
-      const { compressedBlob, finalSizeKB } = await compressImage(file, targetSizeKB);
+      const { compressedBlob, finalSizeKB } = await compressImage(
+        file,
+        targetSizeKB,
+        setProgress
+      );
       setCompressedPreview(URL.createObjectURL(compressedBlob));
       setCompressedSize(finalSizeKB);
       setProgress(100);
       setCompressed(true);
     } catch (error) {
       console.error(error);
-      alert('An error occurred during compression.');
+      toast({
+        title: 'Compression Error',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'An unknown error occurred.',
+        variant: 'destructive',
+      });
     } finally {
       setIsCompressing(false);
     }
   };
-  
+
   const handleGoBack = () => {
     setCompressed(false);
     setCompressedPreview(null);
     setProgress(0);
     setCompressedSize(null);
-  }
+  };
 
   const handleDownload = () => {
     if (!compressedPreview || !file) return;
@@ -190,7 +203,7 @@ export default function ImageCompressorPage() {
     const baseName = name.substring(0, name.lastIndexOf('.'));
     a.download = `${baseName}-compressed${ext}`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
   };
 
@@ -202,8 +215,8 @@ a.click();
         <CardHeader>
           <CardTitle className="font-headline">Image Compressor</CardTitle>
           <CardDescription>
-            Upload an image, set a target file size, and download the
-            optimized file.
+            Upload an image, set a target file size, and download the optimized
+            file.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -233,21 +246,26 @@ a.click();
                 {preview && (
                   <img
                     src={compressed ? compressedPreview! : preview}
-                    alt={compressed ? "Compressed image preview" : "Original image preview"}
+                    alt={
+                      compressed
+                        ? 'Compressed image preview'
+                        : 'Original image preview'
+                    }
                     className="max-h-[400px] w-full rounded-lg object-contain"
                   />
                 )}
-                 {!compressed && (
+                {!compressed && (
                   <Button
                     variant="destructive"
                     size="icon"
                     className="absolute right-2 top-2"
                     onClick={handleRemoveFile}
+                    disabled={isCompressing}
                   >
                     <X className="h-4 w-4" />
                   </Button>
-                 )}
-                 <div className="absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-1 text-xs text-white">
+                )}
+                <div className="absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-1 text-xs text-white">
                   {compressed ? 'Compressed Preview' : 'Original'}
                 </div>
               </div>
@@ -266,34 +284,34 @@ a.click();
                 </div>
                 {!compressed && !isCompressing && (
                   <>
-                  <div className="space-y-2">
-                    <Label htmlFor="target-size">Target Size (KB)</Label>
-                    <Input
-                      id="target-size"
-                      type="number"
-                      value={targetSize}
-                      onChange={(e) => setTargetSize(e.target.value)}
-                      placeholder={`e.g., ${Math.round(
-                        (file?.size || 0) / 1024 / 2
-                      )}`}
-                      disabled={isCompressing || compressed}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter your desired file size in kilobytes.
-                    </p>
-                  </div>
-                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="target-size">Target Size (KB)</Label>
+                      <Input
+                        id="target-size"
+                        type="number"
+                        value={targetSize}
+                        onChange={(e) => setTargetSize(e.target.value)}
+                        placeholder={`e.g., ${Math.round(
+                          (file?.size || 0) / 1024 / 2
+                        )}`}
+                        disabled={isCompressing}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Enter your desired file size in kilobytes.
+                      </p>
+                    </div>
+                    <div className="space-y-4">
                       <Button
                         onClick={handleCompress}
                         className="w-full"
-                        disabled={!targetSize}
+                        disabled={!targetSize || isCompressing}
                       >
                         Compress Image
                       </Button>
-                  </div>
-                 </>
+                    </div>
+                  </>
                 )}
-                
+
                 {isCompressing && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
                     <Progress value={progress} className="w-full" />
@@ -305,30 +323,29 @@ a.click();
 
                 {compressed && !isCompressing && (
                   <div className="flex h-full flex-col justify-center space-y-4">
-                     <div className="space-y-2 text-center">
-                        <p className="font-semibold text-green-600">
-                          Compression Complete!
-                        </p>
-                        <Button
-                          className="w-full"
-                          variant="secondary"
-                          onClick={handleDownload}
-                        >
-                          <FileDown className="mr-2 h-4 w-4" />
-                          Download Compressed Image
-                        </Button>
-                        <Button
-                          onClick={handleGoBack}
-                          className="w-full"
-                          variant="outline"
-                        >
-                          <RefreshCcw className="mr-2 h-4 w-4" />
-                          Go Back & Re-compress
-                        </Button>
-                      </div>
+                    <div className="space-y-2 text-center">
+                      <p className="font-semibold text-green-600">
+                        Compression Complete!
+                      </p>
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={handleDownload}
+                      >
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Download Compressed Image
+                      </Button>
+                      <Button
+                        onClick={handleGoBack}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        <RefreshCcw className="mr-2 h-4 w-4" />
+                        Go Back & Re-compress
+                      </Button>
+                    </div>
                   </div>
                 )}
-
               </div>
             </div>
           )}
