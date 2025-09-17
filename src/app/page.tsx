@@ -1,5 +1,10 @@
+
 import Link from 'next/link';
-import { AppLogo, AppName, tools } from '@/lib/constants';
+import {
+  AppLogo,
+  AppName,
+  tools
+} from '@/lib/constants';
 import {
   Card,
   CardHeader,
@@ -8,16 +13,101 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import {
+  ArrowRight,
+  Image as ImageIcon,
+  FileText as PdfIcon,
+  Globe,
+  ChevronDown
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal
+} from '@/components/ui/dropdown-menu';
+
+const imageTools = tools.filter(t => t.path.includes('image') || t.path.includes('background-remover'));
+const pdfTools = tools.filter(t => t.path.includes('pdf'));
+const otherTools = tools.filter(t => !imageTools.includes(t) && !pdfTools.includes(t));
+
+const webDataTools = otherTools.filter(t => t.path.includes('qr-code') || t.path.includes('credit-card') || t.path.includes('random-data'));
+const textTools = otherTools.filter(t => t.path.includes('text'));
+const utilityTools = otherTools.filter(t => !webDataTools.includes(t) && !textTools.includes(t));
+
 
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="flex items-center gap-3 border-b p-4 md:px-6">
-        <AppLogo className="h-8 w-8 text-primary" />
-        <h1 className="font-headline text-2xl font-bold tracking-tighter">
-          {AppName}
-        </h1>
+      <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
+        <Link href="/" className="flex items-center gap-3">
+          <AppLogo className="h-8 w-8 text-primary" />
+          <h1 className="font-headline text-2xl font-bold tracking-tighter">
+            {AppName}
+          </h1>
+        </Link>
+        <nav className="hidden md:flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <ImageIcon className="mr-2" /> Image Tools <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {imageTools.map(tool => (
+                   <DropdownMenuItem key={tool.name} asChild>
+                    <Link href={tool.path}>
+                      <tool.icon className="mr-2" />
+                      <span>{tool.name}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <PdfIcon className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {pdfTools.map(tool => (
+                   <DropdownMenuItem key={tool.name} asChild>
+                    <Link href={tool.path}>
+                      <tool.icon className="mr-2" />
+                      <span>{tool.name}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+               <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {otherTools.map(tool => (
+                   <DropdownMenuItem key={tool.name} asChild>
+                    <Link href={tool.path}>
+                      <tool.icon className="mr-2" />
+                      <span>{tool.name}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </nav>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
@@ -34,10 +124,10 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+             <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
-                  <Card className="flex h-full flex-col transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
+                  <Card className="flex h-full flex-col transition-all duration-300 hover:scale-[1.02] hover:border-primary hover:shadow-lg hover:shadow-primary/10">
                     <CardHeader className="flex flex-row items-start gap-4">
                       <div className="rounded-md bg-primary/10 p-3">
                         <tool.icon className="h-6 w-6 text-primary" />
