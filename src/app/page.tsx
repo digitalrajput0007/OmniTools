@@ -50,6 +50,30 @@ export default function Home() {
           </h1>
         </Link>
         <nav className="hidden md:flex items-center gap-2">
+            {randomDataGeneratorTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={randomDataGeneratorTool.path}>
+                        <randomDataGeneratorTool.icon className="mr-2" /> {randomDataGeneratorTool.name}
+                    </Link>
+                </Button>
+            )}
+
+            {randomPickerTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={randomPickerTool.path}>
+                        <randomPickerTool.icon className="mr-2" /> {randomPickerTool.name}
+                    </Link>
+                </Button>
+            )}
+
+            {creditCardGeneratorTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={creditCardGeneratorTool.path}>
+                        <creditCardGeneratorTool.icon className="mr-2" /> {creditCardGeneratorTool.name}
+                    </Link>
+                </Button>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost">
@@ -104,30 +128,6 @@ export default function Home() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {randomDataGeneratorTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={randomDataGeneratorTool.path}>
-                        <randomDataGeneratorTool.icon className="mr-2" /> {randomDataGeneratorTool.name}
-                    </Link>
-                </Button>
-            )}
-
-            {randomPickerTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={randomPickerTool.path}>
-                        <randomPickerTool.icon className="mr-2" /> {randomPickerTool.name}
-                    </Link>
-                </Button>
-            )}
-
-            {creditCardGeneratorTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={creditCardGeneratorTool.path}>
-                        <creditCardGeneratorTool.icon className="mr-2" /> {creditCardGeneratorTool.name}
-                    </Link>
-                </Button>
-            )}
-            
             {otherTools.length > 0 && (
                 <DropdownMenu>
                    <DropdownMenuTrigger asChild>
