@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, UploadCloud, X, File as FileIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,12 +24,11 @@ export default function PdfSplitterPage() {
   const [isSplitting, setIsSplitting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [split, setSplit] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.type === 'application/pdf') {
+  
+  const handleFileSelect = async (selectedFile: File) => {
+     if (selectedFile.type === 'application/pdf') {
         setFile(selectedFile);
         setSplit(false);
         setProgress(0);
@@ -54,8 +54,37 @@ export default function PdfSplitterPage() {
           variant: 'destructive',
         });
       }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileSelect(e.target.files[0]);
     }
   };
+  
+  const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+       handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
 
   const handleRemoveFile = () => {
     setFile(null);
@@ -70,18 +99,19 @@ export default function PdfSplitterPage() {
     setIsSplitting(true);
     setSplit(false);
     setProgress(0);
+    const startTime = Date.now();
+    const minDuration = 3000;
 
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsSplitting(false);
-          setSplit(true);
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 30);
+      const elapsedTime = Date.now() - startTime;
+      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+      setProgress(currentProgress);
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setIsSplitting(false);
+        setSplit(true);
+      }
+    }, 50);
   };
 
   const downloadSplitPdf = async () => {
@@ -164,7 +194,13 @@ export default function PdfSplitterPage() {
           {!file ? (
             <label
               htmlFor="pdf-upload"
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center"
+              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
+                "bg-accent/50 border-primary": isDragging
+              })}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragEvents}
+              onDrop={handleDrop}
             >
               <UploadCloud className="h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-muted-foreground">

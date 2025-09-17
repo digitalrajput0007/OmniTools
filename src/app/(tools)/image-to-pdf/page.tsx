@@ -13,6 +13,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, UploadCloud, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ImageToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -20,21 +22,54 @@ export default function ImageToPdfPage() {
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [converted, setConverted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
+
+  const handleFileSelect = (selectedFile: File) => {
+    if (selectedFile.type.startsWith('image/')) {
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+      setConverted(false);
+      setProgress(0);
+      setIsConverting(false);
+    } else {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please select an image file.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.type.startsWith('image/')) {
-        setFile(selectedFile);
-        setPreview(URL.createObjectURL(selectedFile));
-        setConverted(false);
-        setProgress(0);
-        setIsConverting(false);
-      } else {
-        alert('Please select an image file.');
-      }
+      handleFileSelect(e.target.files[0]);
     }
   };
+  
+  const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
 
   const handleRemoveFile = () => {
     setFile(null);
@@ -54,7 +89,11 @@ export default function ImageToPdfPage() {
       pdf.save(`${file.name.replace(/\.[^/.]+$/, '')}.pdf`);
     };
     img.onerror = () => {
-      alert('Failed to load image for PDF conversion.');
+      toast({
+        title: 'Conversion Error',
+        description: 'Failed to load image for PDF conversion.',
+        variant: 'destructive',
+      });
     };
   };
 
@@ -63,18 +102,20 @@ export default function ImageToPdfPage() {
     setIsConverting(true);
     setConverted(false);
     setProgress(0);
+    const startTime = Date.now();
+    const minDuration = 3000;
 
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsConverting(false);
-          setConverted(true);
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 30); // ~3 seconds total
+      const elapsedTime = Date.now() - startTime;
+      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+      setProgress(currentProgress);
+
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setIsConverting(false);
+        setConverted(true);
+      }
+    }, 50);
   };
 
   return (
@@ -90,7 +131,13 @@ export default function ImageToPdfPage() {
           {!preview ? (
             <label
               htmlFor="image-upload"
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center"
+              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
+                "bg-accent/50 border-primary": isDragging
+              })}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragEvents}
+              onDrop={handleDrop}
             >
               <UploadCloud className="h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-muted-foreground">

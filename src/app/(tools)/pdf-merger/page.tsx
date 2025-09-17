@@ -14,30 +14,59 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, UploadCloud, X, File as FileIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function PdfMergerPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isMerging, setIsMerging] = useState(false);
   const [progress, setProgress] = useState(0);
   const [merged, setMerged] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files).filter(
+  
+  const handleFileAdd = (newFiles: File[]) => {
+     const pdfFiles = newFiles.filter(
         (file) => file.type === 'application/pdf'
       );
-      if (newFiles.length !== e.target.files.length) {
+      if (pdfFiles.length !== newFiles.length) {
         toast({
           title: 'Invalid File Type',
           description: 'Only PDF files are allowed.',
           variant: 'destructive',
         });
       }
-      setFiles((prev) => [...prev, ...newFiles]);
+      setFiles((prev) => [...prev, ...pdfFiles]);
       setMerged(false);
       setProgress(0);
       setIsMerging(false);
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFileAdd(Array.from(e.target.files));
+    }
+  };
+  
+   const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      handleFileAdd(Array.from(e.dataTransfer.files));
     }
   };
 
@@ -57,18 +86,19 @@ export default function PdfMergerPage() {
     setIsMerging(true);
     setMerged(false);
     setProgress(0);
+    const startTime = Date.now();
+    const minDuration = 3000;
 
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsMerging(false);
-          setMerged(true);
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 30);
+      const elapsedTime = Date.now() - startTime;
+      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+      setProgress(currentProgress);
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setIsMerging(false);
+        setMerged(true);
+      }
+    }, 50);
   };
 
   const downloadMergedPdf = async () => {
@@ -116,7 +146,13 @@ export default function PdfMergerPage() {
           <div className="space-y-6">
             <label
               htmlFor="pdf-upload"
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center"
+              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
+                "bg-accent/50 border-primary": isDragging
+              })}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragEvents}
+              onDrop={handleDrop}
             >
               <UploadCloud className="h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-muted-foreground">

@@ -15,6 +15,7 @@ import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 // Helper function to compress image on the client
 async function compressImage(
@@ -63,21 +64,57 @@ export default function ImageCompressorPage() {
   const [progress, setProgress] = useState(0);
   const [compressed, setCompressed] = useState(false);
   const [compressedSize, setCompressedSize] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+    setPreview(URL.createObjectURL(selectedFile));
+    setCompressed(false);
+    setCompressedPreview(null);
+    setProgress(0);
+    setIsCompressing(false);
+    setCompressedSize(null);
+    setCompressionLevel([50]);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
-      setCompressed(false);
-      setCompressedPreview(null);
-      setProgress(0);
-      setIsCompressing(false);
-      setCompressedSize(null);
-      setCompressionLevel([50]);
+      handleFileSelect(e.target.files[0]);
     }
   };
+  
+  const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    handleDragEvents(e);
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+       if (e.dataTransfer.files[0].type.startsWith('image/')) {
+        handleFileSelect(e.dataTransfer.files[0]);
+      } else {
+        toast({
+          title: 'Invalid File Type',
+          description: 'Please drop an image file.',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
 
   const handleRemoveFile = () => {
     setFile(null);
@@ -90,51 +127,47 @@ export default function ImageCompressorPage() {
   };
 
   const handleCompress = async () => {
-    if (!file || isCompressing) return;
+    if (!file) return;
 
     setIsCompressing(true);
-    setCompressed(false);
-    setCompressedPreview(null);
-    setCompressedSize(null);
     setProgress(0);
-    
+
+    const startTime = Date.now();
+    const minDuration = 3000;
+
     let compressedBlob: Blob | null = null;
     let compressionError: Error | null = null;
-
+    
     try {
       compressedBlob = await compressImage(file, compressionLevel[0]);
     } catch (error) {
-      compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
+       compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
     }
+    
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(currentProgress);
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          
-          if (compressionError) {
-             toast({
-              title: 'Compression Error',
-              description: compressionError.message,
-              variant: 'destructive',
-            });
+        if (currentProgress >= 100) {
+            clearInterval(progressInterval);
+
+            if (compressionError) {
+              toast({
+                  title: 'Compression Error',
+                  description: compressionError.message,
+                  variant: 'destructive',
+              });
+            } else if (compressedBlob) {
+                const finalSizeKB = compressedBlob.size / 1024;
+                setCompressedPreview(URL.createObjectURL(compressedBlob));
+                setCompressedSize(finalSizeKB);
+                setCompressed(true);
+            }
+            
             setIsCompressing(false);
-            return 100;
-          }
-
-          if(compressedBlob) {
-            const finalSizeKB = compressedBlob.size / 1024;
-            setCompressedPreview(URL.createObjectURL(compressedBlob));
-            setCompressedSize(finalSizeKB);
-            setCompressed(true);
-          }
-          
-          setIsCompressing(false);
-          return 100;
         }
-        return prev + 1;
-      });
-    }, 30);
+    }, 50);
   };
   
   const handleGoBack = () => {
@@ -175,7 +208,13 @@ export default function ImageCompressorPage() {
           {!preview ? (
             <label
               htmlFor="image-upload"
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center"
+              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
+                "bg-accent/50 border-primary": isDragging
+              })}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragEvents}
+              onDrop={handleDrop}
             >
               <UploadCloud className="h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-muted-foreground">
@@ -266,7 +305,7 @@ export default function ImageCompressorPage() {
                   </>
                 )}
 
-                {isCompressing && (
+                {isCompressing && !compressed && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
                     <Progress value={progress} className="w-full" />
                     <p className="text-center text-sm text-muted-foreground">
@@ -275,7 +314,7 @@ export default function ImageCompressorPage() {
                   </div>
                 )}
 
-                {compressed && !isCompressing && (
+                {compressed && (
                   <div className="flex h-full flex-col justify-center space-y-4">
                     <div className="space-y-2 text-center">
                       <p className="font-semibold text-green-600">
