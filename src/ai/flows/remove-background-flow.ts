@@ -64,7 +64,7 @@ const removeBackgroundFlow = ai.defineFlow(
         },
       ],
       config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['IMAGE', 'TEXT'],
       },
     });
 
