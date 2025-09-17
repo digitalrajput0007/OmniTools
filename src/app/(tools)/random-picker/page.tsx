@@ -39,9 +39,9 @@ const getOrdinal = (n: number) => {
 }
 
 const rankStyles = [
-    "min-h-[100px]", // 1st
-    "min-h-[90px]", // 2nd
-    "min-h-[80px]", // 3rd
+    "min-h-[90px]", // 1st
+    "min-h-[80px]", // 2nd
+    "min-h-[70px]", // 3rd
 ];
 
 const getRankStyle = (index: number) => {
