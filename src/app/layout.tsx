@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 export const metadata: Metadata = {
   title: 'OmniToolbox - Your All-in-One Utility Hub',
   description:
-    'A collection of powerful and easy-to-use tools including Image Compressor, PDF utilities, QR Code Generator, and more.',
+    'A collection of powerful and easy-to-use tools including Image Compressor, Image Format Converter, PDF utilities, QR Code Generator, and more.',
 };
 
 export default function RootLayout({

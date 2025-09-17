@@ -5,6 +5,7 @@ import {
   FileText,
   Minimize,
   QrCode,
+  Replace,
   Scale,
   Scissors,
 } from 'lucide-react';
@@ -28,6 +29,12 @@ export const tools: Tool[] = [
     description: 'Convert your JPG, PNG, and other images to PDF.',
     path: '/image-to-pdf',
     icon: FileText,
+  },
+  {
+    name: 'Image Format Converter',
+    description: 'Change the format of your images (e.g., JPG, PNG, WEBP).',
+    path: '/image-format-converter',
+    icon: Replace,
   },
   {
     name: 'PDF Merger',
