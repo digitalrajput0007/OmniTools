@@ -13,11 +13,68 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { removeBackground } from '@/ai/flows/remove-background-flow';
 import { UploadCloud, Wand2, X, Download, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+
+async function removeBackgroundClientSide(
+  photoDataUri: string,
+  tolerance: number
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.src = photoDataUri;
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        return reject(new Error('Could not get canvas context.'));
+      }
+
+      ctx.drawImage(image, 0, 0);
+
+      // Get the color of the top-left pixel as the background color
+      const pixelData = ctx.getImageData(0, 0, 1, 1).data;
+      const bgR = pixelData[0];
+      const bgG = pixelData[1];
+      const bgB = pixelData[2];
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // Calculate color difference
+        const diff = Math.sqrt(
+          Math.pow(r - bgR, 2) + Math.pow(g - bgG, 2) + Math.pow(b - bgB, 2)
+        );
+
+        if (diff < tolerance) {
+          // Set pixel to transparent
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      const resultDataUri = canvas.toDataURL('image/png');
+
+      resolve(resultDataUri);
+    };
+
+    image.onerror = () => {
+      reject(new Error('Failed to load image for processing.'));
+    };
+  });
+}
+
 
 export default function BackgroundRemoverPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -98,8 +155,8 @@ export default function BackgroundRemoverPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     try {
-      const resultData = await removeBackground({ photoDataUri: preview, tolerance: tolerance[0] });
-      setResult(resultData.imageWithBackgroundRemoved);
+      const resultDataUri = await removeBackgroundClientSide(preview, tolerance[0] );
+      setResult(resultDataUri);
       setIsDone(true);
     } catch (error) {
       console.error(error);
@@ -290,3 +347,5 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
+
+    
