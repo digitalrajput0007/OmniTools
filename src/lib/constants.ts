@@ -64,12 +64,6 @@ export const tools: Tool[] = [
     path: '/pdf-splitter',
     icon: Scissors,
   },
-   {
-    name: 'PDF to Word',
-    description: 'Extract text from a PDF to edit in Word.',
-    path: '/pdf-to-word',
-    icon: FileOutput,
-  },
   {
     name: 'QR Code Generator',
     description: 'Create custom QR codes for URLs, text, and more.',
