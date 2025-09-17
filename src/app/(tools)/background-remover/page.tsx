@@ -14,8 +14,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { removeBackground } from '@/ai/flows/remove-background-flow';
-import { UploadCloud, Wand2, X, Download, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, Wand2, X, Download, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function BackgroundRemoverPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -24,6 +25,7 @@ export default function BackgroundRemoverPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const resetState = () => {
@@ -32,6 +34,7 @@ export default function BackgroundRemoverPage() {
     setResult(null);
     setIsProcessing(false);
     setIsDone(false);
+    setError(null);
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -87,6 +90,7 @@ export default function BackgroundRemoverPage() {
     setIsProcessing(true);
     setIsDone(false);
     setResult(null);
+    setError(null);
 
     try {
       const resultData = await removeBackground({ photoDataUri: preview });
@@ -94,12 +98,16 @@ export default function BackgroundRemoverPage() {
       setIsDone(true);
     } catch (error) {
       console.error(error);
-      toast({
-        title: 'An Error Occurred',
-        description:
-          'Failed to remove background. The AI model may be overloaded. Please try again.',
-        variant: 'destructive',
-      });
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred.';
+      
+      if (errorMessage.includes('REMOVE_BG_API_KEY')) {
+        setError('The remove.bg API key is not configured. Please add it to your .env file and restart the server.');
+      } else if (errorMessage.includes('402')) {
+        setError('You have exceeded your free credits for the remove.bg API. Please check your account on their website.');
+      } else {
+        setError('Failed to remove background. The API may be overloaded or the image format is not supported. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -112,7 +120,7 @@ export default function BackgroundRemoverPage() {
     const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
     a.download = `${baseName}-no-bg.png`;
     document.body.appendChild(a);
-    a.click();
+a.click();
     document.body.removeChild(a);
   };
 
@@ -183,7 +191,7 @@ export default function BackgroundRemoverPage() {
                     {isProcessing ? (
                        <div className="flex h-full w-full flex-col items-center justify-center space-y-4 bg-muted/20">
                          <Wand2 className="h-10 w-10 animate-pulse text-primary" />
-                         <p className="text-sm text-muted-foreground">AI is thinking...</p>
+                         <p className="text-sm text-muted-foreground">Removing background...</p>
                          <Skeleton className='absolute h-full w-full' />
                        </div>
                     ) : result ? (
@@ -193,6 +201,11 @@ export default function BackgroundRemoverPage() {
                         fill
                         className="object-contain"
                       />
+                    ) : error ? (
+                       <div className="flex h-full w-full flex-col items-center justify-center bg-destructive/10 p-4 text-center">
+                          <AlertTriangle className="h-10 w-10 text-destructive" />
+                           <p className="mt-4 text-sm text-destructive">{error}</p>
+                       </div>
                     ) : (
                       <div className="flex h-full w-full flex-col items-center justify-center bg-muted/20 p-4 text-center">
                         <Wand2 className="h-10 w-10 text-muted-foreground" />
@@ -205,7 +218,7 @@ export default function BackgroundRemoverPage() {
                 </div>
               </div>
 
-              {!isDone && (
+              {!isDone && !error && (
                 <div className="mt-6 flex justify-center">
                   <Button
                     onClick={handleRemoveBackground}
@@ -245,6 +258,17 @@ export default function BackgroundRemoverPage() {
                   </CardContent>
                 </Card>
               )}
+
+               {error && (
+                 <div className="mt-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={resetState}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+                      </Button>
+                 </div>
+                )}
             </div>
           )}
         </CardContent>

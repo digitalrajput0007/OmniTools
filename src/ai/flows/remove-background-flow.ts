@@ -7,8 +7,8 @@
  * - BackgroundRemoverOutput - The return type for the removeBackground function.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import FormData from 'form-data';
 
 const BackgroundRemoverInputSchema = z.object({
   photoDataUri: z
@@ -35,45 +35,38 @@ export type BackgroundRemoverOutput = z.infer<
 export async function removeBackground(
   input: BackgroundRemoverInput
 ): Promise<BackgroundRemoverOutput> {
-  return removeBackgroundFlow(input);
-}
-
-const removeBackgroundFlow = ai.defineFlow(
-  {
-    name: 'removeBackgroundFlow',
-    inputSchema: BackgroundRemoverInputSchema,
-    outputSchema: BackgroundRemoverOutputSchema,
-  },
-  async (input) => {
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-image-preview',
-      prompt: [
-        {
-          media: {
-            url: input.photoDataUri,
-          },
-        },
-        {
-          text: `You are an expert image editor specializing in removing backgrounds.
-
-          Your task is to take the user's uploaded image and remove the background completely.
-        
-          - The subject should be cleanly isolated.
-          - The output must be a PNG image.
-          - The background of the output image must be transparent.`,
-        },
-      ],
-      config: {
-        responseModalities: ['IMAGE', 'TEXT'],
-      },
-    });
-
-    if (!media?.url) {
-      throw new Error('The model did not return an image.');
-    }
-
-    return {
-      imageWithBackgroundRemoved: media.url,
-    };
+  const apiKey = process.env.REMOVE_BG_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'REMOVE_BG_API_KEY is not configured. Please add it to your .env file.'
+    );
   }
-);
+
+  const base64Data = input.photoDataUri.split(',')[1];
+  const imageBuffer = Buffer.from(base64Data, 'base64');
+
+  const formData = new FormData();
+  formData.append('image_file', imageBuffer, 'image.jpg');
+  formData.append('size', 'auto');
+
+  const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+    method: 'POST',
+    headers: {
+      ...formData.getHeaders(),
+      'X-Api-Key': apiKey,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error: ${response.statusText} - ${errorText}`);
+  }
+
+  const resultBuffer = await response.arrayBuffer();
+  const resultBase64 = Buffer.from(resultBuffer).toString('base64');
+
+  return {
+    imageWithBackgroundRemoved: `data:image/png;base64,${resultBase64}`,
+  };
+}
