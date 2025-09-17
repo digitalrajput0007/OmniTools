@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -90,8 +90,15 @@ export default function RandomDataGeneratorPage() {
     const newData = Array.from({ length: count }, () => {
       const record: GeneratedRecord = {};
       
-      const firstName = selectedFields.includes('First Name') ? baseGenerators['First Name']() : getRandomItem(firstNames);
-      const lastName = selectedFields.includes('Last Name') ? baseGenerators['Last Name']() : getRandomItem(lastNames);
+      let firstName = '';
+      let lastName = '';
+
+      if (selectedFields.includes('First Name') || selectedFields.includes('Full Name') || selectedFields.includes('Email')) {
+        firstName = baseGenerators['First Name']();
+      }
+      if (selectedFields.includes('Last Name') || selectedFields.includes('Full Name') || selectedFields.includes('Email')) {
+        lastName = baseGenerators['Last Name']();
+      }
 
       if (selectedFields.includes('First Name')) {
         record['First Name'] = firstName;
@@ -108,7 +115,7 @@ export default function RandomDataGeneratorPage() {
       }
       
       selectedFields.forEach(field => {
-        if (baseGenerators[field]) {
+        if (baseGenerators[field] && !record[field]) {
           record[field] = baseGenerators[field]();
         }
       });
@@ -165,10 +172,11 @@ export default function RandomDataGeneratorPage() {
     XLSX.writeFile(workbook, 'random-data.xlsx');
   };
 
-  // Generate initial data on load
-  useState(() => {
+  // Generate initial data on load, only on client
+  useEffect(() => {
     handleGenerate();
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="grid gap-6">
