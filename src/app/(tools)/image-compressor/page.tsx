@@ -94,44 +94,47 @@ export default function ImageCompressorPage() {
 
     setIsCompressing(true);
     setCompressed(false);
-    setProgress(0);
-    setCompressedSize(null);
     setCompressedPreview(null);
+    setCompressedSize(null);
+    setProgress(0);
+    
+    let compressedBlob: Blob | null = null;
+    let compressionError: Error | null = null;
+
+    try {
+      compressedBlob = await compressImage(file, compressionLevel[0]);
+    } catch (error) {
+      compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
+    }
 
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
+          
+          if (compressionError) {
+             toast({
+              title: 'Compression Error',
+              description: compressionError.message,
+              variant: 'destructive',
+            });
+            setIsCompressing(false);
+            return 100;
+          }
+
+          if(compressedBlob) {
+            const finalSizeKB = compressedBlob.size / 1024;
+            setCompressedPreview(URL.createObjectURL(compressedBlob));
+            setCompressedSize(finalSizeKB);
+            setCompressed(true);
+          }
+          
+          setIsCompressing(false);
           return 100;
         }
         return prev + 1;
       });
-    }, 30); // ~3 seconds total
-
-    try {
-      const compressedBlob = await compressImage(file, compressionLevel[0]);
-      
-      clearInterval(interval);
-      setProgress(100);
-
-      const finalSizeKB = compressedBlob.size / 1024;
-      setCompressedPreview(URL.createObjectURL(compressedBlob));
-      setCompressedSize(finalSizeKB);
-      setCompressed(true);
-    } catch (error) {
-      clearInterval(interval);
-      console.error(error);
-      toast({
-        title: 'Compression Error',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'An unknown error occurred.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsCompressing(false);
-    }
+    }, 30);
   };
   
   const handleGoBack = () => {
@@ -194,7 +197,7 @@ export default function ImageCompressorPage() {
               <div className="relative">
                 {preview && (
                   <img
-                    src={compressed ? compressedPreview! : preview}
+                    src={compressed && compressedPreview ? compressedPreview : preview}
                     alt={
                       compressed
                         ? 'Compressed image preview'
@@ -203,7 +206,7 @@ export default function ImageCompressorPage() {
                     className="max-h-[400px] w-full rounded-lg object-contain"
                   />
                 )}
-                {!compressed && (
+                {!compressed && !isCompressing && (
                   <Button
                     variant="destructive"
                     size="icon"

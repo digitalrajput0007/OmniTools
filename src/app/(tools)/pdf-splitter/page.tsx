@@ -194,6 +194,7 @@ export default function PdfSplitterPage() {
                   size="icon"
                   className="absolute right-2 top-2"
                   onClick={handleRemoveFile}
+                  disabled={isSplitting}
                 >
                   <X className="h-4 w-4" />
                 </Button>

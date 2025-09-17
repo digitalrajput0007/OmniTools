@@ -122,6 +122,7 @@ export default function ImageToPdfPage() {
                   size="icon"
                   className="absolute right-2 top-2"
                   onClick={handleRemoveFile}
+                  disabled={isConverting}
                 >
                   <X className="h-4 w-4" />
                 </Button>

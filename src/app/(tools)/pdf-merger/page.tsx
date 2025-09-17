@@ -158,6 +158,7 @@ export default function PdfMergerPage() {
                         size="icon"
                         className="h-6 w-6"
                         onClick={() => handleRemoveFile(index)}
+                        disabled={isMerging}
                       >
                         <X className="h-4 w-4" />
                       </Button>
