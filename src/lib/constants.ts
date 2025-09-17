@@ -15,6 +15,7 @@ import {
   ALargeSmall,
   Diff,
   CreditCard,
+  DatabaseZap,
 } from 'lucide-react';
 
 export type Tool = {
@@ -96,6 +97,12 @@ export const tools: Tool[] = [
     description: 'Generate dummy credit card numbers for testing.',
     path: '/credit-card-generator',
     icon: CreditCard,
+  },
+  {
+    name: 'Random Data Generator',
+    description: 'Create dummy data like names, emails, and addresses.',
+    path: '/random-data-generator',
+    icon: DatabaseZap,
   },
 ];
 
