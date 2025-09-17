@@ -89,33 +89,48 @@ export default function RandomDataGeneratorPage() {
     
     const newData = Array.from({ length: count }, () => {
       const record: GeneratedRecord = {};
-      
+      const domain = customDomain || getRandomItem(defaultDomains);
+
       let firstName = '';
       let lastName = '';
+      let fullName = '';
 
-      if (selectedFields.includes('First Name') || selectedFields.includes('Full Name') || selectedFields.includes('Email')) {
-        firstName = baseGenerators['First Name']();
-      }
-      if (selectedFields.includes('Last Name') || selectedFields.includes('Full Name') || selectedFields.includes('Email')) {
-        lastName = baseGenerators['Last Name']();
-      }
-
+      // Generate base name fields first if needed
       if (selectedFields.includes('First Name')) {
+        firstName = baseGenerators['First Name']();
         record['First Name'] = firstName;
       }
       if (selectedFields.includes('Last Name')) {
+        lastName = baseGenerators['Last Name']();
         record['Last Name'] = lastName;
       }
       if (selectedFields.includes('Full Name')) {
-        record['Full Name'] = `${firstName} ${lastName}`;
+        const fn = firstName || baseGenerators['First Name']();
+        const ln = lastName || baseGenerators['Last Name']();
+        if (!firstName) firstName = fn;
+        if (!lastName) lastName = ln;
+        fullName = `${fn} ${ln}`;
+        record['Full Name'] = fullName;
       }
-      if (selectedFields.includes('Email')) {
-        const domain = customDomain || getRandomItem(defaultDomains);
-        record['Email'] = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`;
-      }
-      
+
+      // Handle other fields, including email with its special logic
       selectedFields.forEach(field => {
-        if (baseGenerators[field] && !record[field]) {
+        if (field === 'Email') {
+          if (firstName && lastName) {
+            record.Email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`;
+          } else if (firstName) {
+            record.Email = `${firstName.toLowerCase()}@${domain}`;
+          } else if (fullName) {
+             const nameParts = fullName.split(' ');
+             const fn = nameParts[0] || '';
+             const ln = nameParts.slice(1).join(' ') || '';
+             record.Email = `${fn.toLowerCase()}.${ln.toLowerCase().replace(/ /g,'.')}@${domain}`;
+          } else {
+            const fn = baseGenerators['First Name']();
+            const ln = baseGenerators['Last Name']();
+            record.Email = `${fn.toLowerCase()}.${ln.toLowerCase()}@${domain}`;
+          }
+        } else if (baseGenerators[field] && !record[field]) {
           record[field] = baseGenerators[field]();
         }
       });
@@ -298,3 +313,5 @@ export default function RandomDataGeneratorPage() {
     </div>
   );
 }
+
+    
