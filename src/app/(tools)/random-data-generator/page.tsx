@@ -111,7 +111,7 @@ export default function RandomDataGeneratorPage() {
       }
       if (selectedFields.includes('Email')) {
         const domain = customDomain || getRandomItem(defaultDomains);
-        record['Email'] = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${getRandomNumber(1,99)}@${domain}`;
+        record['Email'] = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`;
       }
       
       selectedFields.forEach(field => {
