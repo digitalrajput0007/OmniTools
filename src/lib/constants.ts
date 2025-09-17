@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Combine,
   CopyPlus,
+  Crop,
   FileText,
   Minimize,
   QrCode,
@@ -35,6 +36,12 @@ export const tools: Tool[] = [
     description: 'Change the format of your images (e.g., JPG, PNG, WEBP).',
     path: '/image-format-converter',
     icon: Replace,
+  },
+  {
+    name: 'Image Resizer/Cropper',
+    description: 'Easily resize and crop your images to the perfect dimensions.',
+    path: '/image-resizer',
+    icon: Crop,
   },
   {
     name: 'PDF Merger',
