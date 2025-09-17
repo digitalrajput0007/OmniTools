@@ -49,9 +49,6 @@ export default function PdfMergerPage() {
       });
     }
     setFiles((prev) => [...prev, ...pdfFiles]);
-    setMerged(false);
-    setProgress(0);
-    setIsMerging(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,6 +128,7 @@ export default function PdfMergerPage() {
       const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
+a.style.display = 'none';
       a.href = url;
       a.download = 'merged.pdf';
       document.body.appendChild(a);
@@ -190,32 +188,34 @@ export default function PdfMergerPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
-                <label
-                  htmlFor="pdf-upload-additional"
-                  className={cn(
-                    'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
-                    {
-                      'border-primary bg-accent/50': isDragging,
-                    }
-                  )}
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragEvents}
-                  onDrop={handleDrop}
-                >
-                  <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Drag & drop more files, or click to browse
-                  </p>
-                  <Input
-                    id="pdf-upload-additional"
-                    type="file"
-                    className="sr-only"
-                    onChange={handleFileChange}
-                    accept="application/pdf"
-                    multiple
-                  />
-                </label>
+                {!merged && (
+                  <label
+                    htmlFor="pdf-upload-additional"
+                    className={cn(
+                      'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
+                      {
+                        'border-primary bg-accent/50': isDragging,
+                      }
+                    )}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragEvents}
+                    onDrop={handleDrop}
+                  >
+                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Drag & drop more files, or click to browse
+                    </p>
+                    <Input
+                      id="pdf-upload-additional"
+                      type="file"
+                      className="sr-only"
+                      onChange={handleFileChange}
+                      accept="application/pdf"
+                      multiple
+                    />
+                  </label>
+                )}
 
                 <div className="space-y-4">
                   <h3 className="font-semibold">Selected Files:</h3>
