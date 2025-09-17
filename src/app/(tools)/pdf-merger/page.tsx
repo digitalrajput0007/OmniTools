@@ -128,7 +128,7 @@ export default function PdfMergerPage() {
       const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-a.style.display = 'none';
+      a.style.display = 'none';
       a.href = url;
       a.download = 'merged.pdf';
       document.body.appendChild(a);
@@ -187,86 +187,111 @@ a.style.display = 'none';
             </label>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                {!merged && (
-                  <label
-                    htmlFor="pdf-upload-additional"
-                    className={cn(
-                      'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
-                      {
-                        'border-primary bg-accent/50': isDragging,
-                      }
-                    )}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragEvents}
-                    onDrop={handleDrop}
-                  >
-                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Drag & drop more files, or click to browse
-                    </p>
-                    <Input
-                      id="pdf-upload-additional"
-                      type="file"
-                      className="sr-only"
-                      onChange={handleFileChange}
-                      accept="application/pdf"
-                      multiple
-                    />
-                  </label>
-                )}
+              {!merged && (
+                <>
+                  <div className="space-y-4">
+                    <label
+                      htmlFor="pdf-upload-additional"
+                      className={cn(
+                        'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
+                        {
+                          'border-primary bg-accent/50': isDragging,
+                        }
+                      )}
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragEvents}
+                      onDrop={handleDrop}
+                    >
+                      <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Drag & drop more files, or click to browse
+                      </p>
+                      <Input
+                        id="pdf-upload-additional"
+                        type="file"
+                        className="sr-only"
+                        onChange={handleFileChange}
+                        accept="application/pdf"
+                        multiple
+                      />
+                    </label>
 
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Selected Files:</h3>
-                  <div className="grid grid-cols-1 gap-4">
-                    {files.map((file, index) => (
-                      <div
-                        key={index}
-                        className="relative flex items-center gap-4 rounded-md border p-2"
-                      >
-                        <FileIcon className="h-6 w-6 text-muted-foreground" />
-                        <div className="flex-1 overflow-hidden">
-                          <p className="truncate text-sm font-medium">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {(file.size / 1024).toFixed(2)} KB
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleRemoveFile(index)}
-                          disabled={isMerging || merged}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">Selected Files:</h3>
+                      <div className="grid grid-cols-1 gap-4">
+                        {files.map((file, index) => (
+                          <div
+                            key={index}
+                            className="relative flex items-center gap-4 rounded-md border p-2"
+                          >
+                            <FileIcon className="h-6 w-6 text-muted-foreground" />
+                            <div className="flex-1 overflow-hidden">
+                              <p className="truncate text-sm font-medium">
+                                {file.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {(file.size / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRemoveFile(index)}
+                              disabled={isMerging}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center space-y-6">
-                {!isMerging && !merged && (
-                  <Button
-                    onClick={handleMerge}
-                    className="w-full"
-                    disabled={files.length < 2}
-                  >
-                    Merge PDFs
-                  </Button>
-                )}
-                {isMerging && (
-                  <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <Progress value={progress} className="w-full" />
-                    <p className="text-center text-sm text-muted-foreground">
-                      Merging...
-                    </p>
+                  <div className="flex flex-col justify-center space-y-6">
+                    {!isMerging && (
+                      <Button
+                        onClick={handleMerge}
+                        className="w-full"
+                        disabled={files.length < 2}
+                      >
+                        Merge PDFs
+                      </Button>
+                    )}
+                    {isMerging && (
+                      <div className="flex h-full flex-col items-center justify-center space-y-4">
+                        <Progress value={progress} className="w-full" />
+                        <p className="text-center text-sm text-muted-foreground">
+                          Merging...
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-                {merged && (
+                </>
+              )}
+              {merged && (
+                <>
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">Files Merged:</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {files.map((file, index) => (
+                        <div
+                          key={index}
+                          className="relative flex items-center gap-4 rounded-md border p-2"
+                        >
+                          <FileIcon className="h-6 w-6 text-muted-foreground" />
+                          <div className="flex-1 overflow-hidden">
+                            <p className="truncate text-sm font-medium">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(file.size / 1024).toFixed(2)} KB
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
                     <CheckCircle2 className="h-16 w-16 text-green-500" />
                     <h3 className="text-2xl font-bold">Merging Complete</h3>
@@ -295,8 +320,8 @@ a.style.display = 'none';
                       </Button>
                     </div>
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           )}
         </CardContent>
