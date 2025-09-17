@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,6 +20,7 @@ import {
   RefreshCw,
   CropIcon,
   Scaling,
+  Undo2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -31,11 +32,21 @@ import ReactCrop, {
 import 'react-image-crop/dist/ReactCrop.css';
 import { Progress } from '@/components/ui/progress';
 
+// Utility to create a file from a data URL
+async function dataUrlToFile(
+  dataUrl: string,
+  fileName: string
+): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], fileName, { type: blob.type });
+}
+
 function getCroppedImg(
   image: HTMLImageElement,
   crop: Crop,
   fileName: string
-): Promise<File> {
+): Promise<{ url: string; file: File }> {
   const canvas = document.createElement('canvas');
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
@@ -47,10 +58,6 @@ function getCroppedImg(
     return Promise.reject(new Error('Failed to get canvas context'));
   }
 
-  const pixelRatio = window.devicePixelRatio;
-  canvas.width = crop.width * pixelRatio;
-  canvas.height = crop.height * pixelRatio;
-  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   ctx.imageSmoothingQuality = 'high';
 
   ctx.drawImage(
@@ -65,16 +72,14 @@ function getCroppedImg(
     crop.height
   );
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     canvas.toBlob(
       (blob) => {
-        if (!blob) {
-          reject(new Error('Canvas is empty'));
-          return;
-        }
+        if (!blob) return;
         const newFileName = `cropped-${fileName}`;
         const file = new File([blob], newFileName, { type: blob.type });
-        resolve(file);
+        const url = URL.createObjectURL(file);
+        resolve({ url, file });
       },
       'image/png',
       1
@@ -100,9 +105,7 @@ function getResizedImg(
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
-      if (!blob) {
-        return;
-      }
+      if (!blob) return;
       const newFileName = `resized-${fileName}`;
       const file = new File([blob], newFileName, { type: blob.type });
       const url = URL.createObjectURL(file);
@@ -111,12 +114,16 @@ function getResizedImg(
   });
 }
 
-type Step = 'upload' | 'choose' | 'resize' | 'crop' | 'processing' | 'download';
+type Step = 'upload' | 'edit' | 'processing' | 'download';
+type EditMode = 'resize' | 'crop' | null;
 
 export default function ImageResizerCropperPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [downloadableFile, setDownloadableFile] = useState<File | null>(null);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [originalPreview, setOriginalPreview] = useState<string | null>(null);
+  const [lastPreview, setLastPreview] = useState<string | null>(null);
+
   const [isDragging, setIsDragging] = useState(false);
   const [width, setWidth] = useState<number | string>('');
   const [height, setHeight] = useState<number | string>('');
@@ -129,12 +136,14 @@ export default function ImageResizerCropperPage() {
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<Step>('upload');
-  const [operation, setOperation] = useState<'resize' | 'crop' | null>(null);
+  const [editMode, setEditMode] = useState<EditMode>(null);
 
   const resetState = () => {
     setFile(null);
-    setDownloadableFile(null);
+    setOriginalFile(null);
     setPreview(null);
+    setOriginalPreview(null);
+    setLastPreview(null);
     setWidth('');
     setHeight('');
     setAspectLock(true);
@@ -142,8 +151,8 @@ export default function ImageResizerCropperPage() {
     setCompletedCrop(undefined);
     setProgress(0);
     setStep('upload');
-    setOperation(null);
-    if(imgRef.current) imgRef.current = null;
+    setEditMode(null);
+    if (imgRef.current) imgRef.current = null;
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -156,10 +165,14 @@ export default function ImageResizerCropperPage() {
       return;
     }
     setFile(selectedFile);
+    setOriginalFile(selectedFile);
+
     const reader = new FileReader();
     reader.addEventListener('load', () => {
-      setPreview(reader.result as string);
-      setStep('choose');
+      const result = reader.result as string;
+      setPreview(result);
+      setOriginalPreview(result);
+      setStep('edit');
     });
     reader.readAsDataURL(selectedFile);
   };
@@ -198,7 +211,7 @@ export default function ImageResizerCropperPage() {
     imgRef.current = img;
     const { width, height } = img;
     setOriginalAspectRatio(width / height);
-    if (step === 'choose') {
+    if (width && height && !lastPreview) {
       setWidth(width);
       setHeight(height);
     }
@@ -217,6 +230,16 @@ export default function ImageResizerCropperPage() {
       )
     );
   };
+  
+  useEffect(() => {
+    if(editMode === 'crop' && imgRef.current){
+      const { width, height } = imgRef.current;
+      centerAspectCrop(width, height, aspectLock ? originalAspectRatio : width / height);
+    } else {
+      setCrop(undefined);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode, aspectLock]);
 
   const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newWidth = e.target.value === '' ? '' : Number(e.target.value);
@@ -234,9 +257,40 @@ export default function ImageResizerCropperPage() {
     }
   };
 
-  const runWithProgress = async (
-    action: () => Promise<void>
-  ) => {
+  const handleApplyResize = async () => {
+    if (!imgRef.current || !file) return;
+    const w = Number(width);
+    const h = Number(height);
+    
+    setLastPreview(preview);
+    const { url, file: resizedFile } = await getResizedImg(imgRef.current, w, h, file.type, file.name);
+    setPreview(url);
+    setFile(resizedFile);
+    toast({ title: "Resize Applied", description: "The image preview has been updated." });
+  };
+
+  const handleApplyCrop = async () => {
+    if (!completedCrop || !imgRef.current || !file) return;
+
+    setLastPreview(preview);
+    const { url, file: croppedFile } = await getCroppedImg(imgRef.current, completedCrop, file.name);
+    setPreview(url);
+    setFile(croppedFile);
+    setEditMode(null);
+    toast({ title: "Crop Applied", description: "The image preview has been updated." });
+  };
+  
+  const handleUndo = () => {
+    if(!lastPreview || !originalFile) return;
+
+    setPreview(lastPreview);
+    dataUrlToFile(lastPreview, originalFile.name).then(setFile);
+    setLastPreview(null);
+    setEditMode(null);
+    toast({ title: "Undo Successful", description: "Reverted to the previous image state." });
+  };
+
+  const handleFinalize = async () => {
     setStep('processing');
     setProgress(0);
     const startTime = Date.now();
@@ -251,82 +305,25 @@ export default function ImageResizerCropperPage() {
       }
     }, 50);
 
-    try {
-      await action();
-    } catch (error) {
-      toast({
-        title: 'An error occurred',
-        description:
-          error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive',
-      });
-      resetState();
-      return;
-    }
-    
-    // Ensure the progress bar runs for the minimum duration
     const elapsedTime = Date.now() - startTime;
     if (elapsedTime < minDuration) {
       await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
     }
-
     setStep('download');
   };
-
-  const handleApplyResize = async () => {
-    if (!imgRef.current || !file) return;
-    const w = Number(width);
-    const h = Number(height);
-
-    await runWithProgress(async () => {
-      const { url, file: resizedFile } = await getResizedImg(
-        imgRef.current!,
-        w,
-        h,
-        file.type,
-        file.name
-      );
-      setPreview(url);
-      setDownloadableFile(resizedFile);
-    });
-  };
-
-  const handleApplyCrop = async () => {
-    if (!completedCrop || !imgRef.current || !file) return;
-
-    await runWithProgress(async () => {
-      const croppedFile = await getCroppedImg(
-        imgRef.current!,
-        completedCrop,
-        file.name
-      );
-      setPreview(URL.createObjectURL(croppedFile));
-      setDownloadableFile(croppedFile);
-    });
-  };
-
+  
   const handleDownload = () => {
-    if (!preview || !downloadableFile) return;
+    if (!preview || !file) return;
     const a = document.createElement('a');
     a.href = preview;
-    a.download = downloadableFile.name;
+    a.download = file.name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
   
-  const handleStartCrop = () => {
-    if (imgRef.current) {
-      const { width, height } = imgRef.current;
-      centerAspectCrop(width, height, width / height);
-    }
-    setOperation('crop');
-    setStep('crop');
-  }
-
-  const handleStartResize = () => {
-    setOperation('resize');
-    setStep('resize');
+  const toggleEditMode = (mode: EditMode) => {
+    setEditMode(current => current === mode ? null : mode);
   }
   
   const renderContent = () => {
@@ -348,20 +345,18 @@ export default function ImageResizerCropperPage() {
           </label>
         );
 
-      case 'choose':
-      case 'resize':
-      case 'crop':
+      case 'edit':
         return (
           <div className="grid gap-8 md:grid-cols-2">
-            <div className="relative">
+            <div className="relative flex items-center justify-center rounded-lg bg-muted/20 p-4">
               {preview && (
                 <>
-                  {step === 'crop' ? (
+                  {editMode === 'crop' ? (
                      <ReactCrop
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
-                      aspect={aspectLock ? (crop?.width && crop.height ? crop.width/crop.height : undefined) : undefined}
+                      aspect={aspectLock ? originalAspectRatio : undefined}
                     >
                       <img src={preview} alt="Image to crop" onLoad={onImageLoad} className="max-h-[60vh] w-full object-contain" />
                     </ReactCrop>
@@ -376,51 +371,66 @@ export default function ImageResizerCropperPage() {
             </div>
 
             <div className="flex flex-col space-y-6">
-              {step === 'choose' && (
-                <div className="flex h-full flex-col justify-center space-y-4">
-                   <h3 className="mb-4 text-lg font-semibold text-center">
-                      Step 1: Choose an Operation
-                    </h3>
-                  <Button onClick={handleStartResize} className="w-full" size="lg"><Scaling className="mr-2"/> Resize Image</Button>
-                  <Button onClick={handleStartCrop} className="w-full" size="lg"><CropIcon className="mr-2"/> Crop Image</Button>
-                </div>
-              )}
-              {step === 'resize' && (
-                 <>
-                    <div>
-                      <h3 className="mb-4 text-lg font-semibold">
-                        Step 2: Set New Dimensions
-                      </h3>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg">Resize</CardTitle>
+                    <Button variant={editMode === 'resize' ? 'secondary' : 'outline'} size="sm" onClick={() => toggleEditMode('resize')}>
+                      {editMode === 'resize' ? 'Cancel' : 'Select'}
+                    </Button>
+                  </CardHeader>
+                  {editMode === 'resize' && (
+                    <CardContent>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="width">Width (px)</Label>
-                          <Input id="width" type="number" value={width} onChange={handleWidthChange} placeholder="e.g., 1920" />
+                          <Input id="width" type="number" value={width} onChange={handleWidthChange} />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="height">Height (px)</Label>
-                          <Input id="height" type="number" value={height} onChange={handleHeightChange} placeholder="e.g., 1080" />
+                          <Input id="height" type="number" value={height} onChange={handleHeightChange} />
                         </div>
                       </div>
                       <div className="mt-4 flex items-center space-x-2">
-                        <Switch id="aspect-lock" checked={aspectLock} onCheckedChange={setAspectLock}/>
-                        <Label htmlFor="aspect-lock">Lock aspect ratio</Label>
+                        <Switch id="aspect-lock-resize" checked={aspectLock} onCheckedChange={setAspectLock}/>
+                        <Label htmlFor="aspect-lock-resize">Lock aspect ratio</Label>
                       </div>
-                      <Button onClick={handleApplyResize} className="mt-4 w-full"><RefreshCw className="mr-2 h-4 w-4" /> Apply Resize</Button>
-                      <Button onClick={() => setStep('choose')} className="mt-2 w-full" variant="ghost">Back</Button>
-                    </div>
-                  </>
-              )}
-              {step === 'crop' && (
-                <div className="flex h-full flex-col justify-center space-y-4">
-                  <h3 className="text-lg font-semibold">Step 2: Adjust Crop Selection</h3>
-                   <div className="mt-4 flex items-center space-x-2">
-                      <Switch id="aspect-lock-crop" checked={aspectLock} onCheckedChange={setAspectLock}/>
-                      <Label htmlFor="aspect-lock-crop">Lock aspect ratio</Label>
-                    </div>
-                  <Button onClick={handleApplyCrop} className="w-full" disabled={!completedCrop?.width}><CropIcon className="mr-2 h-4 w-4" /> Apply Crop</Button>
-                  <Button onClick={() => setStep('choose')} className="mt-2 w-full" variant="ghost">Back</Button>
+                      <Button onClick={handleApplyResize} className="mt-4 w-full"><Scaling className="mr-2 h-4 w-4" /> Apply Resize</Button>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg">Crop</CardTitle>
+                     <Button variant={editMode === 'crop' ? 'secondary' : 'outline'} size="sm" onClick={() => toggleEditMode('crop')}>
+                      {editMode === 'crop' ? 'Cancel' : 'Select'}
+                    </Button>
+                  </CardHeader>
+                  {editMode === 'crop' && (
+                    <CardContent>
+                      <div className="mt-4 flex items-center space-x-2">
+                        <Switch id="aspect-lock-crop" checked={aspectLock} onCheckedChange={setAspectLock}/>
+                        <Label htmlFor="aspect-lock-crop">Lock aspect ratio</Label>
+                      </div>
+                      <Button onClick={handleApplyCrop} className="mt-4 w-full" disabled={!completedCrop?.width}><CropIcon className="mr-2 h-4 w-4" /> Apply Crop</Button>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <div className='flex-grow' />
+
+                <div className="flex w-full items-center gap-2">
+                  <Button onClick={handleFinalize} className="w-full" size="lg">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Finalize & Download
+                  </Button>
+                  {lastPreview && (
+                    <Button onClick={handleUndo} variant="outline" size="lg" className="w-full">
+                      <Undo2 className="mr-2 h-4 w-4" />
+                      Undo Last Change
+                    </Button>
+                  )}
                 </div>
-              )}
             </div>
           </div>
         );
@@ -429,22 +439,22 @@ export default function ImageResizerCropperPage() {
         return (
           <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
             <Progress value={progress} className="w-full max-w-md" />
-            <p className="text-center text-sm text-muted-foreground">{operation === 'resize' ? 'Resizing...' : 'Cropping...'}</p>
+            <p className="text-center text-sm text-muted-foreground">Finalizing your image...</p>
           </div>
         );
 
       case 'download':
         return (
           <div className="grid gap-8 md:grid-cols-2">
-            <div className="relative">
+            <div className="relative flex items-center justify-center rounded-lg bg-muted/20 p-4">
               {preview && <img src={preview} alt="Final image" className="max-h-[60vh] w-full rounded-lg object-contain" />}
             </div>
             <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
               <CheckCircle2 className="h-16 w-16 text-green-500" />
               <h3 className="text-2xl font-bold">
-                {operation === 'resize' ? 'Resize' : 'Crop'} Complete
+                Image Ready!
               </h3>
-              <p className="text-muted-foreground">Your image is ready for download.</p>
+              <p className="text-muted-foreground">Your image has been processed and is ready for download.</p>
               <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
                 <Button className="w-full" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Image</Button>
                 <Button className="w-full" variant="ghost" onClick={resetState}>Start Over</Button>
@@ -463,7 +473,7 @@ export default function ImageResizerCropperPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">Image Resizer & Cropper</CardTitle>
-          <CardDescription>Resize or crop your images with ease.</CardDescription>
+          <CardDescription>Resize and crop your images with a live preview.</CardDescription>
         </CardHeader>
         <CardContent>
           {renderContent()}
