@@ -32,7 +32,11 @@ import {
 const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
-const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator', 'Random Picker', 'Random Data Generator', 'Credit Card Generator'].includes(t.name));
+const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
+
+const randomDataGeneratorTool = tools.find(t => t.name === 'Random Data Generator');
+const randomPickerTool = tools.find(t => t.name === 'Random Picker');
+const creditCardGeneratorTool = tools.find(t => t.name === 'Credit Card Generator');
 
 
 export default function Home() {
@@ -100,23 +104,49 @@ export default function Home() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-               <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
-                  <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {otherTools.map(tool => (
-                   <DropdownMenuItem key={tool.name} asChild>
-                    <Link href={tool.path}>
-                      <tool.icon className="mr-2" />
-                      <span>{tool.name}</span>
+            {randomDataGeneratorTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={randomDataGeneratorTool.path}>
+                        <randomDataGeneratorTool.icon className="mr-2" /> {randomDataGeneratorTool.name}
                     </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </Button>
+            )}
+
+            {randomPickerTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={randomPickerTool.path}>
+                        <randomPickerTool.icon className="mr-2" /> {randomPickerTool.name}
+                    </Link>
+                </Button>
+            )}
+
+            {creditCardGeneratorTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={creditCardGeneratorTool.path}>
+                        <creditCardGeneratorTool.icon className="mr-2" /> {creditCardGeneratorTool.name}
+                    </Link>
+                </Button>
+            )}
+            
+            {otherTools.length > 0 && (
+                <DropdownMenu>
+                   <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">
+                      <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {otherTools.map(tool => (
+                       <DropdownMenuItem key={tool.name} asChild>
+                        <Link href={tool.path}>
+                          <tool.icon className="mr-2" />
+                          <span>{tool.name}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            )}
         </nav>
       </header>
       <main className="flex-1">
@@ -134,7 +164,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-             <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+             <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-4xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
                   <Card className="flex h-full flex-col transition-all duration-300 hover:scale-[1.02] hover:border-primary hover:shadow-lg hover:shadow-primary/10">
