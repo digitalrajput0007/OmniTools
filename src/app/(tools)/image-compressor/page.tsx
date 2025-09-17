@@ -17,6 +17,7 @@ import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [compressedPreview, setCompressedPreview] = useState<string | null>(null);
   const [targetSize, setTargetSize] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -29,6 +30,7 @@ export default function ImageCompressorPage() {
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
       setCompressed(false);
+      setCompressedPreview(null);
       setProgress(0);
       setIsCompressing(false);
       setCompressedSize(null);
@@ -40,12 +42,102 @@ export default function ImageCompressorPage() {
     setFile(null);
     setPreview(null);
     setCompressed(false);
+    setCompressedPreview(null);
     setProgress(0);
     setCompressedSize(null);
     setTargetSize('');
   };
 
-  const handleCompress = () => {
+  const compressImage = (
+    file: File,
+    targetSizeKB: number
+  ): Promise<{ compressedBlob: Blob; finalSizeKB: number }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            return reject(new Error('Could not get canvas context.'));
+          }
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          let quality = 0.9;
+          let attempts = 10;
+          let low = 0;
+          let high = 1;
+
+          const findBestQuality = () => {
+            if (attempts-- <= 0) {
+              // Failsafe to prevent infinite loops
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) {
+                    resolve({
+                      compressedBlob: blob,
+                      finalSizeKB: blob.size / 1024,
+                    });
+                  } else {
+                    reject(new Error('Canvas to Blob conversion failed.'));
+                  }
+                },
+                file.type,
+                quality
+              );
+              return;
+            }
+
+            quality = (low + high) / 2;
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  const currentSizeKB = blob.size / 1024;
+                  const difference = currentSizeKB - targetSizeKB;
+                  
+                  // Update progress based on how close we are
+                  setProgress(prev => Math.min(prev + 10, 90));
+
+                  if (Math.abs(difference) < 10 || attempts <= 1) { // Within 10KB tolerance or last attempt
+                    resolve({
+                      compressedBlob: blob,
+                      finalSizeKB: currentSizeKB,
+                    });
+                  } else if (difference > 0) {
+                    high = quality;
+                    findBestQuality();
+                  } else {
+                    low = quality;
+                    findBestQuality();
+                  }
+                } else {
+                  reject(new Error('Canvas to Blob conversion failed.'));
+                }
+              },
+              file.type,
+              quality
+            );
+          };
+
+          findBestQuality();
+        };
+        img.onerror = () => {
+          reject(new Error('Image failed to load.'));
+        };
+      };
+      reader.onerror = () => {
+        reject(new Error('File could not be read.'));
+      };
+    });
+  };
+
+  const handleCompress = async () => {
     if (!file || !targetSize) return;
 
     const targetSizeKB = parseFloat(targetSize);
@@ -64,51 +156,42 @@ export default function ImageCompressorPage() {
     setCompressed(false);
     setProgress(0);
     setCompressedSize(null);
+    setCompressedPreview(null);
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsCompressing(false);
-          setCompressed(true);
-          // For simulation, we'll just show the user's target size.
-          // In a real scenario, the actual compressed size might differ slightly.
-          setCompressedSize(targetSizeKB);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    try {
+      const { compressedBlob, finalSizeKB } = await compressImage(file, targetSizeKB);
+      setCompressedPreview(URL.createObjectURL(compressedBlob));
+      setCompressedSize(finalSizeKB);
+      setProgress(100);
+      setCompressed(true);
+    } catch (error) {
+      console.error(error);
+      alert('An error occurred during compression.');
+    } finally {
+      setIsCompressing(false);
+    }
   };
   
   const handleGoBack = () => {
     setCompressed(false);
+    setCompressedPreview(null);
     setProgress(0);
     setCompressedSize(null);
   }
 
   const handleDownload = () => {
-    if (!preview || !file) return;
+    if (!compressedPreview || !file) return;
 
-    // In a real app, this would be the compressed file blob.
-    // For this simulation, we'll just use the original file.
-    fetch(preview)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        const name = file.name;
-        const ext = name.substring(name.lastIndexOf('.'));
-        const baseName = name.substring(0, name.lastIndexOf('.'));
-        a.download = `${baseName}-compressed${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      })
-      .catch(() => alert('Failed to download image.'));
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = compressedPreview;
+    const name = file.name;
+    const ext = name.substring(name.lastIndexOf('.'));
+    const baseName = name.substring(0, name.lastIndexOf('.'));
+    a.download = `${baseName}-compressed${ext}`;
+    document.body.appendChild(a);
+a.click();
+    document.body.removeChild(a);
   };
 
   const originalSizeInKB = file ? (file.size / 1024).toFixed(2) : '0';
@@ -149,7 +232,7 @@ export default function ImageCompressorPage() {
               <div className="relative">
                 {preview && (
                   <img
-                    src={preview}
+                    src={compressed ? compressedPreview! : preview}
                     alt={compressed ? "Compressed image preview" : "Original image preview"}
                     className="max-h-[400px] w-full rounded-lg object-contain"
                   />
