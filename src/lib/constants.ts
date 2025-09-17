@@ -13,6 +13,7 @@ import {
   Scaling,
   Wand2,
   ALargeSmall,
+  Diff,
 } from 'lucide-react';
 
 export type Tool = {
@@ -82,6 +83,12 @@ export const tools: Tool[] = [
     description: 'Count words, change case, and remove extra spaces.',
     path: '/text-tools',
     icon: ALargeSmall,
+  },
+  {
+    name: 'Text Difference',
+    description: 'Compare two texts and highlight the differences.',
+    path: '/text-diff',
+    icon: Diff,
   },
 ];
 
