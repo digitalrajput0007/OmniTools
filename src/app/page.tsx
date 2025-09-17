@@ -199,18 +199,30 @@ export default function Home() {
         <p className="text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} {AppName}. All rights reserved.
         </p>
-        <nav className="flex gap-4 sm:ml-auto sm:gap-6">
+        <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 sm:ml-auto sm:gap-6">
           <Link
             className="text-xs underline-offset-4 hover:underline"
-            href="#"
+            href="/about"
+          >
+            About Us
+          </Link>
+          <Link
+            className="text-xs underline-offset-4 hover:underline"
+            href="/contact"
+          >
+            Contact
+          </Link>
+          <Link
+            className="text-xs underline-offset-4 hover:underline"
+            href="/terms"
           >
             Terms of Service
           </Link>
           <Link
             className="text-xs underline-offset-4 hover:underline"
-            href="#"
+            href="/privacy"
           >
-            Privacy
+            Privacy Policy
           </Link>
         </nav>
       </footer>
