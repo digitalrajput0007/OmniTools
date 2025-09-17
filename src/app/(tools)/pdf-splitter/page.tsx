@@ -79,9 +79,9 @@ export default function PdfSplitterPage() {
           setSplit(true);
           return 100;
         }
-        return prev + 10;
+        return prev + 1;
       });
-    }, 300);
+    }, 30);
   };
 
   const downloadSplitPdf = async () => {

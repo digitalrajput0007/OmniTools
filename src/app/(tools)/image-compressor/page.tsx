@@ -98,10 +98,14 @@ export default function ImageCompressorPage() {
     setCompressedSize(null);
     setCompressedPreview(null);
 
-    // Simulate progress
     const interval = setInterval(() => {
-      setProgress((p) => (p < 90 ? p + 10 : p));
-    }, 200);
+      setProgress((prev) => {
+        if (prev >= 95) {
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 30); // 3 seconds for ~95%
 
     try {
       const compressedBlob = await compressImage(file, compressionLevel[0]);
@@ -159,7 +163,7 @@ export default function ImageCompressorPage() {
         <CardHeader>
           <CardTitle className="font-headline">Image Compressor</CardTitle>
           <CardDescription>
-            Upload an image, set a target file size, and download the optimized
+            Upload an image, adjust the compression level, and download the optimized
             file.
           </CardDescription>
         </CardHeader>

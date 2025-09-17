@@ -72,9 +72,9 @@ export default function ImageToPdfPage() {
           setConverted(true);
           return 100;
         }
-        return prev + 10;
+        return prev + 1;
       });
-    }, 300); // 3 seconds total
+    }, 30); // ~3 seconds total
   };
 
   return (

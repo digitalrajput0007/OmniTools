@@ -66,9 +66,9 @@ export default function PdfMergerPage() {
           setMerged(true);
           return 100;
         }
-        return prev + 10;
+        return prev + 1;
       });
-    }, 300);
+    }, 30);
   };
 
   const downloadMergedPdf = async () => {
