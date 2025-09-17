@@ -33,7 +33,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex justify-center">
-              <div className="grid grid-cols-1 gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="inline-grid grid-cols-1 gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {tools.map((tool) => (
                   <Link href={tool.path} key={tool.name} className="group">
                     <Card className="h-full transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
