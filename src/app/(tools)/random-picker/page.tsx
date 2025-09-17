@@ -39,13 +39,13 @@ const getOrdinal = (n: number) => {
 }
 
 const rankStyles = [
-    "min-h-[150px]", // 1st
-    "min-h-[130px]", // 2nd
-    "min-h-[110px]", // 3rd
+    "min-h-[120px]", // 1st
+    "min-h-[110px]", // 2nd
+    "min-h-[100px]", // 3rd
 ];
 
 const getRankStyle = (index: number) => {
-    return rankStyles[index] || "min-h-[100px]";
+    return rankStyles[index] || "min-h-[90px]";
 }
 
 
@@ -58,7 +58,7 @@ export default function RandomPickerPage() {
   const [pickingFor, setPickingFor] = useState<number | null>(null);
   const [showConfettiFor, setShowConfettiFor] = useState<number | null>(null);
   const [rouletteItem, setRouletteItem] = useState<string | null>(null);
-  const [numberOfWinners, setNumberOfWinners] = useState(1);
+  const [numberOfWinners, setNumberOfWinners] = useState<number | ''>(1);
   const [isSetup, setIsSetup] = useState(true);
   const [isClient, setIsClient] = useState(false);
 
@@ -72,12 +72,21 @@ export default function RandomPickerPage() {
   const prizeList = prizes.split('\n').map(item => item.trim()).filter(Boolean);
 
   const handleSetup = () => {
-    const winnerCount = prizeList.length > 0 ? prizeList.length : numberOfWinners;
+    const winnerCount = prizeList.length > 0 ? prizeList.length : (Number(numberOfWinners) || 0);
+
+    if (prizeList.length === 0 && winnerCount < 1) {
+       toast({
+          title: 'Invalid Number of Winners',
+          description: `Please enter at least 1 winner.`,
+          variant: 'destructive',
+      });
+      return;
+    }
 
     if (itemList.length < winnerCount) {
       toast({
           title: 'Not Enough Items',
-          description: `You need at least ${winnerCount} items to pick from.`,
+          description: `You need at least ${winnerCount} participants to draw ${winnerCount} winners.`,
           variant: 'destructive',
       });
       return;
@@ -89,8 +98,9 @@ export default function RandomPickerPage() {
       setWinnerLabels(prizeList);
       setWinners(Array(prizeList.length).fill(null));
     } else {
-      setWinnerLabels(Array.from({ length: numberOfWinners }, (_, i) => `${getOrdinal(i + 1)} Place`));
-      setWinners(Array(numberOfWinners).fill(null));
+      const numWinners = Number(numberOfWinners);
+      setWinnerLabels(Array.from({ length: numWinners }, (_, i) => `${getOrdinal(i + 1)} Place`));
+      setWinners(Array(numWinners).fill(null));
     }
     
     setIsSetup(false);
@@ -150,7 +160,7 @@ export default function RandomPickerPage() {
         <Card>
           <CardHeader>
               <CardTitle>Setup Your Drawing</CardTitle>
-              <CardDescription>Enter items and number of winners to begin.</CardDescription>
+              <CardDescription>Enter items and prizes or number of winners to begin.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -180,8 +190,9 @@ export default function RandomPickerPage() {
                       id="number-of-winners"
                       type="number"
                       value={numberOfWinners}
-                      onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      onChange={(e) => setNumberOfWinners(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                       min="1"
+                      placeholder="Enter a number"
                       disabled={prizeList.length > 0}
                   />
               </div>
@@ -234,7 +245,7 @@ export default function RandomPickerPage() {
   const renderRightColumn = () => {
     const list = isSetup ? itemList : availableItems;
     const title = "Drawing Pool";
-    const description = `${list.length} participants ${isSetup ? 'entered' : 'remaining'}`;
+    const description = `${list.length} participant${list.length === 1 ? '' : 's'} ${isSetup ? 'entered' : 'remaining'}`;
     
     return (
        <Card className="h-fit sticky top-20">
