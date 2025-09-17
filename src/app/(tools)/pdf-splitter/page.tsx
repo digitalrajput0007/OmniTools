@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -317,6 +318,50 @@ export default function PdfSplitterPage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the PDF Splitter</CardTitle>
+          <CardDescription>
+            Learn how to extract exactly the pages you need from any PDF file.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What is PDF Splitting?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  PDF splitting is the process of taking a single, multi-page PDF document and breaking it into smaller parts. Our tool allows you to extract specific pages or a range of pages and save them as a brand new PDF file. This is incredibly useful for isolating a single chapter from a book, separating an important section from a long report, or sharing only the relevant pages of a document.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the PDF Splitter</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file into the upload area, or click to browse and select it from your device. The tool will show you the total number of pages.</li>
+                  <li><strong>Specify Pages to Extract:</strong> In the "Pages to Extract" input field, type the page numbers you want. You can specify single pages, ranges, or a combination.</li>
+                  <li><strong>Start Splitting:</strong> Click the "Split PDF" button to begin the extraction process.</li>
+                  <li><strong>Download Your New PDF:</strong> Once processing is complete, click the "Download Split PDF" button to save the new file containing only your selected pages.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Defining Page Ranges</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>The page selection input is very flexible. Here are some examples of valid entries:</p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>To extract single pages: <strong>1, 5, 12</strong> (extracts pages 1, 5, and 12)</li>
+                  <li>To extract a range of pages: <strong>3-7</strong> (extracts pages 3, 4, 5, 6, and 7)</li>
+                  <li>To extract a combination: <strong>1, 3-5, 9</strong> (extracts pages 1, 3, 4, 5, and 9)</li>
+                  <li>The pages will be saved in the new PDF in their natural sorted order (e.g., entering "5, 1-2" will result in a PDF with pages 1, 2, 5).</li>
+                  <li><strong>Privacy Guaranteed:</strong> Like all our tools, the splitting process happens entirely in your browser. Your files are never sent to a server, ensuring your information remains secure.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

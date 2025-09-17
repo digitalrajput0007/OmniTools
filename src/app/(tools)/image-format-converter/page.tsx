@@ -22,6 +22,7 @@ import {
 import { UploadCloud, X, CheckCircle2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -356,6 +357,57 @@ export default function ImageFormatConverterPage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Image Format Converter</CardTitle>
+          <CardDescription>
+            Understand the differences between image formats and choose the best one for your needs.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Which Image Format Should I Choose?</AccordionTrigger>
+              <AccordionContent className="space-y-4 text-muted-foreground">
+                <div>
+                  <h4 className="font-semibold text-foreground">PNG (Portable Network Graphics)</h4>
+                  <p>Best for graphics with sharp lines, text, or transparency (e.g., logos, icons). It uses lossless compression, which means no quality is lost, but file sizes can be larger than JPEGs.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">JPEG (Joint Photographic Experts Group)</h4>
+                  <p>Ideal for photographs and complex images with many colors and gradients. It uses lossy compression to achieve smaller file sizes, which is great for web use, but can lose some quality.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">WEBP (WebP)</h4>
+                  <p>A modern format developed by Google. WEBP offers both lossy and lossless compression, often providing smaller file sizes than both JPEG and PNG at similar quality levels. It's excellent for web performance but may not be supported by very old browsers.</p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Image Format Converter</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Image:</strong> Drag and drop your image file or click to browse your device.</li>
+                  <li><strong>Select Output Format:</strong> Choose your desired format (PNG, JPEG, or WEBP) from the dropdown menu.</li>
+                  <li><strong>Convert:</strong> Click the "Convert Image" button to begin the conversion process.</li>
+                  <li><strong>Download:</strong> After processing, a download button will appear. Click it to save your new image file.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Conversion Tips</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>JPEG for Photos:</strong> If you're converting a photograph, JPEG is almost always a good choice for a balance of quality and size.</li>
+                  <li><strong>PNG for Transparency:</strong> If your original image has a transparent background, you must convert it to PNG or WEBP to preserve the transparency. Converting to JPEG will result in a solid (usually white) background.</li>
+                  <li><strong>WEBP for Web:</strong> If your target is a modern website or application, converting to WEBP can significantly improve loading times.</li>
+                  <li><strong>No Quality Loss (PNG):</strong> Converting a high-quality JPEG to a PNG will stop further quality degradation, but it won't restore quality that was already lost. The file size will likely increase.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

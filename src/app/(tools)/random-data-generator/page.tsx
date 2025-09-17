@@ -26,6 +26,7 @@ import {
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];
@@ -313,6 +314,49 @@ export default function RandomDataGeneratorPage() {
                 </ScrollArea>
             </CardContent>
           </Card>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Random Data Generator</CardTitle>
+          <CardDescription>
+            Learn how to quickly generate structured placeholder data for your development needs.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Why Use a Dummy Data Generator?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  When building applications, developers and designers often need placeholder content to populate user interfaces, test database schemas, or demonstrate features before real data is available. A dummy data generator automates this process, providing realistic-looking data like names, emails, and addresses in a structured format. This saves significant time and effort compared to manually creating test data.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Data Generator</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Select Fields:</strong> Check the boxes for the data types you want to generate (e.g., Full Name, Email, Country).</li>
+                  <li><strong>Set Quantity:</strong> Enter the number of rows (records) you want to create in the "Number of Rows" field.</li>
+                  <li><strong>(Optional) Customize Email:</strong> If generating emails, you can provide a custom domain (e.g., yourcompany.com) to make the data more specific to your project. If left blank, a random domain will be used.</li>
+                  <li><strong>Generate:</strong> Click the "Generate Data" button. The table below will instantly populate with your requested data.</li>
+                  <li><strong>Export or Copy:</strong> Use the buttons above the table to copy the data to your clipboard or export it as a PDF or Excel file for use in other applications.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Data Generation</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Smart Fields:</strong> Selecting "Full Name" will automatically generate a first and last name to create the full name. Similarly, selecting "Email" will use the generated name to create a realistic email address.</li>
+                  <li><strong>Bulk Export:</strong> The "Copy All", "PDF", and "Excel" buttons are perfect for quickly transferring large amounts of data into spreadsheets, databases, or mockups.</li>
+                  <li><strong>Individual Copy:</strong> Use the copy icon at the end of each row in the table to quickly grab the data for a single record.</li>
+                  <li><strong>Performance:</strong> The generator is optimized to create thousands of rows quickly. However, generating extremely large datasets (50,000+ rows) may be slow depending on your browser and computer.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

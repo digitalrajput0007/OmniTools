@@ -24,6 +24,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type Color = { r: number; g: number; b: number };
 
@@ -401,6 +402,52 @@ a.click();
         </CardHeader>
         <CardContent>
           {renderContent()}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Background Remover</CardTitle>
+          <CardDescription>
+            Learn how this tool can help you isolate subjects and create stunning graphics.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What is Background Removal?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Background removal is the process of isolating the main subject of an image by erasing its background. This tool uses a color-based approach, often called "chroma keying," which is perfect for images with a solid or mostly uniform background color (like a product shot against a white wall or a person in front of a green screen).
+                </p>
+                <p>
+                  By making the background transparent, you can easily place your subject onto any other background, create professional-looking product photos, or design clean graphics for web and print.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Background Remover</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your Image:</strong> Drag and drop an image or click to browse. Images with a clean, solid-color background work best.</li>
+                  <li><strong>Pick the Background Color:</strong> Click anywhere on the background of the original image. The tool will select that color as the one to remove.</li>
+                  <li><strong>Adjust Tolerance:</strong> Use the "Tolerance" slider to fine-tune the removal. A higher tolerance will remove a wider range of similar colors, which can help with shadows and gradients but may also remove parts of your subject if they are too similar to the background.</li>
+                  <li><strong>(Optional) Replace Background:</strong> Toggle the "Replace background with color" switch and select a new color if you want to replace the background instead of making it transparent.</li>
+                  <li><strong>Apply & Download:</strong> Click "Apply Changes" to process the image. Once you're satisfied with the result, click "Download Image" to save it as a transparent PNG or a JPEG with the new background.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Best Results</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Use High-Contrast Images:</strong> The tool works best when the subject is clearly distinct from the background. An image of a blue shirt against a blue wall will be difficult to process.</li>
+                  <li><strong>Start with Low Tolerance:</strong> Begin with a low tolerance value and gradually increase it. This helps you remove the background without accidentally erasing parts of your subject.</li>
+                  <li><strong>Lighting is Key:</strong> Even, consistent lighting on your background will make color-picking more accurate and lead to a cleaner result.</li>
+                  <li><strong>Transparent vs. Replaced:</strong> If you plan to use the image on various backgrounds, download it as a transparent PNG. If you just need a solid color background, using the replacement option is quick and easy.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, RefreshCw, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type CardType = 'visa' | 'mastercard' | 'amex' | 'discover';
 
@@ -254,6 +255,54 @@ export default function CreditCardGeneratorPage() {
             </div>
 
           </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Dummy Credit Card Generator</CardTitle>
+          <CardDescription>
+            Understand the purpose and technology behind generating test credit card numbers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What are Dummy Credit Card Numbers?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Dummy credit card numbers are fake numbers that look real but carry no actual value. They are designed exclusively for testing and validation purposes in development environments, such as e-commerce checkout forms or payment gateway integrations.
+                </p>
+                <p>
+                  <strong>Important:</strong> These numbers are not linked to any real bank accounts and cannot be used to make actual purchases. They are mathematically valid according to the Luhn algorithm, but will be rejected by any real payment processor.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How Does It Work? (The Luhn Algorithm)</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Our generator creates card numbers that conform to the Luhn algorithm (also known as the "modulus 10" or "mod 10" algorithm). This is a simple checksum formula used by major credit card companies to validate card numbers at the point of entry.
+                </p>
+                <ol className="list-decimal list-inside space-y-2 pt-2">
+                  <li>It starts with a valid prefix for the selected card network (e.g., '4' for Visa).</li>
+                  <li>It generates random digits for the main body of the number.</li>
+                  <li>It calculates a final "check digit" based on the Luhn formula and appends it to the end.</li>
+                  <li>This process ensures the generated number passes the initial format validation used by many online forms.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Developers and Testers</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Testing Form Validation:</strong> Use these numbers to test your UI logic, such as input formatting (e.g., adding spaces), error messages for invalid formats, and card network detection.</li>
+                  <li><strong>Sandbox Environments:</strong> When testing payment gateways like Stripe or Braintree, use their specific, documented test card numbers. While our generated numbers are valid, payment gateways often have their own set for triggering specific responses (e.g., "card declined").</li>
+                  <li><strong>Do Not Use in Production:</strong> Never attempt to use these numbers for real transactions. They are for testing and demonstration only.</li>
+                  <li><strong>Randomize Your Tests:</strong> Click "Generate New Card" to get a fresh set of details (number, expiry, CVV) for each test case to ensure your system handles different inputs correctly.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

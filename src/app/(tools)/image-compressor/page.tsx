@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -201,7 +202,7 @@ export default function ImageCompressorPage() {
     const baseName = name.substring(0, name.lastIndexOf('.'));
     a.download = `${baseName}-compressed${ext}`;
     document.body.appendChild(a);
-    a.click();
+a.click();
     document.body.removeChild(a);
   };
 
@@ -383,6 +384,51 @@ export default function ImageCompressorPage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Image Compressor</CardTitle>
+          <CardDescription>
+            Learn more about how to optimize your images for the web and other uses.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What is Image Compression?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Image compression is the process of reducing the file size of an image without significantly compromising its quality. This is crucial for web performance, as smaller images load faster, improving user experience and saving bandwidth.
+                </p>
+                <p>
+                  Our tool uses a "lossy" compression technique, which means it intelligently removes some data from the image that is least perceptible to the human eye. This allows for a significant reduction in file size.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Image Compressor</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your Image:</strong> Drag and drop your image file onto the upload area, or click the "Browse File" button to select it from your device.</li>
+                  <li><strong>Adjust Compression Level:</strong> Use the slider to set your desired compression level. A lower percentage results in a smaller file size but may reduce quality more noticeably. A higher percentage preserves more quality at the cost of a larger file.</li>
+                  <li><strong>Compress:</strong> Click the "Compress Image" button to start the process. Our tool will quickly optimize your image.</li>
+                  <li><strong>Download:</strong> Once complete, you'll see a preview of the compressed image along with the new file size. Click the "Download Image" button to save it.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Optimal Compression</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Balance is Key:</strong> For websites, a compression level between 40% and 70% usually provides the best balance of quality and file size.</li>
+                  <li><strong>Preview the Result:</strong> Always check the preview of the compressed image to ensure you're happy with the quality before downloading.</li>
+                  <li><strong>Batch Processing:</strong> If you need to compress multiple images, you can use the "Compress another" button to quickly start over without refreshing the page.</li>
+                  <li><strong>Consider the Format:</strong> Our compressor outputs images in JPEG format, which is ideal for photographs. If you have graphics with sharp lines or transparency (like logos), a format like PNG might be better, which you can convert to using our Image Format Converter tool.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

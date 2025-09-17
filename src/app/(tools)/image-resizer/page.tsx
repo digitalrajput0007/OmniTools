@@ -32,6 +32,7 @@ import ReactCrop, {
 import 'react-image-crop/dist/ReactCrop.css';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -317,7 +318,7 @@ export default function ImageResizerCropperPage() {
     a.href = preview;
     a.download = file.name;
     document.body.appendChild(a);
-    a.click();
+a.click();
     document.body.removeChild(a);
   };
   
@@ -493,8 +494,53 @@ export default function ImageResizerCropperPage() {
           {renderContent()}
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Image Resizer & Cropper</CardTitle>
+          <CardDescription>
+            Master the art of image resizing and cropping for perfect dimensions every time.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What are Resizing and Cropping?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  <strong>Resizing</strong> changes the overall dimensions (width and height) of an image, scaling the entire image up or down. This is useful for making an image fit into a specific space, like a profile picture container or a website banner.
+                </p>
+                <p>
+                  <strong>Cropping</strong> involves cutting out a portion of an image to change its composition or aspect ratio. This is useful for focusing on a specific subject, removing unwanted elements, or fitting an image into a different shape (e.g., from landscape to square).
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Resizer & Cropper</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your Image:</strong> Drag and drop your image file or click to browse.</li>
+                  <li><strong>Choose an Edit Mode:</strong> Select either "Resize" or "Crop".</li>
+                  <li><strong>If Resizing:</strong> Enter your desired width or height in pixels. If "Lock aspect ratio" is on, the other dimension will update automatically. Click "Apply Resize".</li>
+                  <li><strong>If Cropping:</strong> Drag the handles on the image preview to select the area you want to keep. You can toggle the aspect ratio lock for freeform or fixed-ratio cropping. Click "Apply Crop".</li>
+                  <li><strong>Undo and Iterate:</strong> You can apply multiple resizes and crops. If you make a mistake, the "Undo Last Change" button will revert the last action.</li>
+                  <li><strong>Finalize and Download:</strong> Once you're happy with your edits, click "Finalize & Download" to process the image and save it to your device.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Perfect Edits</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Lock Aspect Ratio:</strong> Keep the "Lock aspect ratio" switch on when resizing to avoid stretching or distorting your image. Turn it off only when you specifically need to change the proportions.</li>
+                  <li><strong>Start Big, Go Small:</strong> For best quality, always start with an image that is larger than your target dimensions. Scaling an image up (making it bigger) will result in a loss of quality and pixelation.</li>
+                  <li><strong>Crop for Composition:</strong> Use the crop tool to improve your photo's composition. Apply the "rule of thirds" by placing your subject at the intersections of the grid lines that appear when cropping.</li>
+                  <li><strong>Undo is Your Friend:</strong> Don't be afraid to experiment! The undo button lets you easily step back if a resize or crop doesn't look right.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-    

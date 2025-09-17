@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CaseLower, CaseUpper, Pilcrow, VenetianMask } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -184,7 +185,7 @@ export default function TextToolsPage() {
                   </Button>
                   <Button onClick={handleConvertToLowercase} disabled={!text}>
                     <CaseLower className="mr-2 h-4 w-4" />
-                    lowercase
+lowercase
                   </Button>
                   <Button onClick={handleConvertToTitleCase} disabled={!text}>
                     <Pilcrow className="mr-2 h-4 w-4" />
@@ -198,6 +199,59 @@ export default function TextToolsPage() {
               </Card>
             </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Text Tools</CardTitle>
+          <CardDescription>
+            A guide to analyzing, cleaning, and formatting your text with ease.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Text Statistics</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  The "Statistics" tab provides a live analysis of your text.
+                </p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Word Count:</strong> Counts the number of words in your text, perfect for essays, articles, and social media posts where length is important.</li>
+                  <li><strong>Character Count:</strong> Counts every character, including spaces. This is useful for platforms with strict character limits, like Twitter or SMS messages.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>Spacing and Case Tools</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>These tools help you clean up and standardize your text formatting instantly.</p>
+                 <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Remove Extra Spaces:</strong> This function removes all leading and trailing spaces, and collapses multiple spaces between words into a single space. It's great for cleaning up text copied from emails, PDFs, or other messy sources.</li>
+                  <li><strong>Case Converter:</strong>
+                    <ul className="list-disc list-inside pl-4 mt-1">
+                      <li><strong>UPPERCASE:</strong> Converts every letter to its uppercase form.</li>
+                      <li><strong>lowercase:</strong> Converts every letter to its lowercase form.</li>
+                      <li><strong>Title Case:</strong> Capitalizes the first letter of every word. Ideal for headlines and titles.</li>
+                      <li><strong>Sentence case:</strong> Capitalizes only the first letter of the first word in each sentence.</li>
+                    </ul>
+                  </li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>How to Use the Text Tools</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                 <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Enter Text:</strong> Type or paste your text into the main text area.</li>
+                  <li><strong>View Statistics:</strong> Navigate to the "Statistics" tab to see a live word and character count.</li>
+                  <li><strong>Clean Spacing:</strong> Go to the "Spacing" tab and click "Apply Space Removal" to clean up your text.</li>
+                  <li><strong>Change Case:</strong> Switch to the "Case" tab and click any of the conversion buttons to instantly change the capitalization of your entire text.</li>
+                  <li><strong>Clear Text:</strong> Use the "Clear Text" button at any time to start over with a blank slate.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

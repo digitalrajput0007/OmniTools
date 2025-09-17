@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ArrowRightLeft } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type UnitCategory = 'length' | 'weight' | 'temperature';
 
@@ -191,6 +192,48 @@ export default function UnitConverterPage() {
               </Select>
             </div>
           </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Unit Converter</CardTitle>
+          <CardDescription>
+            A guide to understanding and using different units of measurement.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Why Use a Unit Converter?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  In a globalized world, we constantly encounter different systems of measurement. A unit converter is an essential tool for students, travelers, cooks, scientists, and professionals who need to quickly and accurately translate measurements from one system to another (e.g., metric to imperial). Our tool eliminates manual calculations and potential errors.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Unit Converter</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Select a Category:</strong> Start by choosing the type of measurement you want to convert, such as Length, Weight, or Temperature.</li>
+                  <li><strong>Enter Your Value:</strong> Type the number you want to convert into the "From" input field.</li>
+                  <li><strong>Choose Your Units:</strong> Select the starting unit (e.g., meters) from the "From" dropdown and the target unit (e.g., feet) from the "To" dropdown.</li>
+                  <li><strong>Get Instant Results:</strong> The converted value will automatically appear in the "To" field as you type. No need to click a button!</li>
+                  <li><strong>Swap Units:</strong> Click the swap icon (<ArrowRightLeft />) to instantly switch the "From" and "To" units and values.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Measurement Tips</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Temperature is Different:</strong> Unlike length and weight, temperature scales (Celsius, Fahrenheit, Kelvin) don't have a simple multiplicative relationship. Our converter uses the correct specific formulas for accurate temperature conversions.</li>
+                  <li><strong>Metric vs. Imperial:</strong> The metric system (meters, grams) is used by most of the world and is based on powers of ten, making it easy to scale. The imperial system (feet, pounds) is primarily used in the United States.</li>
+                  <li><strong>Precision:</strong> Our tool calculates to four decimal places for accuracy, but you can round the result as needed for your specific application.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

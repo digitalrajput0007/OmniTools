@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { FileDown, UploadCloud, X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function ImageToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -240,6 +241,48 @@ export default function ImageToPdfPage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Image to PDF Converter</CardTitle>
+          <CardDescription>
+            Easily turn your images into universally accessible PDF documents.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Why Convert Images to PDF?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Converting images to PDF is useful for many reasons. PDFs are a universal standard, meaning they can be opened on almost any device while preserving the original layout and quality. It's perfect for creating shareable documents, archiving images, or compiling multiple images into a single file for reports or portfolios.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Image to PDF Converter</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload an Image:</strong> Drag your file (JPG, PNG, WEBP, etc.) into the upload box or click to select a file from your computer.</li>
+                  <li><strong>Start Conversion:</strong> Once your image is uploaded, simply click the "Convert to PDF" button.</li>
+                  <li><strong>Download Your PDF:</strong> After a brief processing animation, the "Download PDF" button will appear. Click it to save your newly created PDF document.</li>
+                  <li><strong>Convert More:</strong> Use the "Convert another" button to quickly start the process over with a new image.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Image to PDF Conversion</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>High-Quality Originals:</strong> For the best results, start with a high-quality source image. The PDF will retain the quality of the image you upload.</li>
+                  <li><strong>Page Orientation:</strong> The tool automatically detects your image's orientation (portrait or landscape) and sets the PDF page size accordingly to prevent cropping.</li>
+                  <li><strong>Multiple Images:</strong> While this tool converts one image at a time, you can use our "PDF Merger" tool to combine multiple converted PDFs into a single, multi-page document.</li>
+                  <li><strong>File Naming:</strong> The downloaded PDF will automatically be named after your original image file, making it easy to keep track of your documents.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

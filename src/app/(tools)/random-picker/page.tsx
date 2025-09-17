@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import Confetti from 'react-dom-confetti';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const confettiConfig = {
   angle: 90,
@@ -143,7 +144,7 @@ export default function RandomPickerPage() {
         });
         setAvailableItems(prev => prev.filter(item => item !== finalWinner));
         setRouletteItem(finalWinner);
-        setIsPicking(false);
+setIsPicking(false);
         setShowConfetti(true);
       }
     }, 100);
@@ -315,6 +316,54 @@ export default function RandomPickerPage() {
                 <div className='w-full max-w-2xl h-96 bg-muted rounded-md animate-pulse' />
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the Random Picker</CardTitle>
+          <CardDescription>
+            Make your selections fair, fun, and transparent with our easy-to-use tool.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What is a Random Picker?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  A random picker is a tool that impartially selects one or more items from a given list. It's the digital equivalent of drawing names from a hat. This ensures that every item in the list has an equal chance of being chosen, making it a fair way to run contests, giveaways, drawings, or even make decisions.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Random Picker</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Enter Participants:</strong> In the "Participants" box, list all the names or items you want to include in the drawing. Make sure to put each one on a new line.</li>
+                  <li><strong>Set Prizes or Winners:</strong> You have two options:
+                    <ul className="list-disc list-inside pl-4 mt-1">
+                      <li>Enter specific prize names (e.g., "Grand Prize") in the "Prizes" box. The number of prizes will determine the number of winners.</li>
+                      <li>Alternatively, leave prizes blank and simply enter the "Number of Winners" you want to draw.</li>
+                    </ul>
+                  </li>
+                  <li><strong>Start the Drawing:</strong> Click the "Start Drawing" button to move to the main event screen.</li>
+                  <li><strong>Pick a Winner:</strong> Click the "Pick Winner" button. A fun animation will run, and the winner will be revealed with a confetti celebration! The winner is removed from the pool for subsequent drawings.</li>
+                  <li><strong>Reset:</strong> Once all winners are picked, you can click "Start New Drawing" to reset the tool with the same list of participants.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Your Drawing</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Build Suspense:</strong> The "roulette" animation is great for building excitement during a live event or screen-sharing session.</li>
+                  <li><strong>Prizes vs. Places:</strong> Using the "Prizes" field allows you to assign specific awards (e.g., "Signed T-Shirt," "First Choice"). If you just need a ranked list, use the "Number of Winners" field, which will assign ordinal places (1st, 2nd, 3rd, etc.).</li>
+                  <li><strong>One Entry Per Line:</strong> Ensure there are no blank lines between entries in the participant list, as this can affect the drawing pool. The tool automatically ignores empty lines and trims whitespace.</li>
+                  <li><strong>No Repeats:</strong> Once an item is picked as a winner, it is automatically removed from the drawing pool, so it cannot be chosen again.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

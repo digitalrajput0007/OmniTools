@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function PdfMergerPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -321,6 +322,49 @@ export default function PdfMergerPage() {
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the PDF Merger</CardTitle>
+          <CardDescription>
+            Learn how to combine your PDF documents quickly and securely.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Why Merge PDFs?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Merging PDFs allows you to combine multiple separate documents into one, making them easier to manage, share, and archive. It's perfect for compiling reports, creating portfolios, or organizing related documents like invoices and receipts. A single, consolidated PDF is more professional and convenient than sending multiple attachments.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the PDF Merger</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your PDFs:</strong> Drag and drop multiple PDF files into the upload area, or click to browse and select them from your device. You need at least two files to merge.</li>
+                  <li><strong>Add More Files:</strong> You can continue to drag or browse for more files to add to the merge queue.</li>
+                  <li><strong>Arrange Files (Soon):</strong> In a future update, you'll be able to drag and drop the uploaded files to reorder them before merging. For now, they are merged in the order they are uploaded.</li>
+                  <li><strong>Merge:</strong> Once you have all your files, click the "Merge PDFs" button.</li>
+                  <li><strong>Download:</strong> After processing, click "Download Merged PDF" to save your new, single document.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips and Features</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Privacy First:</strong> All merging happens directly in your browser. Your files are never uploaded to a server, ensuring your data remains private and secure.</li>
+                  <li><strong>No File Size Limits:</strong> Because the processing is done locally, you can merge large PDFs without worrying about server upload limits. Performance may vary depending on your computer's power.</li>
+                  <li><strong>Order of Merging:</strong> The PDFs are merged sequentially in the order they appear in the "Selected Files" list.</li>
+                  <li><strong>Start Fresh:</strong> Use the "Merge another" button on the success screen to quickly clear the list and start a new merge operation.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>
