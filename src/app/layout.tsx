@@ -1,7 +1,21 @@
 import type { Metadata, Viewport } from 'next';
+import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppName, tools } from '@/lib/constants';
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-headline',
+});
+
+const ptSans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-body',
+});
+
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {
   // find the current tool based on the URL
@@ -33,14 +47,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=PT+Sans:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
+        {/*
+          TODO: Add your analytics script here.
+          For example, for Google Analytics:
+          <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'YOUR_GA_ID');
+          </script>
+        */}
       </head>
       <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning>
         {children}
