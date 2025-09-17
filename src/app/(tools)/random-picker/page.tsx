@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,9 +12,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Ticket, Trophy } from 'lucide-react';
+import { RefreshCw, Ticket, Trophy, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-dom-confetti';
+import { Input } from '@/components/ui/input';
 
 const confettiConfig = {
   angle: 90,
@@ -30,130 +31,186 @@ const confettiConfig = {
   colors: ["#a864fd", "#29cdff", "#78ff44", "#ff718d", "#fdff6a"]
 };
 
+const getOrdinal = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 export default function RandomPickerPage() {
-  const [items, setItems] = useState('');
-  const [winner, setWinner] = useState<string | null>(null);
-  const [isPicking, setIsPicking] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [items, setItems] = useState('Alice\nBob\nCharlie\nDiana\nEthan\nFiona');
+  const [availableItems, setAvailableItems] = useState<string[]>([]);
+  const [winners, setWinners] = useState<(string | null)[]>([]);
+  const [pickingFor, setPickingFor] = useState<number | null>(null);
+  const [showConfettiFor, setShowConfettiFor] = useState<number | null>(null);
   const [rouletteItem, setRouletteItem] = useState<string | null>(null);
+  const [numberOfWinners, setNumberOfWinners] = useState(1);
+  const [isSetup, setIsSetup] = useState(true);
 
   const { toast } = useToast();
 
-  const handlePickWinner = () => {
-    const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
+  useEffect(() => {
+    if (isSetup) {
+      const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
+      setAvailableItems(itemList);
+    }
+  }, [items, isSetup]);
 
-    if (itemList.length < 2) {
+  const handleSetup = () => {
+     const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
+     if (itemList.length < numberOfWinners) {
+        toast({
+            title: 'Not Enough Items',
+            description: `You need at least ${numberOfWinners} items to pick from.`,
+            variant: 'destructive',
+        });
+        return;
+    }
+    setAvailableItems(itemList);
+    setWinners(Array(numberOfWinners).fill(null));
+    setIsSetup(false);
+  }
+
+  const handlePickWinner = (index: number) => {
+    if (availableItems.length === 0) {
       toast({
-        title: 'Not Enough Items',
-        description: 'Please enter at least two items to choose from.',
+        title: 'No Items Left',
+        description: 'All items have been picked.',
         variant: 'destructive',
       });
       return;
     }
 
-    setIsPicking(true);
-    setWinner(null);
-    setShowConfetti(false);
+    setPickingFor(index);
+    setShowConfettiFor(null);
 
     let picks = 0;
     const maxPicks = 20 + Math.floor(Math.random() * 10);
     const interval = setInterval(() => {
-      setRouletteItem(itemList[Math.floor(Math.random() * itemList.length)]);
+      setRouletteItem(availableItems[Math.floor(Math.random() * availableItems.length)]);
       picks++;
       if (picks > maxPicks) {
         clearInterval(interval);
-        const finalWinner = itemList[Math.floor(Math.random() * itemList.length)];
-        setWinner(finalWinner);
+        const winnerIndex = Math.floor(Math.random() * availableItems.length);
+        const finalWinner = availableItems[winnerIndex];
+        
+        setWinners(prev => {
+            const newWinners = [...prev];
+            newWinners[index] = finalWinner;
+            return newWinners;
+        });
+        setAvailableItems(prev => prev.filter((_, i) => i !== winnerIndex));
+
         setRouletteItem(finalWinner);
-        setIsPicking(false);
-        setShowConfetti(true);
+        setPickingFor(null);
+        setShowConfettiFor(index);
       }
     }, 100);
   };
 
   const handleReset = () => {
-    setItems('');
-    setWinner(null);
-    setIsPicking(false);
-    setShowConfetti(false);
+    setItems('Alice\nBob\nCharlie\nDiana\nEthan\nFiona');
+    setAvailableItems([]);
+    setWinners([]);
+    setPickingFor(null);
+    setShowConfettiFor(null);
     setRouletteItem(null);
+    setNumberOfWinners(1);
+    setIsSetup(true);
   };
 
-  const isFinished = winner !== null;
+  const allWinnersPicked = winners.length > 0 && winners.every(w => w !== null);
+
+  const renderSetup = () => (
+    <div className="space-y-4">
+        <div className="space-y-2">
+            <Label htmlFor="items-list">Enter items (one per line)</Label>
+            <Textarea
+                id="items-list"
+                value={items}
+                onChange={(e) => setItems(e.target.value)}
+                className="min-h-[200px]"
+                placeholder="Alice\nBob\nCharlie\nDiana"
+            />
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="number-of-winners">Number of Winners</Label>
+            <Input
+                id="number-of-winners"
+                type="number"
+                value={numberOfWinners}
+                onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10)))}
+                min="1"
+            />
+        </div>
+        <Button onClick={handleSetup} className="w-full">
+            <UserPlus className="mr-2" /> Set Up Drawing
+        </Button>
+    </div>
+  );
+
+  const renderDrawing = () => (
+    <div>
+        <div className="mb-6 rounded-lg border bg-card p-4">
+            <h3 className="font-semibold">Drawing Pool</h3>
+            <p className="text-sm text-muted-foreground">{availableItems.length} items remaining</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+                {availableItems.map((item, i) => (
+                    <span key={i} className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">{item}</span>
+                ))}
+            </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {winners.map((winner, index) => (
+                <Card key={index} className={cn("relative overflow-hidden transition-all", winner && "border-green-500")}>
+                    <CardHeader>
+                        <CardTitle>{getOrdinal(index + 1)} Place</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center space-y-4 text-center min-h-[120px]">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <Confetti active={showConfettiFor === index} config={confettiConfig} />
+                        </div>
+                        
+                        {winner ? (
+                             <>
+                                <Trophy className="h-10 w-10 text-yellow-500" />
+                                <p className="text-2xl font-bold font-headline">{winner}</p>
+                            </>
+                        ) : pickingFor === index ? (
+                            <p className="text-2xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
+                        ) : (
+                           <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null}>
+                                <Ticket className="mr-2" /> Pick Winner
+                            </Button>
+                        )}
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+        
+         {allWinnersPicked && (
+            <div className="mt-6 flex justify-center">
+                 <Button onClick={handleReset} variant="outline" size="lg">
+                    <RefreshCw className="mr-2" /> Start New Drawing
+                </Button>
+            </div>
+        )}
+    </div>
+  );
+
 
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Random Picker</CardTitle>
+          <CardTitle className="font-headline">Random Winner Picker</CardTitle>
           <CardDescription>
-            Enter a list of items and let fate decide the winner!
+            Set up your drawing, and pick winners one by one. Good luck!
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-8 md:grid-cols-2">
-          <div className="space-y-4">
-            <Label htmlFor="items-list">Enter items (one per line)</Label>
-            <Textarea
-              id="items-list"
-              value={items}
-              onChange={(e) => setItems(e.target.value)}
-              className="min-h-[300px]"
-              placeholder="Alice\nBob\nCharlie\nDiana"
-              disabled={isPicking || isFinished}
-            />
-             <div className="flex gap-2">
-              <Button 
-                onClick={handlePickWinner} 
-                disabled={isPicking || isFinished} 
-                className="w-full"
-              >
-                <Ticket className="mr-2" /> Pick a Winner
-              </Button>
-              {isFinished && (
-                <Button onClick={handleReset} variant="outline" className="w-full">
-                  <RefreshCw className="mr-2" /> Start Over
-                </Button>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-center space-y-6 rounded-lg bg-muted/50 p-6 relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-               <Confetti active={showConfetti} config={confettiConfig} />
-            </div>
-           
-            {!isPicking && !isFinished && (
-               <div className="text-center text-muted-foreground">
-                <Ticket className="mx-auto h-16 w-16" />
-                <p className="mt-4 text-lg">Waiting for items...</p>
-                <p className="text-sm">Your winner will be displayed here.</p>
-              </div>
-            )}
-            
-            {(isPicking || isFinished) && (
-              <div className="text-center">
-                 <p className="text-sm uppercase text-muted-foreground mb-4">
-                  {isFinished ? "And the winner is..." : "Picking a winner..."}
-                </p>
-                <div 
-                  className={cn(
-                    "text-4xl font-bold font-headline transition-all duration-100", 
-                    isPicking ? "blur-sm scale-95 opacity-50" : "blur-0 scale-100 opacity-100"
-                  )}
-                  style={{ minHeight: '60px' }}
-                >
-                  {rouletteItem}
-                </div>
-              </div>
-            )}
-
-            {isFinished && (
-              <div className="text-center pt-6">
-                <Trophy className="mx-auto h-12 w-12 text-yellow-500" />
-                <p className="mt-2 font-semibold text-lg">Congratulations!</p>
-              </div>
-            )}
-
-          </div>
+        <CardContent>
+          {isSetup ? renderSetup() : renderDrawing()}
         </CardContent>
       </Card>
     </div>
