@@ -83,7 +83,7 @@ export default function ImageCompressorPage() {
 
           const search = () => {
             attempts++;
-            onProgress((attempts / maxAttempts) * 90); // Update progress
+            onProgress((attempts / maxAttempts) * 90);
 
             canvas.toBlob(
               (blob) => {
@@ -96,9 +96,9 @@ export default function ImageCompressorPage() {
 
                 if (
                   attempts >= maxAttempts ||
-                  Math.abs(currentSizeKB - targetSizeKB) < 10
+                  (Math.abs(currentSizeKB - targetSizeKB) < 10 &&
+                    currentSizeKB < targetSizeKB)
                 ) {
-                  // Within 10KB tolerance or max attempts reached
                   resolve({
                     compressedBlob: bestBlob,
                     finalSizeKB: bestBlob.size / 1024,
@@ -118,7 +118,6 @@ export default function ImageCompressorPage() {
               quality
             );
           };
-
           search();
         };
         img.onerror = () => {
