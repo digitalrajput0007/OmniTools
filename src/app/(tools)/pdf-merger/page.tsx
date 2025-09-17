@@ -56,8 +56,9 @@ export default function PdfMergerPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      resetState();
       handleFileAdd(Array.from(e.target.files));
+      // Reset the input value to allow selecting the same file again
+      e.target.value = '';
     }
   };
 
@@ -80,7 +81,6 @@ export default function PdfMergerPage() {
     handleDragEvents(e);
     setIsDragging(false);
     if (e.dataTransfer.files) {
-      resetState();
       handleFileAdd(Array.from(e.dataTransfer.files));
     }
   };
