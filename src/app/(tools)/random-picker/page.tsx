@@ -46,9 +46,14 @@ export default function RandomPickerPage() {
   const [rouletteItem, setRouletteItem] = useState<string | null>(null);
   const [numberOfWinners, setNumberOfWinners] = useState(1);
   const [isSetup, setIsSetup] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   const { toast } = useToast();
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
   useEffect(() => {
     if (isSetup) {
       const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
@@ -210,7 +215,7 @@ export default function RandomPickerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isSetup ? renderSetup() : renderDrawing()}
+          {isClient && (isSetup ? renderSetup() : renderDrawing())}
         </CardContent>
       </Card>
     </div>
