@@ -13,8 +13,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { GitCompareArrows, Pencil, X } from 'lucide-react';
+import { GitCompareArrows, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 
 type DiffPart = {
   value: string;
@@ -26,13 +27,34 @@ export default function TextDiffPage() {
   const [originalText, setOriginalText] = useState('This is the original text.');
   const [changedText, setChangedText] = useState('This is the new and changed text.');
   const [showDiff, setShowDiff] = useState(false);
+  const [isComparing, setIsComparing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handleCompare = () => {
-    setShowDiff(true);
+    setIsComparing(true);
+    setProgress(0);
+    setShowDiff(false);
+
+    const startTime = Date.now();
+    const duration = 3000;
+
+    const interval = setInterval(() => {
+      const elapsedTime = Date.now() - startTime;
+      const p = Math.min((elapsedTime / duration) * 100, 100);
+      setProgress(p);
+
+      if (p >= 100) {
+        clearInterval(interval);
+        setIsComparing(false);
+        setShowDiff(true);
+      }
+    }, 50);
   };
   
   const handleReset = () => {
     setShowDiff(false);
+    setIsComparing(false);
+    setProgress(0);
   }
 
   const differences = useMemo((): DiffPart[] => {
@@ -58,11 +80,11 @@ export default function TextDiffPage() {
                 value={originalText}
                 onChange={(e) => {
                   setOriginalText(e.target.value);
-                  setShowDiff(false);
+                  handleReset();
                 }}
                 className="min-h-[300px] font-mono"
                 placeholder="Paste the first version of your text here."
-                readOnly={showDiff}
+                readOnly={showDiff || isComparing}
               />
             </div>
             <div className="space-y-2">
@@ -98,20 +120,28 @@ export default function TextDiffPage() {
                   value={changedText}
                   onChange={(e) => {
                     setChangedText(e.target.value);
-                    setShowDiff(false);
+                    handleReset();
                   }}
                   className="min-h-[300px] font-mono"
                   placeholder="Paste the second version of your text here."
+                  readOnly={isComparing}
                 />
               )}
             </div>
           </div>
 
-          {!showDiff && (
+          {!showDiff && !isComparing && (
             <div className="flex justify-center">
               <Button onClick={handleCompare} disabled={!originalText || !changedText}>
                 <GitCompareArrows className="mr-2 h-4 w-4" /> Compare Texts
               </Button>
+            </div>
+          )}
+
+          {isComparing && (
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <Progress value={progress} className="w-full max-w-sm" />
+              <p className="text-sm text-muted-foreground">Comparing...</p>
             </div>
           )}
           
