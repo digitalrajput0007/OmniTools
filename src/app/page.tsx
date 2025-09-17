@@ -34,7 +34,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-2xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
+            <div className="mx-auto mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
                   <Card className="flex h-full flex-col transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
@@ -53,7 +53,7 @@ export default function Home() {
                     </CardHeader>
                     <CardContent className="flex-grow" />
                     <CardFooter>
-                      <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:text-accent-foreground">
+                      <span className="flex items-center gap-1 text-sm font-semibold text-primary">
                         Use Tool{' '}
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </span>
