@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +18,19 @@ import { AppLogo, AppName, tools } from '@/lib/constants';
 
 export default function ToolLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const currentTool = tools.find((tool) => tool.path === pathname);
+
+  useEffect(() => {
+    if (!currentTool) {
+      router.replace('/');
+    }
+  }, [currentTool, router]);
+
+  if (!currentTool) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <SidebarProvider>
