@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { FileDown, UploadCloud, X } from 'lucide-react';
+import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
 
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -80,6 +80,12 @@ export default function ImageCompressorPage() {
       });
     }, 200);
   };
+  
+  const handleGoBack = () => {
+    setCompressed(false);
+    setProgress(0);
+    setCompressedSize(null);
+  }
 
   const originalSizeInKB = file ? (file.size / 1024).toFixed(2) : '0';
 
@@ -120,18 +126,23 @@ export default function ImageCompressorPage() {
                 {preview && (
                   <img
                     src={preview}
-                    alt="Image preview"
+                    alt={compressed ? "Compressed image preview" : "Original image preview"}
                     className="max-h-[400px] w-full rounded-lg object-contain"
                   />
                 )}
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={handleRemoveFile}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                 {!compressed && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={handleRemoveFile}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                 )}
+                 <div className="absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-1 text-xs text-white">
+                  {compressed ? 'Compressed Preview' : 'Original'}
+                </div>
               </div>
               <div className="flex flex-col space-y-6">
                 <div>
@@ -146,56 +157,71 @@ export default function ImageCompressorPage() {
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="target-size">Target Size (KB)</Label>
-                  <Input
-                    id="target-size"
-                    type="number"
-                    value={targetSize}
-                    onChange={(e) => setTargetSize(e.target.value)}
-                    placeholder={`e.g., ${Math.round(
-                      (file?.size || 0) / 1024 / 2
-                    )}`}
-                    disabled={isCompressing || compressed}
-                  />
-                   <p className="text-xs text-muted-foreground">
-                    Enter your desired file size in kilobytes.
-                  </p>
-                </div>
-                <div className="space-y-4">
-                  {!isCompressing && !compressed && (
-                    <Button
-                      onClick={handleCompress}
-                      className="w-full"
-                      disabled={!targetSize}
-                    >
-                      Compress Image
-                    </Button>
-                  )}
-                  {isCompressing && (
-                    <>
-                      <Progress value={progress} className="w-full" />
-                      <p className="text-center text-sm text-muted-foreground">
-                        Compressing...
-                      </p>
-                    </>
-                  )}
-                  {compressed && (
-                    <div className="space-y-2 text-center">
-                      <p className="font-semibold text-green-600">
-                        Compression Complete!
-                      </p>
+                {!compressed && !isCompressing && (
+                  <>
+                  <div className="space-y-2">
+                    <Label htmlFor="target-size">Target Size (KB)</Label>
+                    <Input
+                      id="target-size"
+                      type="number"
+                      value={targetSize}
+                      onChange={(e) => setTargetSize(e.target.value)}
+                      placeholder={`e.g., ${Math.round(
+                        (file?.size || 0) / 1024 / 2
+                      )}`}
+                      disabled={isCompressing || compressed}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter your desired file size in kilobytes.
+                    </p>
+                  </div>
+                  <div className="space-y-4">
                       <Button
+                        onClick={handleCompress}
                         className="w-full"
-                        variant="secondary"
-                        onClick={() => alert('Simulating download...')}
+                        disabled={!targetSize}
                       >
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Download Compressed Image
+                        Compress Image
                       </Button>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                 </>
+                )}
+                
+                {isCompressing && (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <Progress value={progress} className="w-full" />
+                    <p className="text-center text-sm text-muted-foreground">
+                      Compressing...
+                    </p>
+                  </div>
+                )}
+
+                {compressed && !isCompressing && (
+                  <div className="flex h-full flex-col justify-center space-y-4">
+                     <div className="space-y-2 text-center">
+                        <p className="font-semibold text-green-600">
+                          Compression Complete!
+                        </p>
+                        <Button
+                          className="w-full"
+                          variant="secondary"
+                          onClick={() => alert('Simulating download...')}
+                        >
+                          <FileDown className="mr-2 h-4 w-4" />
+                          Download Compressed Image
+                        </Button>
+                        <Button
+                          onClick={handleGoBack}
+                          className="w-full"
+                          variant="outline"
+                        >
+                          <RefreshCcw className="mr-2 h-4 w-4" />
+                          Go Back & Re-compress
+                        </Button>
+                      </div>
+                  </div>
+                )}
+
               </div>
             </div>
           )}
