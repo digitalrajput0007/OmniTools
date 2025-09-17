@@ -22,6 +22,7 @@ export default function ImageCompressorPage() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [compressed, setCompressed] = useState(false);
+  const [compressedSize, setCompressedSize] = useState<number | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -31,6 +32,7 @@ export default function ImageCompressorPage() {
       setCompressed(false);
       setProgress(0);
       setIsCompressing(false);
+      setCompressedSize(null);
     }
   };
 
@@ -39,6 +41,7 @@ export default function ImageCompressorPage() {
     setPreview(null);
     setCompressed(false);
     setProgress(0);
+    setCompressedSize(null);
   };
 
   const handleCompress = () => {
@@ -46,6 +49,7 @@ export default function ImageCompressorPage() {
     setIsCompressing(true);
     setCompressed(false);
     setProgress(0);
+    setCompressedSize(null);
 
     const interval = setInterval(() => {
       setProgress((prev) => {
@@ -53,6 +57,8 @@ export default function ImageCompressorPage() {
           clearInterval(interval);
           setIsCompressing(false);
           setCompressed(true);
+          const newSize = (file.size * (compression / 100)) / 1024;
+          setCompressedSize(newSize);
           return 100;
         }
         return prev + 10;
@@ -113,13 +119,18 @@ export default function ImageCompressorPage() {
               <div className="flex flex-col space-y-6">
                 <div>
                   <h3 className="mb-2 font-semibold">File Information</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Name: {file?.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Size:{' '}
-                    {file ? (file.size / 1024).toFixed(2) : 0} KB
-                  </p>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <p>Name: {file?.name}</p>
+                    <p>
+                      Original Size:{' '}
+                      {file ? (file.size / 1024).toFixed(2) : 0} KB
+                    </p>
+                    {compressedSize !== null && (
+                      <p className="font-medium text-foreground">
+                        Compressed Size: {compressedSize.toFixed(2)} KB
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <Label htmlFor="compression">
