@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const BackgroundRemoverInputSchema = z.object({
+const BackgroundRemoverInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
@@ -21,11 +21,11 @@ export type BackgroundRemoverInput = z.infer<
   typeof BackgroundRemoverInputSchema
 >;
 
-export const BackgroundRemoverOutputSchema = z.object({
+const BackgroundRemoverOutputSchema = z.object({
   imageWithBackgroundRemoved: z
     .string()
     .describe(
-      "The generated image with the background removed, as a data URI. This should be a PNG with a transparent background. Expected format: 'data:image/png;base64,<encoded_data>'."
+      "The generated image with the background removed, as a PNG with a transparent background. Expected format: 'data:image/png;base64,<encoded_data>'."
     ),
 });
 export type BackgroundRemoverOutput = z.infer<
