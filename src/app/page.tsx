@@ -1,5 +1,6 @@
 
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import {
   AppLogo,
   AppName,
@@ -39,6 +40,12 @@ const randomPickerTool = tools.find(t => t.name === 'Random Picker');
 const creditCardGeneratorTool = tools.find(t => t.name === 'Credit Card Generator');
 
 
+export const metadata: Metadata = {
+  title: `${AppName} - Free Online Tools for Images, PDFs, and More`,
+  description: `Your all-in-one hub for free online utilities. Compress images, convert image formats, merge or split PDFs, generate QR codes, create dummy data, and much more. All tools are private, secure, and work in your browser.`
+};
+
+
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -49,7 +56,7 @@ export default function Home() {
             {AppName}
           </h1>
         </Link>
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden items-center gap-2 md:flex">
             {randomDataGeneratorTool && (
                 <Button variant="ghost" asChild>
                     <Link href={randomDataGeneratorTool.path}>
@@ -158,9 +165,8 @@ export default function Home() {
                   Your All-in-One Utility Hub
                 </h2>
                 <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  OmniToolbox provides a suite of powerful, easy-to-use online
-                  tools to streamline your daily tasks. No installation,
-                  completely free.
+                  {AppName} offers a comprehensive suite of free, powerful, and easy-to-use online utilities.
+                  Whether you need to compress images, merge PDFs, convert file formats, generate QR codes, or create dummy data for testing, our tools are designed to streamline your daily tasks—all without installation, right in your browser.
                 </p>
               </div>
             </div>
