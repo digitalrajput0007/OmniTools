@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import imageCompression from 'browser-image-compression';
 
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -52,92 +53,6 @@ export default function ImageCompressorPage() {
     setTargetSize('');
   };
 
-  const compressImage = (
-    file: File,
-    targetSizeKB: number,
-    onProgress: (p: number) => void
-  ): Promise<{ compressedBlob: Blob; finalSizeKB: number }> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            return reject(new Error('Could not get canvas context.'));
-          }
-
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-
-          let low = 0.0;
-          let high = 1.0;
-          let quality = 0.9;
-          let bestBlob: Blob | null = null;
-          const maxAttempts = 10;
-          let attempts = 0;
-
-          const search = () => {
-            attempts++;
-            if (attempts > maxAttempts) {
-              if (bestBlob) {
-                resolve({
-                  compressedBlob: bestBlob,
-                  finalSizeKB: bestBlob.size / 1024,
-                });
-              } else {
-                reject(new Error('Could not achieve target size.'));
-              }
-              return;
-            }
-
-            onProgress((attempts / maxAttempts) * 90);
-            quality = (low + high) / 2;
-
-            canvas.toBlob(
-              (blob) => {
-                if (!blob) {
-                  return reject(new Error('Canvas to Blob conversion failed.'));
-                }
-
-                const currentSizeKB = blob.size / 1024;
-                bestBlob = blob;
-
-                if (Math.abs(currentSizeKB - targetSizeKB) < 10) {
-                  resolve({
-                    compressedBlob: blob,
-                    finalSizeKB: currentSizeKB,
-                  });
-                  return;
-                }
-
-                if (currentSizeKB > targetSizeKB) {
-                  high = quality;
-                } else {
-                  low = quality;
-                }
-                search();
-              },
-              file.type,
-              quality
-            );
-          };
-          search();
-        };
-        img.onerror = () => {
-          reject(new Error('Image failed to load.'));
-        };
-      };
-      reader.onerror = () => {
-        reject(new Error('File could not be read.'));
-      };
-    });
-  };
-
   const handleCompress = async () => {
     if (!file || !targetSize || isCompressing) return;
 
@@ -168,12 +83,19 @@ export default function ImageCompressorPage() {
     setCompressedPreview(null);
 
     try {
-      const { compressedBlob, finalSizeKB } = await compressImage(
-        file,
-        targetSizeKB,
-        setProgress
-      );
-      setCompressedPreview(URL.createObjectURL(compressedBlob));
+      const options = {
+        maxSizeMB: targetSizeKB / 1024,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        onProgress: (p: number) => {
+          setProgress(p);
+        },
+      };
+
+      const compressedFile = await imageCompression(file, options);
+      const finalSizeKB = compressedFile.size / 1024;
+
+      setCompressedPreview(URL.createObjectURL(compressedFile));
       setCompressedSize(finalSizeKB);
       setProgress(100);
       setCompressed(true);
