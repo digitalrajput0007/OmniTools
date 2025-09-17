@@ -51,8 +51,10 @@ const getRankStyle = (index: number) => {
 
 export default function RandomPickerPage() {
   const [items, setItems] = useState('Alice\nBob\nCharlie\nDiana\nEthan\nFiona');
+  const [prizes, setPrizes] = useState('');
   const [availableItems, setAvailableItems] = useState<string[]>([]);
   const [winners, setWinners] = useState<(string | null)[]>([]);
+  const [winnerLabels, setWinnerLabels] = useState<string[]>([]);
   const [pickingFor, setPickingFor] = useState<number | null>(null);
   const [showConfettiFor, setShowConfettiFor] = useState<number | null>(null);
   const [rouletteItem, setRouletteItem] = useState<string | null>(null);
@@ -67,18 +69,30 @@ export default function RandomPickerPage() {
   }, []);
   
   const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
+  const prizeList = prizes.split('\n').map(item => item.trim()).filter(Boolean);
 
   const handleSetup = () => {
-     if (itemList.length < numberOfWinners) {
-        toast({
-            title: 'Not Enough Items',
-            description: `You need at least ${numberOfWinners} items to pick from.`,
-            variant: 'destructive',
-        });
-        return;
+    const winnerCount = prizeList.length > 0 ? prizeList.length : numberOfWinners;
+
+    if (itemList.length < winnerCount) {
+      toast({
+          title: 'Not Enough Items',
+          description: `You need at least ${winnerCount} items to pick from.`,
+          variant: 'destructive',
+      });
+      return;
     }
+    
     setAvailableItems(itemList);
-    setWinners(Array(numberOfWinners).fill(null));
+    
+    if (prizeList.length > 0) {
+      setWinnerLabels(prizeList);
+      setWinners(Array(prizeList.length).fill(null));
+    } else {
+      setWinnerLabels(Array.from({ length: numberOfWinners }, (_, i) => `${getOrdinal(i + 1)} Place`));
+      setWinners(Array(numberOfWinners).fill(null));
+    }
+    
     setIsSetup(false);
   }
 
@@ -124,6 +138,8 @@ export default function RandomPickerPage() {
     setIsSetup(true);
     setShowConfettiFor(null);
     setPickingFor(null);
+    setWinners([]);
+    setWinnerLabels([]);
   };
 
   const allWinnersPicked = !isSetup && winners.length > 0 && winners.every(w => w !== null);
@@ -138,14 +154,25 @@ export default function RandomPickerPage() {
           </CardHeader>
           <CardContent className="space-y-4">
               <div className="space-y-2">
-                  <Label htmlFor="items-list">Enter items (one per line)</Label>
+                  <Label htmlFor="items-list">Participants (one per line)</Label>
                   <Textarea
                       id="items-list"
                       value={items}
                       onChange={(e) => setItems(e.target.value)}
-                      className="min-h-[200px]"
+                      className="min-h-[150px]"
                       placeholder="Alice\nBob\nCharlie\nDiana"
                   />
+              </div>
+               <div className="space-y-2">
+                  <Label htmlFor="prizes-list">Prizes (one per line, optional)</Label>
+                  <Textarea
+                      id="prizes-list"
+                      value={prizes}
+                      onChange={(e) => setPrizes(e.target.value)}
+                      className="min-h-[80px]"
+                      placeholder="Grand Prize\n2nd Prize\n3rd Prize"
+                  />
+                  <p className="text-xs text-muted-foreground">If filled, this overrides "Number of Winners".</p>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="number-of-winners">Number of Winners</Label>
@@ -155,6 +182,7 @@ export default function RandomPickerPage() {
                       value={numberOfWinners}
                       onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10) || 1))}
                       min="1"
+                      disabled={prizeList.length > 0}
                   />
               </div>
                <Button onClick={handleSetup} className="w-full" size="lg" disabled={itemList.length === 0}>
@@ -170,7 +198,7 @@ export default function RandomPickerPage() {
         {winners.map((winner, index) => (
           <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", getRankStyle(index), winner && "border-green-500 bg-green-500/5")}>
               <CardHeader>
-                  <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
+                  <CardTitle className="text-muted-foreground">{winnerLabels[index]}</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-grow flex-col items-center justify-center space-y-4 text-center">
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -205,8 +233,8 @@ export default function RandomPickerPage() {
 
   const renderRightColumn = () => {
     const list = isSetup ? itemList : availableItems;
-    const title = isSetup ? "Participants" : "Drawing Pool";
-    const description = isSetup ? `${list.length} participants entered` : `${list.length} items remaining`;
+    const title = "Drawing Pool";
+    const description = `${list.length} participants ${isSetup ? 'entered' : 'remaining'}`;
     
     return (
        <Card className="h-fit sticky top-20">
@@ -238,10 +266,32 @@ export default function RandomPickerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isClient && (
+          {isClient ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {renderLeftColumn()}
               {renderRightColumn()}
+            </div>
+          ) : (
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <Card>
+                    <CardHeader><CardTitle>Setup Your Drawing</CardTitle></CardHeader>
+                    <CardContent className='space-y-4'>
+                      <div className='h-[150px] bg-muted rounded-md animate-pulse' />
+                      <div className='h-[80px] bg-muted rounded-md animate-pulse' />
+                      <div className='h-[40px] bg-muted rounded-md animate-pulse' />
+                      <div className='h-[44px] bg-muted rounded-md animate-pulse' />
+                    </CardContent>
+                  </Card>
+                </div>
+                 <div>
+                  <Card>
+                    <CardHeader><CardTitle>Drawing Pool</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className='h-[calc(100vh-20rem)] bg-muted rounded-md animate-pulse' />
+                    </CardContent>
+                  </Card>
+                </div>
             </div>
           )}
         </CardContent>
