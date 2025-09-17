@@ -18,29 +18,21 @@ import {
   Image as ImageIcon,
   FileText as PdfIcon,
   Globe,
-  ChevronDown
+  ChevronDown,
+  ALargeSmall,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal
 } from '@/components/ui/dropdown-menu';
 
-const imageTools = tools.filter(t => t.path.includes('image') || t.path.includes('background-remover'));
-const pdfTools = tools.filter(t => t.path.includes('pdf'));
-const otherTools = tools.filter(t => !imageTools.includes(t) && !pdfTools.includes(t));
-
-const webDataTools = otherTools.filter(t => t.path.includes('qr-code') || t.path.includes('credit-card') || t.path.includes('random-data'));
-const textTools = otherTools.filter(t => t.path.includes('text'));
-const utilityTools = otherTools.filter(t => !webDataTools.includes(t) && !textTools.includes(t));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
+const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
+const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
+const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator', 'Random Picker', 'Random Data Generator', 'Credit Card Generator'].includes(t.name));
 
 
 export default function Home() {
@@ -80,6 +72,24 @@ export default function Home() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {pdfTools.map(tool => (
+                   <DropdownMenuItem key={tool.name} asChild>
+                    <Link href={tool.path}>
+                      <tool.icon className="mr-2" />
+                      <span>{tool.name}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <ALargeSmall className="mr-2" /> Text Tools <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {textToolsList.map(tool => (
                    <DropdownMenuItem key={tool.name} asChild>
                     <Link href={tool.path}>
                       <tool.icon className="mr-2" />
