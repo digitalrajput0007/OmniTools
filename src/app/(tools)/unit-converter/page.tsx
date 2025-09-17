@@ -117,7 +117,6 @@ export default function UnitConverterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Unit Converter</CardTitle>
           <CardDescription>
             Convert between length, weight, temperature, and more.
           </CardDescription>

@@ -199,7 +199,6 @@ export default function ImageFormatConverterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Image Format Converter</CardTitle>
           <CardDescription>
             Change the format of your images (e.g., JPG, PNG, WEBP).
           </CardDescription>

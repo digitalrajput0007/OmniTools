@@ -192,7 +192,6 @@ export default function PdfSplitterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">PDF Splitter</CardTitle>
           <CardDescription>
             Extract specific pages or ranges from a PDF file.
           </CardDescription>

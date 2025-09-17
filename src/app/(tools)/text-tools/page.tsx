@@ -94,7 +94,6 @@ export default function TextToolsPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Text Tools</CardTitle>
           <CardDescription>
             A versatile set of tools to analyze and transform your text.
           </CardDescription>

@@ -150,7 +150,6 @@ export default function PdfMergerPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">PDF Merger</CardTitle>
           <CardDescription>
             Combine multiple PDF files into a single document.
           </CardDescription>

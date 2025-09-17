@@ -168,7 +168,6 @@ export default function CreditCardGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Dummy Credit Card Generator</CardTitle>
           <CardDescription>
             Create valid-looking, but fake, credit card numbers for testing and validation purposes.
           </CardDescription>

@@ -305,7 +305,6 @@ setIsPicking(false);
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Random Winner Picker</CardTitle>
           <CardDescription>
             A fun and easy way to pick random winners for giveaways, contests, and more.
           </CardDescription>

@@ -216,7 +216,6 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Image Compressor</CardTitle>
           <CardDescription>
             Upload an image, adjust the compression level, and download the
             optimized file.

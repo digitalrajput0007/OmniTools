@@ -44,7 +44,6 @@ export default function QrCodeGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">QR Code Generator</CardTitle>
           <CardDescription>
             Enter text or a URL to generate a QR code instantly.
           </CardDescription>

@@ -395,7 +395,6 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Background Remover</CardTitle>
           <CardDescription>
             Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
           </CardDescription>

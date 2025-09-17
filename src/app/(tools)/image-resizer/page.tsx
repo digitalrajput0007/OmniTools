@@ -487,7 +487,6 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Image Resizer & Cropper</CardTitle>
           <CardDescription>Resize and crop your images with a live preview.</CardDescription>
         </CardHeader>
         <CardContent>

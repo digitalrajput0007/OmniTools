@@ -203,7 +203,6 @@ export default function RandomDataGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Random Data Generator</CardTitle>
           <CardDescription>
             Create various types of dummy data for your projects and testing needs.
           </CardDescription>
