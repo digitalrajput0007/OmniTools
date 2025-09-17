@@ -56,7 +56,7 @@ export default function TextDiffPage() {
                   setOriginalText(e.target.value);
                   setShowDiff(false);
                 }}
-                className="min-h-[200px] font-mono"
+                className="min-h-[300px] font-mono"
                 placeholder="Paste the first version of your text here."
               />
             </div>
@@ -69,7 +69,7 @@ export default function TextDiffPage() {
                   setChangedText(e.target.value);
                   setShowDiff(false);
                 }}
-                className="min-h-[200px] font-mono"
+                className="min-h-[300px] font-mono"
                 placeholder="Paste the second version of your text here."
               />
             </div>
@@ -86,14 +86,14 @@ export default function TextDiffPage() {
               <CardHeader>
                 <CardTitle>Highlighted Differences</CardTitle>
                 <CardDescription>
-                  <span className="bg-green-100 dark:bg-green-900/50 text-green-900 dark:text-green-300 px-1 rounded-sm">
-                    Green
-                  </span>{' '}
-                  indicates added text, and{' '}
                   <span className="bg-red-100 dark:bg-red-900/50 text-red-900 dark:text-red-300 px-1 rounded-sm">
                     Red
                   </span>{' '}
-                  indicates removed text.
+                  indicates removed text, and{' '}
+                  <span className="bg-green-100 dark:bg-green-900/50 text-green-900 dark:text-green-300 px-1 rounded-sm">
+                    Green
+                  </span>{' '}
+                  indicates added text.
                 </CardDescription>
               </CardHeader>
               <CardContent>
