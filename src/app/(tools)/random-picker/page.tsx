@@ -16,6 +16,7 @@ import { RefreshCw, Ticket, Trophy, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-dom-confetti';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const confettiConfig = {
   angle: 90,
@@ -127,74 +128,91 @@ export default function RandomPickerPage() {
   const allWinnersPicked = winners.length > 0 && winners.every(w => w !== null);
 
   const renderSetup = () => (
-    <div className="space-y-4">
-        <div className="space-y-2">
-            <Label htmlFor="items-list">Enter items (one per line)</Label>
-            <Textarea
-                id="items-list"
-                value={items}
-                onChange={(e) => setItems(e.target.value)}
-                className="min-h-[200px]"
-                placeholder="Alice\nBob\nCharlie\nDiana"
-            />
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="number-of-winners">Number of Winners</Label>
-            <Input
-                id="number-of-winners"
-                type="number"
-                value={numberOfWinners}
-                onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10)))}
-                min="1"
-            />
-        </div>
-        <Button onClick={handleSetup} className="w-full">
-            <UserPlus className="mr-2" /> Set Up Drawing
-        </Button>
+    <div className="mx-auto max-w-lg space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Setup Your Drawing</CardTitle>
+                <CardDescription>Enter the items to draw from and how many winners to pick.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="items-list">Enter items (one per line)</Label>
+                    <Textarea
+                        id="items-list"
+                        value={items}
+                        onChange={(e) => setItems(e.target.value)}
+                        className="min-h-[200px]"
+                        placeholder="Alice\nBob\nCharlie\nDiana"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="number-of-winners">Number of Winners</Label>
+                    <Input
+                        id="number-of-winners"
+                        type="number"
+                        value={numberOfWinners}
+                        onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10)))}
+                        min="1"
+                    />
+                </div>
+                 <Button onClick={handleSetup} className="w-full" size="lg">
+                    <UserPlus className="mr-2" /> Start Drawing
+                </Button>
+            </CardContent>
+        </Card>
     </div>
   );
 
   const renderDrawing = () => (
-    <div>
-        <div className="mb-6 rounded-lg border bg-card p-4">
-            <h3 className="font-semibold">Drawing Pool</h3>
-            <p className="text-sm text-muted-foreground">{availableItems.length} items remaining</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-                {availableItems.map((item, i) => (
-                    <span key={i} className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">{item}</span>
+    <div className='space-y-8'>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+             <Card className="md:col-span-1">
+                <CardHeader>
+                    <CardTitle>Drawing Pool</CardTitle>
+                    <CardDescription>{availableItems.length} items remaining</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ScrollArea className="h-64">
+                        <div className="flex flex-col gap-2">
+                            {availableItems.map((item, i) => (
+                                <div key={i} className="rounded-md border bg-secondary/30 px-3 py-2 text-sm text-secondary-foreground">{item}</div>
+                            ))}
+                             {availableItems.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">No items left!</p>}
+                        </div>
+                    </ScrollArea>
+                </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
+                 {winners.map((winner, index) => (
+                    <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", winner && "border-green-500 bg-green-500/5")}>
+                        <CardHeader>
+                            <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-grow flex-col items-center justify-center space-y-4 text-center">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                <Confetti active={showConfettiFor === index} config={confettiConfig} />
+                            </div>
+                            
+                            {winner ? (
+                                <>
+                                    <Trophy className="h-10 w-10 text-yellow-500" />
+                                    <p className="text-2xl font-bold font-headline">{winner}</p>
+                                </>
+                            ) : pickingFor === index ? (
+                                <p className="text-3xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
+                            ) : (
+                               <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null} size="lg" className='w-full'>
+                                    <Ticket className="mr-2" /> Pick Winner
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {winners.map((winner, index) => (
-                <Card key={index} className={cn("relative overflow-hidden transition-all", winner && "border-green-500")}>
-                    <CardHeader>
-                        <CardTitle>{getOrdinal(index + 1)} Place</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center justify-center space-y-4 text-center min-h-[120px]">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                            <Confetti active={showConfettiFor === index} config={confettiConfig} />
-                        </div>
-                        
-                        {winner ? (
-                             <>
-                                <Trophy className="h-10 w-10 text-yellow-500" />
-                                <p className="text-2xl font-bold font-headline">{winner}</p>
-                            </>
-                        ) : pickingFor === index ? (
-                            <p className="text-2xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
-                        ) : (
-                           <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null}>
-                                <Ticket className="mr-2" /> Pick Winner
-                            </Button>
-                        )}
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
         
-         {allWinnersPicked && (
+         {(allWinnersPicked || availableItems.length === 0) && (
             <div className="mt-6 flex justify-center">
                  <Button onClick={handleReset} variant="outline" size="lg">
                     <RefreshCw className="mr-2" /> Start New Drawing
