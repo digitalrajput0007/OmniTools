@@ -111,7 +111,7 @@ export default function RandomPickerPage() {
             newWinners[index] = finalWinner;
             return newWinners;
         });
-        setAvailableItems(prev => prev.filter((_, i) => i !== winnerIndex));
+        setAvailableItems(prev => prev.filter(item => item !== finalWinner));
 
         setRouletteItem(finalWinner);
         setPickingFor(null);
@@ -126,116 +126,107 @@ export default function RandomPickerPage() {
     setPickingFor(null);
   };
 
-  const allWinnersPicked = winners.length > 0 && winners.every(w => w !== null);
+  const allWinnersPicked = !isSetup && winners.length > 0 && winners.every(w => w !== null);
 
-  const renderSetup = () => (
-    <div className="flex flex-col gap-4">
+  const renderLeftColumn = () => {
+    if (isSetup) {
+      return (
         <Card>
-            <CardHeader>
-                <CardTitle>Setup Your Drawing</CardTitle>
-                <CardDescription>Enter items and number of winners.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="items-list">Enter items (one per line)</Label>
-                    <Textarea
-                        id="items-list"
-                        value={items}
-                        onChange={(e) => setItems(e.target.value)}
-                        className="min-h-[200px]"
-                        placeholder="Alice\nBob\nCharlie\nDiana"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="number-of-winners">Number of Winners</Label>
-                    <Input
-                        id="number-of-winners"
-                        type="number"
-                        value={numberOfWinners}
-                        onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                        min="1"
-                    />
-                </div>
-                 <Button onClick={handleSetup} className="w-full" size="lg">
-                    <UserPlus className="mr-2" /> Start Drawing
-                </Button>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader>
-                <CardTitle>Drawing Pool</CardTitle>
-                <CardDescription>{itemList.length} items</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ScrollArea className="h-96">
-                    <div className="flex flex-col gap-2">
-                        {itemList.map((item, i) => (
-                            <div key={i} className="rounded-md border bg-secondary/30 px-3 py-2 text-sm text-secondary-foreground">{item}</div>
-                        ))}
-                         {itemList.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">No items in the pool.</p>}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
-    </div>
-  );
-
-  const renderDrawing = () => (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-      <div className='space-y-4'>
-           {winners.map((winner, index) => (
-              <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", getRankStyle(index), winner && "border-green-500 bg-green-500/5")}>
-                  <CardHeader>
-                      <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-grow flex-col items-center justify-center space-y-4 text-center">
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                          <Confetti active={showConfettiFor === index} config={confettiConfig} />
-                      </div>
-                      
-                      {winner ? (
-                          <>
-                              <Trophy className={cn("text-yellow-500", index === 0 ? "h-10 w-10" : "h-8 w-8")} />
-                              <p className={cn("font-bold font-headline", index === 0 ? "text-3xl" : "text-2xl")}>{winner}</p>
-                          </>
-                      ) : pickingFor === index ? (
-                          <p className="text-3xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
-                      ) : (
-                         <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null || !!winners[index]} size="lg" className='w-full max-w-xs'>
-                              <Ticket className="mr-2" /> Pick Winner
-                          </Button>
-                      )}
-                  </CardContent>
-              </Card>
-          ))}
-          
-           {(allWinnersPicked || (availableItems.length === 0 && !isSetup)) && (
-              <div className="mt-6 flex justify-center">
-                   <Button onClick={handleReset} variant="outline" size="lg">
-                      <RefreshCw className="mr-2" /> Start New Drawing
-                  </Button>
-              </div>
-          )}
-      </div>
-      <Card className="h-fit">
           <CardHeader>
-              <CardTitle>Drawing Pool</CardTitle>
-              <CardDescription>{availableItems.length} items remaining</CardDescription>
+              <CardTitle>Setup Your Drawing</CardTitle>
+              <CardDescription>Enter items and number of winners to begin.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <div className="space-y-2">
+                  <Label htmlFor="items-list">Enter items (one per line)</Label>
+                  <Textarea
+                      id="items-list"
+                      value={items}
+                      onChange={(e) => setItems(e.target.value)}
+                      className="min-h-[200px]"
+                      placeholder="Alice\nBob\nCharlie\nDiana"
+                  />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="number-of-winners">Number of Winners</Label>
+                  <Input
+                      id="number-of-winners"
+                      type="number"
+                      value={numberOfWinners}
+                      onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      min="1"
+                  />
+              </div>
+               <Button onClick={handleSetup} className="w-full" size="lg" disabled={itemList.length === 0}>
+                  <UserPlus className="mr-2" /> Start Drawing
+              </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className='space-y-4'>
+        {winners.map((winner, index) => (
+          <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", getRankStyle(index), winner && "border-green-500 bg-green-500/5")}>
+              <CardHeader>
+                  <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-grow flex-col items-center justify-center space-y-4 text-center">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <Confetti active={showConfettiFor === index} config={confettiConfig} />
+                  </div>
+                  
+                  {winner ? (
+                      <>
+                          <Trophy className={cn("text-yellow-500", index === 0 ? "h-10 w-10" : "h-8 w-8")} />
+                          <p className={cn("font-bold font-headline", index === 0 ? "text-3xl" : "text-2xl")}>{winner}</p>
+                      </>
+                  ) : pickingFor === index ? (
+                      <p className="text-3xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
+                  ) : (
+                     <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null || !!winners[index]} size="lg" className='w-full max-w-xs'>
+                          <Ticket className="mr-2" /> Pick Winner
+                      </Button>
+                  )}
+              </CardContent>
+          </Card>
+        ))}
+        {(allWinnersPicked || (availableItems.length === 0 && !isSetup)) && (
+          <div className="mt-2 flex justify-center">
+               <Button onClick={handleReset} variant="outline" size="lg">
+                  <RefreshCw className="mr-2" /> Start New Drawing
+              </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const renderRightColumn = () => {
+    const list = isSetup ? itemList : availableItems;
+    const title = isSetup ? "Participants" : "Drawing Pool";
+    const description = isSetup ? `${list.length} participants entered` : `${list.length} items remaining`;
+    
+    return (
+       <Card className="h-fit sticky top-20">
+          <CardHeader>
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent>
               <ScrollArea className="h-[calc(100vh-20rem)]">
                   <div className="flex flex-col gap-2">
-                      {availableItems.map((item, i) => (
+                      {list.map((item, i) => (
                           <div key={i} className="rounded-md border bg-secondary/30 px-3 py-2 text-sm text-secondary-foreground">{item}</div>
                       ))}
-                       {availableItems.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">No items in the pool.</p>}
+                       {list.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">No items in the pool.</p>}
                   </div>
               </ScrollArea>
           </CardContent>
       </Card>
-    </div>
-  );
-
+    );
+  }
 
   return (
     <div className="grid gap-6">
@@ -243,11 +234,16 @@ export default function RandomPickerPage() {
         <CardHeader>
           <CardTitle className="font-headline">Random Winner Picker</CardTitle>
           <CardDescription>
-            Set up your drawing, and pick winners one by one. Good luck!
+            Set up your drawing, pick winners one by one, and see who's lucky!
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isClient && (isSetup ? renderSetup() : renderDrawing())}
+          {isClient && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {renderLeftColumn()}
+              {renderRightColumn()}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
