@@ -22,6 +22,7 @@ const toTitleCase = (str: string) => {
 
 export default function TextToolsPage() {
   const [text, setText] = useState('');
+  const [activeTab, setActiveTab] = useState('stats');
 
   const stats = useMemo(() => {
     const trimmedText = text.trim();
@@ -60,25 +61,24 @@ export default function TextToolsPage() {
             A versatile set of tools to analyze and transform your text.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Paste or type your text here..."
-                className="min-h-[300px] text-base"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
-               <Button variant="outline" onClick={handleClearText} disabled={!text}>Clear Text</Button>
-            </div>
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <Tabs defaultValue="stats">
-                <TabsList className="grid w-full grid-cols-3">
+        <CardContent className="space-y-6">
+           <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="stats">
+              <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="stats">Statistics</TabsTrigger>
                   <TabsTrigger value="spacing">Spacing</TabsTrigger>
                   <TabsTrigger value="case">Case</TabsTrigger>
-                </TabsList>
-                <TabsContent value="stats" className="pt-6">
+              </TabsList>
+              <div className="mt-6 space-y-4">
+                <Textarea
+                  placeholder="Paste or type your text here..."
+                  className="min-h-[300px] text-base"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+                <Button variant="outline" onClick={handleClearText} disabled={!text}>Clear Text</Button>
+              </div>
+
+              <TabsContent value="stats" className="pt-6">
                   <Card>
                     <CardContent className="space-y-6 p-6">
                       <div className="flex justify-around text-center">
@@ -134,9 +134,7 @@ export default function TextToolsPage() {
                     </CardContent>
                   </Card>
                 </TabsContent>
-              </Tabs>
-            </div>
-          </div>
+           </Tabs>
         </CardContent>
       </Card>
     </div>
