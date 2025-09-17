@@ -38,6 +38,17 @@ const getOrdinal = (n: number) => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+const rankStyles = [
+    "md:col-span-2 min-h-[160px]", // 1st
+    "md:col-span-2 min-h-[140px]", // 2nd
+    "md:col-span-2 min-h-[120px]", // 3rd
+];
+
+const getRankStyle = (index: number) => {
+    return rankStyles[index] || "md:col-span-2 min-h-[110px]";
+}
+
+
 export default function RandomPickerPage() {
   const [items, setItems] = useState('Alice\nBob\nCharlie\nDiana\nEthan\nFiona');
   const [availableItems, setAvailableItems] = useState<string[]>([]);
@@ -59,8 +70,9 @@ export default function RandomPickerPage() {
     if (isSetup) {
       const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
       setAvailableItems(itemList);
+      setWinners(Array(numberOfWinners > 0 ? numberOfWinners : 1).fill(null));
     }
-  }, [items, isSetup]);
+  }, [items, isSetup, numberOfWinners]);
 
   const handleSetup = () => {
      const itemList = items.split('\n').map(item => item.trim()).filter(Boolean);
@@ -151,7 +163,7 @@ export default function RandomPickerPage() {
                         id="number-of-winners"
                         type="number"
                         value={numberOfWinners}
-                        onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10)))}
+                        onChange={(e) => setNumberOfWinners(Math.max(1, parseInt(e.target.value, 10) || 1))}
                         min="1"
                     />
                 </div>
@@ -166,7 +178,35 @@ export default function RandomPickerPage() {
   const renderDrawing = () => (
     <div className='space-y-8'>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-             <Card className="md:col-span-1">
+             <div className="flex flex-col gap-4 md:col-span-2">
+                 {winners.map((winner, index) => (
+                    <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", getRankStyle(index), winner && "border-green-500 bg-green-500/5")}>
+                        <CardHeader>
+                            <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-grow flex-col items-center justify-center space-y-4 text-center">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                <Confetti active={showConfettiFor === index} config={confettiConfig} />
+                            </div>
+                            
+                            {winner ? (
+                                <>
+                                    <Trophy className={cn("text-yellow-500", index === 0 ? "h-10 w-10" : "h-8 w-8")} />
+                                    <p className={cn("font-bold font-headline", index === 0 ? "text-3xl" : "text-2xl")}>{winner}</p>
+                                </>
+                            ) : pickingFor === index ? (
+                                <p className="text-3xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
+                            ) : (
+                               <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null} size="lg" className='w-full max-w-xs'>
+                                    <Ticket className="mr-2" /> Pick Winner
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <Card className="md:col-span-1 h-fit">
                 <CardHeader>
                     <CardTitle>Drawing Pool</CardTitle>
                     <CardDescription>{availableItems.length} items remaining</CardDescription>
@@ -182,34 +222,6 @@ export default function RandomPickerPage() {
                     </ScrollArea>
                 </CardContent>
             </Card>
-
-            <div className="flex flex-col gap-4 md:col-span-2">
-                 {winners.map((winner, index) => (
-                    <Card key={index} className={cn("relative flex min-h-[150px] flex-col overflow-hidden transition-all", winner && "border-green-500 bg-green-500/5")}>
-                        <CardHeader>
-                            <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-grow flex-col items-center justify-center space-y-4 text-center">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                <Confetti active={showConfettiFor === index} config={confettiConfig} />
-                            </div>
-                            
-                            {winner ? (
-                                <>
-                                    <Trophy className="h-10 w-10 text-yellow-500" />
-                                    <p className="text-2xl font-bold font-headline">{winner}</p>
-                                </>
-                            ) : pickingFor === index ? (
-                                <p className="text-3xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
-                            ) : (
-                               <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null} size="lg" className='w-full max-w-xs'>
-                                    <Ticket className="mr-2" /> Pick Winner
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
         </div>
         
          {(allWinnersPicked || availableItems.length === 0) && (
