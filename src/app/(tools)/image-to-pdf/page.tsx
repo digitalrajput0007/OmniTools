@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { FileDown, UploadCloud, X } from 'lucide-react';
+import { FileDown, UploadCloud, X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,13 +25,19 @@ export default function ImageToPdfPage() {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
+  const resetState = () => {
+    setFile(null);
+    setPreview(null);
+    setConverted(false);
+    setProgress(0);
+    setIsConverting(false);
+  };
+
   const handleFileSelect = (selectedFile: File) => {
     if (selectedFile.type.startsWith('image/')) {
+      resetState();
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
-      setConverted(false);
-      setProgress(0);
-      setIsConverting(false);
     } else {
       toast({
         title: 'Invalid File Type',
@@ -46,7 +52,7 @@ export default function ImageToPdfPage() {
       handleFileSelect(e.target.files[0]);
     }
   };
-  
+
   const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -56,12 +62,12 @@ export default function ImageToPdfPage() {
     handleDragEvents(e);
     setIsDragging(true);
   };
-  
+
   const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
   };
-  
+
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
@@ -70,12 +76,8 @@ export default function ImageToPdfPage() {
     }
   };
 
-
   const handleRemoveFile = () => {
-    setFile(null);
-    setPreview(null);
-    setConverted(false);
-    setProgress(0);
+    resetState();
   };
 
   const downloadPdf = () => {
@@ -128,12 +130,15 @@ export default function ImageToPdfPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!preview ? (
+          {!file ? (
             <label
               htmlFor="image-upload"
-              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
-                "bg-accent/50 border-primary": isDragging
-              })}
+              className={cn(
+                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+                {
+                  'border-primary bg-accent/50': isDragging,
+                }
+              )}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragEvents}
@@ -164,57 +169,74 @@ export default function ImageToPdfPage() {
                     className="max-h-[400px] w-full rounded-lg object-contain"
                   />
                 )}
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={handleRemoveFile}
-                  disabled={isConverting}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                {!isConverting && !converted && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={handleRemoveFile}
+                    disabled={isConverting}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex flex-col justify-center space-y-6">
-                <div>
-                  <h3 className="mb-2 font-semibold">File Information</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Name: {file?.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Size: {file ? (file.size / 1024).toFixed(2) : 0} KB
-                  </p>
-                </div>
+                {!isConverting && !converted && (
+                  <>
+                    <div>
+                      <h3 className="mb-2 font-semibold">File Information</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Name: {file?.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Size: {file ? (file.size / 1024).toFixed(2) : 0} KB
+                      </p>
+                    </div>
 
-                <div className="space-y-4">
-                  {!isConverting && !converted && (
-                    <Button onClick={handleConvertToPdf} className="w-full">
-                      Convert to PDF
-                    </Button>
-                  )}
-                  {isConverting && (
-                    <>
-                      <Progress value={progress} className="w-full" />
-                      <p className="text-center text-sm text-muted-foreground">
-                        Converting...
+                    <div className="space-y-4">
+                      <Button onClick={handleConvertToPdf} className="w-full">
+                        Convert to PDF
+                      </Button>
+                    </div>
+                  </>
+                )}
+                {isConverting && !converted && (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <Progress value={progress} className="w-full" />
+                    <p className="text-center text-sm text-muted-foreground">
+                      Converting...
+                    </p>
+                  </div>
+                )}
+                {converted && (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <h3 className="text-2xl font-bold">Conversion Complete</h3>
+                    <p className="text-muted-foreground">
+                      Your image has been converted to PDF.
+                    </p>
+                    <div>
+                      <h3 className="mb-2 font-semibold">File Information</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Name: {file?.name}
                       </p>
-                    </>
-                  )}
-                  {converted && (
-                    <div className="space-y-2 text-center">
-                      <p className="font-semibold text-green-600">
-                        Conversion Complete!
-                      </p>
-                      <Button
-                        className="w-full"
-                        variant="secondary"
-                        onClick={downloadPdf}
-                      >
+                    </div>
+                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                      <Button className="w-full" onClick={downloadPdf}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Download PDF
                       </Button>
+                      <Button
+                        className="w-full"
+                        variant="ghost"
+                        onClick={resetState}
+                      >
+                        Convert another
+                      </Button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

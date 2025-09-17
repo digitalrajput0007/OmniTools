@@ -13,7 +13,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { FileDown, UploadCloud, X, File as FileIcon } from 'lucide-react';
+import {
+  FileDown,
+  UploadCloud,
+  X,
+  File as FileIcon,
+  CheckCircle2,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -26,42 +32,47 @@ export default function PdfSplitterPage() {
   const [split, setSplit] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
-  
+
+  const resetState = () => {
+    setFile(null);
+    setTotalPages(0);
+    setSplit(false);
+    setProgress(0);
+    setRanges('');
+    setIsSplitting(false);
+  };
+
   const handleFileSelect = async (selectedFile: File) => {
-     if (selectedFile.type === 'application/pdf') {
-        setFile(selectedFile);
-        setSplit(false);
-        setProgress(0);
-        setIsSplitting(false);
-        setRanges('');
-        try {
-          const arrayBuffer = await selectedFile.arrayBuffer();
-          const pdf = await PDFDocument.load(arrayBuffer);
-          setTotalPages(pdf.getPageCount());
-        } catch (error) {
-          toast({
-            title: 'Error Reading PDF',
-            description: 'Could not read the selected PDF file.',
-            variant: 'destructive',
-          });
-          setFile(null);
-          setTotalPages(0);
-        }
-      } else {
+    if (selectedFile.type === 'application/pdf') {
+      resetState();
+      setFile(selectedFile);
+      try {
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const pdf = await PDFDocument.load(arrayBuffer);
+        setTotalPages(pdf.getPageCount());
+      } catch (error) {
         toast({
-          title: 'Invalid File Type',
-          description: 'Please select a PDF file.',
+          title: 'Error Reading PDF',
+          description: 'Could not read the selected PDF file.',
           variant: 'destructive',
         });
+        resetState();
       }
-  }
+    } else {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please select a PDF file.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       handleFileSelect(e.target.files[0]);
     }
   };
-  
+
   const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -71,27 +82,22 @@ export default function PdfSplitterPage() {
     handleDragEvents(e);
     setIsDragging(true);
   };
-  
+
   const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
   };
-  
+
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-       handleFileSelect(e.dataTransfer.files[0]);
+      handleFileSelect(e.dataTransfer.files[0]);
     }
   };
 
-
   const handleRemoveFile = () => {
-    setFile(null);
-    setTotalPages(0);
-    setSplit(false);
-    setProgress(0);
-    setRanges('');
+    resetState();
   };
 
   const handleSplit = () => {
@@ -194,9 +200,12 @@ export default function PdfSplitterPage() {
           {!file ? (
             <label
               htmlFor="pdf-upload"
-              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
-                "bg-accent/50 border-primary": isDragging
-              })}
+              className={cn(
+                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+                {
+                  'border-primary bg-accent/50': isDragging,
+                }
+              )}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragEvents}
@@ -225,66 +234,86 @@ export default function PdfSplitterPage() {
                 <p className="text-sm text-muted-foreground">
                   Total pages: {totalPages}
                 </p>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={handleRemoveFile}
-                  disabled={isSplitting}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                {!isSplitting && !split && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={handleRemoveFile}
+                    disabled={isSplitting}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex flex-col space-y-6">
-                <div>
-                  <Label htmlFor="ranges">Pages to Extract</Label>
-                  <Input
-                    id="ranges"
-                    type="text"
-                    value={ranges}
-                    onChange={(e) => setRanges(e.target.value)}
-                    placeholder="e.g., 1, 3-5, 8"
-                    disabled={isSplitting || split}
-                  />
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Enter page numbers or ranges separated by commas.
-                  </p>
-                </div>
+                {!isSplitting && !split && (
+                  <>
+                    <div>
+                      <Label htmlFor="ranges">Pages to Extract</Label>
+                      <Input
+                        id="ranges"
+                        type="text"
+                        value={ranges}
+                        onChange={(e) => setRanges(e.target.value)}
+                        placeholder="e.g., 1, 3-5, 8"
+                        disabled={isSplitting || split}
+                      />
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Enter page numbers or ranges separated by commas.
+                      </p>
+                    </div>
 
-                <div className="space-y-4">
-                  {!isSplitting && !split && (
-                    <Button
-                      onClick={handleSplit}
-                      className="w-full"
-                      disabled={!ranges}
-                    >
-                      Split PDF
-                    </Button>
-                  )}
-                  {isSplitting && (
-                    <>
-                      <Progress value={progress} className="w-full" />
-                      <p className="text-center text-sm text-muted-foreground">
-                        Splitting...
-                      </p>
-                    </>
-                  )}
-                  {split && (
-                    <div className="space-y-2 text-center">
-                      <p className="font-semibold text-green-600">
-                        Splitting Complete!
-                      </p>
+                    <div className="space-y-4">
                       <Button
+                        onClick={handleSplit}
                         className="w-full"
-                        variant="secondary"
-                        onClick={downloadSplitPdf}
+                        disabled={!ranges}
                       >
+                        Split PDF
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {isSplitting && (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <Progress value={progress} className="w-full" />
+                    <p className="text-center text-sm text-muted-foreground">
+                      Splitting...
+                    </p>
+                  </div>
+                )}
+                {split && (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <h3 className="text-2xl font-bold">Splitting Complete</h3>
+                    <p className="text-muted-foreground">
+                      Your PDF has been split based on your selection.
+                    </p>
+                    <div className="text-sm">
+                      <p>
+                        Selected Pages:{' '}
+                        <span className="font-medium text-foreground">
+                          {ranges}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                      <Button className="w-full" onClick={downloadSplitPdf}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Download Split PDF
                       </Button>
+                      <Button
+                        className="w-full"
+                        variant="ghost"
+                        onClick={resetState}
+                      >
+                        Split another
+                      </Button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
