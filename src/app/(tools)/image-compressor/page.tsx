@@ -11,10 +11,46 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import imageCompression from 'browser-image-compression';
+
+// Helper function to compress image on the client
+async function compressImage(
+  file: File,
+  quality: number
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('Failed to get canvas context'));
+      }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Canvas to Blob conversion failed'));
+          }
+        },
+        'image/jpeg',
+        quality / 100
+      );
+    };
+    img.onerror = (err) => {
+      reject(err);
+    };
+  });
+}
+
 
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,7 +58,7 @@ export default function ImageCompressorPage() {
   const [compressedPreview, setCompressedPreview] = useState<string | null>(
     null
   );
-  const [targetSize, setTargetSize] = useState('');
+  const [compressionLevel, setCompressionLevel] = useState([50]);
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [compressed, setCompressed] = useState(false);
@@ -39,7 +75,7 @@ export default function ImageCompressorPage() {
       setProgress(0);
       setIsCompressing(false);
       setCompressedSize(null);
-      setTargetSize(String(Math.round(selectedFile.size / 1024 / 2))); // Default to 50%
+      setCompressionLevel([50]);
     }
   };
 
@@ -50,31 +86,11 @@ export default function ImageCompressorPage() {
     setCompressedPreview(null);
     setProgress(0);
     setCompressedSize(null);
-    setTargetSize('');
+    setCompressionLevel([50]);
   };
 
   const handleCompress = async () => {
-    if (!file || !targetSize || isCompressing) return;
-
-    const targetSizeKB = parseFloat(targetSize);
-    if (isNaN(targetSizeKB) || targetSizeKB <= 0) {
-      toast({
-        title: 'Invalid Target Size',
-        description: 'Please enter a valid target size in KB.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const originalSizeKB = file.size / 1024;
-    if (targetSizeKB >= originalSizeKB) {
-      toast({
-        title: 'Target Too Large',
-        description: 'Target size must be smaller than the original size.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (!file || isCompressing) return;
 
     setIsCompressing(true);
     setCompressed(false);
@@ -82,24 +98,23 @@ export default function ImageCompressorPage() {
     setCompressedSize(null);
     setCompressedPreview(null);
 
+    // Simulate progress
+    const interval = setInterval(() => {
+      setProgress((p) => (p < 90 ? p + 10 : p));
+    }, 200);
+
     try {
-      const options = {
-        maxSizeMB: targetSizeKB / 1024,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-        onProgress: (p: number) => {
-          setProgress(p);
-        },
-      };
-
-      const compressedFile = await imageCompression(file, options);
-      const finalSizeKB = compressedFile.size / 1024;
-
-      setCompressedPreview(URL.createObjectURL(compressedFile));
-      setCompressedSize(finalSizeKB);
+      const compressedBlob = await compressImage(file, compressionLevel[0]);
+      
+      clearInterval(interval);
       setProgress(100);
+
+      const finalSizeKB = compressedBlob.size / 1024;
+      setCompressedPreview(URL.createObjectURL(compressedBlob));
+      setCompressedSize(finalSizeKB);
       setCompressed(true);
     } catch (error) {
+      clearInterval(interval);
       console.error(error);
       toast({
         title: 'Compression Error',
@@ -113,7 +128,7 @@ export default function ImageCompressorPage() {
       setIsCompressing(false);
     }
   };
-
+  
   const handleGoBack = () => {
     setCompressed(false);
     setCompressedPreview(null);
@@ -213,27 +228,29 @@ export default function ImageCompressorPage() {
                 </div>
                 {!compressed && !isCompressing && (
                   <>
-                    <div className="space-y-2">
-                      <Label htmlFor="target-size">Target Size (KB)</Label>
-                      <Input
-                        id="target-size"
-                        type="number"
-                        value={targetSize}
-                        onChange={(e) => setTargetSize(e.target.value)}
-                        placeholder={`e.g., ${Math.round(
-                          (file?.size || 0) / 1024 / 2
-                        )}`}
+                    <div className="space-y-4">
+                      <Label htmlFor="compression-level">
+                        Compression Level: {compressionLevel[0]}%
+                      </Label>
+                      <Slider
+                        id="compression-level"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={compressionLevel}
+                        onValueChange={setCompressionLevel}
                         disabled={isCompressing}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Enter your desired file size in kilobytes.
+                        Lower percentage means smaller file size but lower
+                        quality.
                       </p>
                     </div>
                     <div className="space-y-4">
                       <Button
                         onClick={handleCompress}
                         className="w-full"
-                        disabled={!targetSize || isCompressing}
+                        disabled={isCompressing}
                       >
                         Compress Image
                       </Button>
