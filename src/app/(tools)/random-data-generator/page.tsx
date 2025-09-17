@@ -30,7 +30,7 @@ import * as XLSX from 'xlsx';
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];
 const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez"];
-const domains = ["example.com", "mail.co", "inbox.org", "test.net"];
+const defaultDomains = ["example.com", "mail.co", "inbox.org", "test.net"];
 const streetNames = ["Main St", "Oak Ave", "Pine Ln", "Maple Dr", "Cedar Blvd"];
 const cities = ["Springfield", "Rivertown", "Mapleton", "Oakville", "Fairview"];
 const countries = ["USA", "Canada", "UK", "Australia", "Germany"];
@@ -45,12 +45,9 @@ const generateUUID = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/
   return v.toString(16);
 });
 
-// Generator map
-const generators: Record<string, () => string> = {
+const baseGenerators: Record<string, () => string> = {
   'First Name': () => getRandomItem(firstNames),
   'Last Name': () => getRandomItem(lastNames),
-  'Full Name': () => `${getRandomItem(firstNames)} ${getRandomItem(lastNames)}`,
-  'Email': () => `${getRandomItem(firstNames).toLowerCase()}.${getRandomItem(lastNames).toLowerCase()}${getRandomNumber(1,99)}@${getRandomItem(domains)}`,
   'Phone Number': () => `(${getRandomNumber(200, 999)}) ${getRandomNumber(100, 999)}-${getRandomNumber(1000, 9999)}`,
   'Address': () => `${getRandomNumber(1, 9999)} ${getRandomItem(streetNames)}`,
   'City': () => getRandomItem(cities),
@@ -60,14 +57,17 @@ const generators: Record<string, () => string> = {
   'UUID': generateUUID,
 };
 
-type DataType = keyof typeof generators;
-type GeneratedRecord = Record<DataType, string>;
+type DataType = keyof typeof baseGenerators | 'Full Name' | 'Email';
+type GeneratedRecord = Partial<Record<DataType, string>>;
 
 export default function RandomDataGeneratorPage() {
   const [selectedFields, setSelectedFields] = useState<DataType[]>(['Full Name', 'Email']);
   const [count, setCount] = useState(10);
+  const [customDomain, setCustomDomain] = useState('');
   const [generatedData, setGeneratedData] = useState<GeneratedRecord[]>([]);
   const { toast } = useToast();
+  
+  const availableFields: DataType[] = ['First Name', 'Last Name', 'Full Name', 'Email', 'Phone Number', 'Address', 'City', 'Country', 'Integer', 'Float', 'UUID'];
 
   const handleFieldToggle = (field: DataType) => {
     setSelectedFields(prev => 
@@ -86,12 +86,33 @@ export default function RandomDataGeneratorPage() {
       });
       return;
     }
+    
     const newData = Array.from({ length: count }, () => {
-      const record: Partial<GeneratedRecord> = {};
+      const record: GeneratedRecord = {};
+      
+      const firstName = selectedFields.includes('First Name') ? baseGenerators['First Name']() : getRandomItem(firstNames);
+      const lastName = selectedFields.includes('Last Name') ? baseGenerators['Last Name']() : getRandomItem(lastNames);
+
+      if (selectedFields.includes('First Name')) {
+        record['First Name'] = firstName;
+      }
+      if (selectedFields.includes('Last Name')) {
+        record['Last Name'] = lastName;
+      }
+      if (selectedFields.includes('Full Name')) {
+        record['Full Name'] = `${firstName} ${lastName}`;
+      }
+      if (selectedFields.includes('Email')) {
+        const domain = customDomain || getRandomItem(defaultDomains);
+        record['Email'] = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${getRandomNumber(1,99)}@${domain}`;
+      }
+      
       selectedFields.forEach(field => {
-        record[field] = generators[field]();
+        if (baseGenerators[field]) {
+          record[field] = baseGenerators[field]();
+        }
       });
-      return record as GeneratedRecord;
+      return record;
     });
     setGeneratedData(newData);
   };
@@ -115,7 +136,7 @@ export default function RandomDataGeneratorPage() {
   const copyAllToClipboard = () => {
     if(generatedData.length === 0) return;
     const header = selectedFields.join('\t');
-    const rows = generatedData.map(row => selectedFields.map(field => row[field]).join('\t'));
+    const rows = generatedData.map(row => selectedFields.map(field => row[field] ?? '').join('\t'));
     const allData = [header, ...rows].join('\n');
     copyToClipboard(allData, 'All generated data');
   }
@@ -125,7 +146,7 @@ export default function RandomDataGeneratorPage() {
     const doc = new jsPDF();
     (doc as any).autoTable({
       head: [selectedFields],
-      body: generatedData.map(row => selectedFields.map(field => row[field])),
+      body: generatedData.map(row => selectedFields.map(field => row[field] ?? '')),
     });
     doc.save('random-data.pdf');
   };
@@ -133,7 +154,7 @@ export default function RandomDataGeneratorPage() {
   const exportToExcel = () => {
     if (generatedData.length === 0) return;
     const worksheet = XLSX.utils.json_to_sheet(generatedData.map(row => {
-      const newRow: Record<string, string> = {};
+      const newRow: Record<string, string | undefined> = {};
       selectedFields.forEach(field => {
         newRow[field] = row[field];
       });
@@ -159,12 +180,12 @@ export default function RandomDataGeneratorPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
             <div className="md:col-span-3">
               <Label>Data Fields to Generate</Label>
               <Card className="mt-2">
-                <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {Object.keys(generators).map(key => (
+                <CardContent className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4">
+                  {availableFields.map(key => (
                     <div key={key} className="flex items-center space-x-2">
                       <Checkbox
                         id={key}
@@ -190,8 +211,18 @@ export default function RandomDataGeneratorPage() {
                     id="count"
                     type="number"
                     value={count}
-                    onChange={(e) => setCount(Math.max(1, parseInt(e.target.value, 10)))}
+                    onChange={(e) => setCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
                     min="1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="custom-domain">Custom Email Domain (Optional)</Label>
+                <Input
+                  id="custom-domain"
+                  type="text"
+                  value={customDomain}
+                  onChange={(e) => setCustomDomain(e.target.value)}
+                  placeholder="e.g., mycompany.com"
                 />
               </div>
               <Button onClick={handleGenerate} className="w-full">
