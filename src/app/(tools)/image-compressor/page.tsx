@@ -13,15 +13,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
-import { FileDown, RefreshCcw, UploadCloud, X } from 'lucide-react';
+import {
+  FileDown,
+  RefreshCcw,
+  UploadCloud,
+  X,
+  CheckCircle2,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 // Helper function to compress image on the client
-async function compressImage(
-  file: File,
-  quality: number
-): Promise<Blob> {
+async function compressImage(file: File, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.src = URL.createObjectURL(file);
@@ -51,7 +54,6 @@ async function compressImage(
     };
   });
 }
-
 
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -83,7 +85,7 @@ export default function ImageCompressorPage() {
       handleFileSelect(e.target.files[0]);
     }
   };
-  
+
   const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -93,7 +95,7 @@ export default function ImageCompressorPage() {
     handleDragEvents(e);
     setIsDragging(true);
   };
-  
+
   const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
@@ -103,7 +105,7 @@ export default function ImageCompressorPage() {
     handleDragEvents(e);
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-       if (e.dataTransfer.files[0].type.startsWith('image/')) {
+      if (e.dataTransfer.files[0].type.startsWith('image/')) {
         handleFileSelect(e.dataTransfer.files[0]);
       } else {
         toast({
@@ -115,8 +117,7 @@ export default function ImageCompressorPage() {
     }
   };
 
-
-  const handleRemoveFile = () => {
+  const resetState = () => {
     setFile(null);
     setPreview(null);
     setCompressed(false);
@@ -126,55 +127,67 @@ export default function ImageCompressorPage() {
     setCompressionLevel([50]);
   };
 
+  const handleRemoveFile = () => {
+    resetState();
+  };
+
   const handleCompress = async () => {
     if (!file) return;
 
     setIsCompressing(true);
     setProgress(0);
-
-    const startTime = Date.now();
-    const minDuration = 3000;
+    setCompressed(false);
 
     let compressedBlob: Blob | null = null;
     let compressionError: Error | null = null;
-    
+
     try {
       compressedBlob = await compressImage(file, compressionLevel[0]);
     } catch (error) {
-       compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
+      compressionError =
+        error instanceof Error
+          ? error
+          : new Error('An unknown error occurred during compression.');
     }
-    
+
+    const minDuration = 3000;
+    const startTime = Date.now();
+
     const progressInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
-        setProgress(currentProgress);
+      const elapsedTime = Date.now() - startTime;
+      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+      setProgress(currentProgress);
 
-        if (currentProgress >= 100) {
-            clearInterval(progressInterval);
+      if (currentProgress >= 100) {
+        clearInterval(progressInterval);
+        setIsCompressing(false);
 
-            if (compressionError) {
-              toast({
-                  title: 'Compression Error',
-                  description: compressionError.message,
-                  variant: 'destructive',
-              });
-            } else if (compressedBlob) {
-                const finalSizeKB = compressedBlob.size / 1024;
-                setCompressedPreview(URL.createObjectURL(compressedBlob));
-                setCompressedSize(finalSizeKB);
-                setCompressed(true);
-            }
-            
-            setIsCompressing(false);
+        if (compressionError) {
+          toast({
+            title: 'Compression Error',
+            description: compressionError.message,
+            variant: 'destructive',
+          });
+          handleGoBack();
+        } else if (compressedBlob) {
+          const finalSizeKB = compressedBlob.size / 1024;
+          setCompressedPreview(URL.createObjectURL(compressedBlob));
+          setCompressedSize(finalSizeKB);
+          setCompressed(true);
         }
+      }
     }, 50);
   };
-  
+
   const handleGoBack = () => {
     setCompressed(false);
     setCompressedPreview(null);
     setProgress(0);
     setCompressedSize(null);
+  };
+
+  const handleCompressAnother = () => {
+    resetState();
   };
 
   const handleDownload = () => {
@@ -192,7 +205,11 @@ export default function ImageCompressorPage() {
     document.body.removeChild(a);
   };
 
-  const originalSizeInKB = file ? (file.size / 1024).toFixed(2) : '0';
+  const originalSizeInKB = file ? file.size / 1024 : 0;
+  const compressionPercentage =
+    file && compressedSize
+      ? Math.round(((originalSizeInKB - compressedSize) / originalSizeInKB) * 100)
+      : 0;
 
   return (
     <div className="grid gap-6">
@@ -200,17 +217,20 @@ export default function ImageCompressorPage() {
         <CardHeader>
           <CardTitle className="font-headline">Image Compressor</CardTitle>
           <CardDescription>
-            Upload an image, adjust the compression level, and download the optimized
-            file.
+            Upload an image, adjust the compression level, and download the
+            optimized file.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!preview ? (
+          {!file ? (
             <label
               htmlFor="image-upload"
-              className={cn("flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors", {
-                "bg-accent/50 border-primary": isDragging
-              })}
+              className={cn(
+                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+                {
+                  'border-primary bg-accent/50': isDragging,
+                }
+              )}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragEvents}
@@ -236,7 +256,11 @@ export default function ImageCompressorPage() {
               <div className="relative">
                 {preview && (
                   <img
-                    src={compressed && compressedPreview ? compressedPreview : preview}
+                    src={
+                      compressed && compressedPreview
+                        ? compressedPreview
+                        : preview
+                    }
                     alt={
                       compressed
                         ? 'Compressed image preview'
@@ -261,47 +285,46 @@ export default function ImageCompressorPage() {
                 </div>
               </div>
               <div className="flex flex-col space-y-6">
-                <div>
-                  <h3 className="mb-2 font-semibold">File Information</h3>
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <p>Name: {file?.name}</p>
-                    <p>Original Size: {originalSizeInKB} KB</p>
-                    {compressedSize !== null && (
-                      <p className="font-medium text-foreground">
-                        Compressed Size: {compressedSize.toFixed(2)} KB
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {!compressed && !isCompressing && (
+                {!compressed && (
                   <>
-                    <div className="space-y-4">
-                      <Label htmlFor="compression-level">
-                        Compression Level: {compressionLevel[0]}%
-                      </Label>
-                      <Slider
-                        id="compression-level"
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={compressionLevel}
-                        onValueChange={setCompressionLevel}
-                        disabled={isCompressing}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Lower percentage means smaller file size but lower
-                        quality.
-                      </p>
+                    <div>
+                      <h3 className="mb-2 font-semibold">File Information</h3>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p>Name: {file?.name}</p>
+                        <p>Original Size: {originalSizeInKB.toFixed(2)} KB</p>
+                      </div>
                     </div>
-                    <div className="space-y-4">
-                      <Button
-                        onClick={handleCompress}
-                        className="w-full"
-                        disabled={isCompressing}
-                      >
-                        Compress Image
-                      </Button>
-                    </div>
+                    {!isCompressing && (
+                      <>
+                        <div className="space-y-4">
+                          <Label htmlFor="compression-level">
+                            Compression Level: {compressionLevel[0]}%
+                          </Label>
+                          <Slider
+                            id="compression-level"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={compressionLevel}
+                            onValueChange={setCompressionLevel}
+                            disabled={isCompressing}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Lower percentage means smaller file size but lower
+                            quality.
+                          </p>
+                        </div>
+                        <div className="space-y-4">
+                          <Button
+                            onClick={handleCompress}
+                            className="w-full"
+                            disabled={isCompressing}
+                          >
+                            Compress Image
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
@@ -314,27 +337,45 @@ export default function ImageCompressorPage() {
                   </div>
                 )}
 
-                {compressed && (
-                  <div className="flex h-full flex-col justify-center space-y-4">
-                    <div className="space-y-2 text-center">
-                      <p className="font-semibold text-green-600">
-                        Compression Complete!
+                {compressed && compressedSize !== null && (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <h3 className="text-2xl font-bold">
+                      Compression Complete
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Your image has been compressed by {compressionPercentage}
+                      %.
+                      <br />
+                      Ready to download!
+                    </p>
+                    <div className="text-sm">
+                      <p>
+                        Original Size:{' '}
+                        <span className="font-medium text-foreground">
+                          {originalSizeInKB.toFixed(2)} KB
+                        </span>
                       </p>
+                      <p>
+                        Compressed Size:{' '}
+                        <span className="font-medium text-foreground">
+                          {compressedSize.toFixed(2)} KB
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
                       <Button
                         className="w-full"
-                        variant="secondary"
                         onClick={handleDownload}
                       >
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Download Compressed Image
+                        Download Image
                       </Button>
                       <Button
-                        onClick={handleGoBack}
                         className="w-full"
-                        variant="outline"
+                        variant="ghost"
+                        onClick={handleCompressAnother}
                       >
-                        <RefreshCcw className="mr-2 h-4 w-4" />
-                        Go Back & Re-compress
+                        Compress another
                       </Button>
                     </div>
                   </div>
