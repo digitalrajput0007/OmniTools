@@ -87,6 +87,30 @@ export default function ImageCompressorPage() {
     setCompressedSize(null);
   }
 
+  const handleDownload = () => {
+    if (!preview || !file) return;
+
+    // In a real app, this would be the compressed file blob.
+    // For this simulation, we'll just use the original file.
+    fetch(preview)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        const name = file.name;
+        const ext = name.substring(name.lastIndexOf('.'));
+        const baseName = name.substring(0, name.lastIndexOf('.'));
+        a.download = `${baseName}-compressed${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      })
+      .catch(() => alert('Failed to download image.'));
+  };
+
   const originalSizeInKB = file ? (file.size / 1024).toFixed(2) : '0';
 
   return (
@@ -205,7 +229,7 @@ export default function ImageCompressorPage() {
                         <Button
                           className="w-full"
                           variant="secondary"
-                          onClick={() => alert('Simulating download...')}
+                          onClick={handleDownload}
                         >
                           <FileDown className="mr-2 h-4 w-4" />
                           Download Compressed Image
