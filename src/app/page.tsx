@@ -32,7 +32,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 justify-center gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
                   <Card className="h-full transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
