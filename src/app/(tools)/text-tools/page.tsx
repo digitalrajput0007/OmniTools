@@ -20,6 +20,13 @@ const toTitleCase = (str: string) => {
   );
 };
 
+const toSentenceCase = (str: string) => {
+  if (!str) return '';
+  const lowercased = str.toLowerCase();
+  return lowercased.replace(/(^\s*\w|[.!?]\s+\w)/g, (c) => c.toUpperCase());
+};
+
+
 export default function TextToolsPage() {
   const [text, setText] = useState('');
   const [activeTab, setActiveTab] = useState('stats');
@@ -48,6 +55,10 @@ export default function TextToolsPage() {
     setText(toTitleCase(text));
   };
   
+  const handleConvertToSentenceCase = () => {
+    setText(toSentenceCase(text));
+  };
+
   const handleClearText = () => {
     setText('');
   }
@@ -130,6 +141,10 @@ export default function TextToolsPage() {
                        <Button onClick={handleConvertToTitleCase} disabled={!text}>
                           <Pilcrow className="mr-2 h-4 w-4" />
                           Title Case
+                       </Button>
+                       <Button onClick={handleConvertToSentenceCase} disabled={!text}>
+                          <Pilcrow className="mr-2 h-4 w-4" />
+                          Sentence case
                        </Button>
                     </CardContent>
                   </Card>
