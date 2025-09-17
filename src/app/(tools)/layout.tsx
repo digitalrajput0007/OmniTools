@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/sidebar';
 import Header from '@/components/header';
 import { AppLogo, AppName, tools } from '@/lib/constants';
-import type { Metadata } from 'next';
 
 // This is not how you generate dynamic metadata in the app router.
 // Each page should export its own metadata object.
