@@ -15,6 +15,11 @@ import {
 } from '@/components/ui/sidebar';
 import Header from '@/components/header';
 import { AppLogo, AppName, tools } from '@/lib/constants';
+import type { Metadata } from 'next';
+
+// This is not how you generate dynamic metadata in the app router.
+// Each page should export its own metadata object.
+// However, since this is a client component, we can update the document title.
 
 export default function ToolLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,7 +29,11 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!currentTool) {
+      // Redirect to home if the tool is not found.
+      // A more robust solution might show a 404 page.
       router.replace('/');
+    } else {
+      document.title = `${currentTool.name} | ${AppName}`;
     }
   }, [currentTool, router]);
 
