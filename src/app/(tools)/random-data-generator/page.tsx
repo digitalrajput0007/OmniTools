@@ -68,6 +68,11 @@ export default function RandomDataGeneratorPage() {
   const { toast } = useToast();
   
   const availableFields: DataType[] = ['First Name', 'Last Name', 'Full Name', 'Email', 'Phone Number', 'Address', 'City', 'Country', 'Integer', 'Float', 'UUID'];
+  const fieldOrder: DataType[] = ['First Name', 'Last Name', 'Full Name', 'Phone Number', 'Email', 'Address', 'City', 'Country', 'Integer', 'Float', 'UUID'];
+
+  const displayedFields = useMemo(() => {
+    return fieldOrder.filter(field => selectedFields.includes(field));
+  }, [selectedFields]);
 
   const handleFieldToggle = (field: DataType) => {
     setSelectedFields(prev => 
@@ -157,8 +162,8 @@ export default function RandomDataGeneratorPage() {
 
   const copyAllToClipboard = () => {
     if(generatedData.length === 0) return;
-    const header = selectedFields.join('\t');
-    const rows = generatedData.map(row => selectedFields.map(field => row[field] ?? '').join('\t'));
+    const header = displayedFields.join('\t');
+    const rows = generatedData.map(row => displayedFields.map(field => row[field] ?? '').join('\t'));
     const allData = [header, ...rows].join('\n');
     copyToClipboard(allData, 'All generated data');
   }
@@ -167,8 +172,8 @@ export default function RandomDataGeneratorPage() {
     if (generatedData.length === 0) return;
     const doc = new jsPDF();
     (doc as any).autoTable({
-      head: [selectedFields],
-      body: generatedData.map(row => selectedFields.map(field => row[field] ?? '')),
+      head: [displayedFields],
+      body: generatedData.map(row => displayedFields.map(field => row[field] ?? '')),
     });
     doc.save('random-data.pdf');
   };
@@ -177,7 +182,7 @@ export default function RandomDataGeneratorPage() {
     if (generatedData.length === 0) return;
     const worksheet = XLSX.utils.json_to_sheet(generatedData.map(row => {
       const newRow: Record<string, string | undefined> = {};
-      selectedFields.forEach(field => {
+      displayedFields.forEach(field => {
         newRow[field] = row[field];
       });
       return newRow;
@@ -278,7 +283,7 @@ export default function RandomDataGeneratorPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {selectedFields.map(field => <TableHead key={field}>{field}</TableHead>)}
+                          {displayedFields.map(field => <TableHead key={field}>{field}</TableHead>)}
                           <TableHead className="w-[50px] text-right">Copy</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -286,11 +291,11 @@ export default function RandomDataGeneratorPage() {
                         {generatedData.length > 0 ? (
                           generatedData.map((row, rowIndex) => (
                             <TableRow key={rowIndex}>
-                              {selectedFields.map(field => (
+                              {displayedFields.map(field => (
                                 <TableCell key={field} className="font-mono text-xs">{row[field]}</TableCell>
                               ))}
                               <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(selectedFields.map(field => row[field]).join(', '), 'Row')}>
+                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(displayedFields.map(field => row[field]).join(', '), 'Row')}>
                                     <Copy className="h-4 w-4" />
                                 </Button>
                               </TableCell>
@@ -298,7 +303,7 @@ export default function RandomDataGeneratorPage() {
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={selectedFields.length + 1} className="h-24 text-center">
+                            <TableCell colSpan={displayedFields.length + 1} className="h-24 text-center">
                               No data generated. Select fields and click "Generate Data".
                             </TableCell>
                           </TableRow>
@@ -313,5 +318,3 @@ export default function RandomDataGeneratorPage() {
     </div>
   );
 }
-
-    
