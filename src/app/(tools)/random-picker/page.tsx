@@ -207,28 +207,24 @@ export default function RandomPickerPage() {
     return (
       <div className='space-y-4'>
         {winners.map((winner, index) => (
-          <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", getRankStyle(index), winner && "border-green-500 bg-green-500/5")}>
-              <CardHeader className="py-2">
-                  <CardTitle className="text-sm text-muted-foreground">{winnerLabels[index]}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-grow flex-col items-center justify-center space-y-2 text-center py-2">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <Confetti active={showConfettiFor === index} config={confettiConfig} />
+          <Card key={index} className={cn("relative flex flex-col items-center justify-center overflow-hidden transition-all p-4", getRankStyle(index), winner && "border-green-500 bg-green-500/5")}>
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <Confetti active={showConfettiFor === index} config={confettiConfig} />
+            </div>
+             <p className="absolute top-2 left-4 text-sm text-muted-foreground font-medium">{winnerLabels[index]}</p>
+             
+              {winner ? (
+                  <div className="flex items-center gap-2">
+                      <Trophy className={cn("text-yellow-500", index === 0 ? "h-6 w-6" : "h-5 w-5")} />
+                      <p className={cn("font-bold font-headline", index === 0 ? "text-xl" : "text-lg")}>{winner}</p>
                   </div>
-                  
-                  {winner ? (
-                      <div className="flex items-center gap-2">
-                          <Trophy className={cn("text-yellow-500", index === 0 ? "h-6 w-6" : "h-5 w-5")} />
-                          <p className={cn("font-bold font-headline", index === 0 ? "text-xl" : "text-lg")}>{winner}</p>
-                      </div>
-                  ) : pickingFor === index ? (
-                      <p className="text-xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
-                  ) : (
-                     <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null || !!winners[index]} size="sm" className='w-full max-w-xs'>
-                          <Ticket className="mr-2 h-4 w-4" /> Pick Winner
-                      </Button>
-                  )}
-              </CardContent>
+              ) : pickingFor === index ? (
+                  <p className="text-xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
+              ) : (
+                 <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null || !!winners[index]} size="sm" className='w-full max-w-xs'>
+                      <Ticket className="mr-2 h-4 w-4" /> Pick Winner
+                  </Button>
+              )}
           </Card>
         ))}
         {(allWinnersPicked || (availableItems.length === 0 && !isSetup)) && (
