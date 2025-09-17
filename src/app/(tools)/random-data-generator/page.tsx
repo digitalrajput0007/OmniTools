@@ -202,8 +202,8 @@ export default function RandomDataGeneratorPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">
             Create various types of dummy data for your projects and testing needs.
           </CardDescription>
         </CardHeader>

@@ -93,8 +93,8 @@ export default function TextToolsPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">
             A versatile set of tools to analyze and transform your text.
           </CardDescription>
         </CardHeader>

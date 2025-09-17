@@ -66,8 +66,8 @@ export default function TextDiffPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">
             Paste two blocks of text to see the differences highlighted.
           </CardDescription>
         </CardHeader>

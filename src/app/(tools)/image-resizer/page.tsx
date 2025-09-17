@@ -486,8 +486,8 @@ a.click();
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>Resize and crop your images with a live preview.</CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">Resize and crop your images with a live preview.</CardDescription>
         </CardHeader>
         <CardContent>
           {renderContent()}

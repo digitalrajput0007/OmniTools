@@ -124,8 +124,8 @@ export default function ImageToPdfPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">
             Convert your JPG, PNG, and other images to a PDF document.
           </CardDescription>
         </CardHeader>

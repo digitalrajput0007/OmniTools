@@ -394,8 +394,8 @@ a.click();
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">
             Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
           </CardDescription>
         </CardHeader>

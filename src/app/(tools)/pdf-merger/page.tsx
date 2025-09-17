@@ -149,8 +149,8 @@ export default function PdfMergerPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
-          <CardDescription>
+        <CardHeader className="text-center">
+          <CardDescription className="text-base">
             Combine multiple PDF files into a single document.
           </CardDescription>
         </CardHeader>
