@@ -172,7 +172,7 @@ export default function RandomPickerPage() {
                     <CardDescription>{availableItems.length} items remaining</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="h-64">
+                    <ScrollArea className="h-96">
                         <div className="flex flex-col gap-2">
                             {availableItems.map((item, i) => (
                                 <div key={i} className="rounded-md border bg-secondary/30 px-3 py-2 text-sm text-secondary-foreground">{item}</div>
@@ -183,9 +183,9 @@ export default function RandomPickerPage() {
                 </CardContent>
             </Card>
 
-            <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
+            <div className="flex flex-col gap-4 md:col-span-2">
                  {winners.map((winner, index) => (
-                    <Card key={index} className={cn("relative flex flex-col overflow-hidden transition-all", winner && "border-green-500 bg-green-500/5")}>
+                    <Card key={index} className={cn("relative flex min-h-[150px] flex-col overflow-hidden transition-all", winner && "border-green-500 bg-green-500/5")}>
                         <CardHeader>
                             <CardTitle className="text-muted-foreground">{getOrdinal(index + 1)} Place</CardTitle>
                         </CardHeader>
@@ -202,7 +202,7 @@ export default function RandomPickerPage() {
                             ) : pickingFor === index ? (
                                 <p className="text-3xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
                             ) : (
-                               <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null} size="lg" className='w-full'>
+                               <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null} size="lg" className='w-full max-w-xs'>
                                     <Ticket className="mr-2" /> Pick Winner
                                 </Button>
                             )}
