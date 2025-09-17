@@ -10,6 +10,7 @@ import {
   Scale,
   Scissors,
   Scaling,
+  Wand2,
 } from 'lucide-react';
 
 export type Tool = {
@@ -43,6 +44,12 @@ export const tools: Tool[] = [
     description: 'Easily resize and crop your images to the perfect dimensions.',
     path: '/image-resizer',
     icon: Scaling,
+  },
+  {
+    name: 'Background Remover',
+    description: 'Use AI to automatically remove the background from an image.',
+    path: '/background-remover',
+    icon: Wand2,
   },
   {
     name: 'PDF Merger',
