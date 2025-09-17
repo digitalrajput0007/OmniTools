@@ -100,12 +100,13 @@ export default function ImageCompressorPage() {
 
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 95) {
-          return prev;
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
         }
         return prev + 1;
       });
-    }, 30); // 3 seconds for ~95%
+    }, 30); // ~3 seconds total
 
     try {
       const compressedBlob = await compressImage(file, compressionLevel[0]);
