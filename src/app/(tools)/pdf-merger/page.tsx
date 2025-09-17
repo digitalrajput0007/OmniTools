@@ -128,8 +128,8 @@ export default function PdfMergerPage() {
       const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-a.style.display = 'none';
-a.href = url;
+      a.style.display = 'none';
+      a.href = url;
       a.download = 'merged.pdf';
       document.body.appendChild(a);
       a.click();
@@ -244,7 +244,7 @@ a.href = url;
                   <label
                     htmlFor="pdf-upload-additional"
                     className={cn(
-                      'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
+                      'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
                       {
                         'border-primary bg-accent/50': isDragging,
                       }
