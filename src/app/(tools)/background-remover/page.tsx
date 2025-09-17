@@ -244,14 +244,14 @@ a.click();
         <div className="space-y-2">
           <h3 className="text-center font-semibold text-muted-foreground">Original Image</h3>
           <p className="text-center text-xs text-muted-foreground">Click to pick a background color</p>
-          <div className="relative mx-auto max-h-[40vh] w-full max-w-sm overflow-hidden rounded-lg border">
+          <div className="relative mx-auto flex h-64 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border">
             {preview && <Image
               ref={imageRef}
               src={preview}
               alt="Original image"
               width={400}
               height={400}
-              className="h-full w-full cursor-crosshair object-contain"
+              className="h-auto max-h-full w-auto max-w-full cursor-crosshair object-contain"
               onClick={handleColorPick}
             />}
           </div>
@@ -259,14 +259,14 @@ a.click();
         <div className="space-y-2">
           <h3 className="text-center font-semibold text-muted-foreground">Live Preview</h3>
            <p className="text-center text-xs text-muted-foreground">Adjust controls to update</p>
-           <div className="relative mx-auto max-h-[40vh] w-full max-w-sm overflow-hidden rounded-lg border">
+           <div className="relative mx-auto flex h-64 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border">
             {result ? (
               <Image
                 src={result}
                 alt="Image with background removed"
                 width={400}
                 height={400}
-                className="h-full w-full object-contain"
+                className="h-auto max-h-full w-auto max-w-full object-contain"
                 unoptimized
                 key={result}
               />
@@ -340,13 +340,13 @@ a.click();
             <h2 className="text-3xl font-headline font-bold">Success!</h2>
             <p className="text-muted-foreground">Your image is ready. You can now download it or start over.</p>
         </div>
-        <div className="relative mx-auto max-h-[50vh] w-full max-w-lg overflow-hidden rounded-lg border">
+        <div className="relative mx-auto flex h-80 w-full max-w-lg items-center justify-center overflow-hidden rounded-lg border">
             {result && <Image
             src={result}
             alt="Final result"
             width={500}
             height={500}
-            className="h-full w-full object-contain"
+            className="h-auto max-h-full w-auto max-w-full object-contain"
             unoptimized
             />}
         </div>
