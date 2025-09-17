@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,87 +13,29 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { UploadCloud, Wand2, X, Download, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
+import { UploadCloud, Download, RefreshCw, Palette } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 
-async function removeBackgroundClientSide(
-  photoDataUri: string,
-  tolerance: number
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = photoDataUri;
-
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = image.width;
-      canvas.height = image.height;
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        return reject(new Error('Could not get canvas context.'));
-      }
-
-      ctx.drawImage(image, 0, 0);
-
-      // Get the color of the top-left pixel as the background color
-      const pixelData = ctx.getImageData(0, 0, 1, 1).data;
-      const bgR = pixelData[0];
-      const bgG = pixelData[1];
-      const bgB = pixelData[2];
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        // Calculate color difference
-        const diff = Math.sqrt(
-          Math.pow(r - bgR, 2) + Math.pow(g - bgG, 2) + Math.pow(b - bgB, 2)
-        );
-
-        if (diff < tolerance) {
-          // Set pixel to transparent
-          data[i + 3] = 0;
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      const resultDataUri = canvas.toDataURL('image/png');
-
-      resolve(resultDataUri);
-    };
-
-    image.onerror = () => {
-      reject(new Error('Failed to load image for processing.'));
-    };
-  });
-}
-
+type Color = { r: number; g: number; b: number };
 
 export default function BackgroundRemoverPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isDone, setIsDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [tolerance, setTolerance] = useState([30]);
+  const [tolerance, setTolerance] = useState([10]); // Percentage
+  const [backgroundColor, setBackgroundColor] = useState<Color>({ r: 255, g: 255, b: 255 });
   const { toast } = useToast();
+  const imageRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const resetState = () => {
     setFile(null);
     setPreview(null);
     setResult(null);
-    setIsProcessing(false);
-    setIsDone(false);
-    setError(null);
+    setTolerance([10]);
+    setBackgroundColor({ r: 255, g: 255, b: 255 });
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -142,31 +84,72 @@ export default function BackgroundRemoverPage() {
       handleFileSelect(e.dataTransfer.files[0]);
     }
   };
+  
+  const handleColorPick = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!imageRef.current) return;
 
-  const handleRemoveBackground = async () => {
-    if (!preview) return;
+    const canvas = document.createElement('canvas');
+    const rect = imageRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    setIsProcessing(true);
-    setIsDone(false);
-    setResult(null);
-    setError(null);
+    const naturalWidth = imageRef.current.naturalWidth;
+    const naturalHeight = imageRef.current.naturalHeight;
+    
+    canvas.width = naturalWidth;
+    canvas.height = naturalHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    
+    ctx.drawImage(imageRef.current, 0, 0, naturalWidth, naturalHeight);
 
-    // Simulate a delay for user feedback, as canvas operation can be very fast
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const pixelX = Math.floor(x * (naturalWidth / rect.width));
+    const pixelY = Math.floor(y * (naturalHeight / rect.height));
 
-    try {
-      const resultDataUri = await removeBackgroundClientSide(preview, tolerance[0] );
-      setResult(resultDataUri);
-      setIsDone(true);
-    } catch (error) {
-      console.error(error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unknown error occurred.';
-      setError(`Failed to remove background. ${errorMessage}`);
-    } finally {
-      setIsProcessing(false);
-    }
+    const pixelData = ctx.getImageData(pixelX, pixelY, 1, 1).data;
+    setBackgroundColor({ r: pixelData[0], g: pixelData[1], b: pixelData[2] });
   };
+
+  useEffect(() => {
+    if (!preview || !canvasRef.current) return;
+
+    const image = new window.Image();
+    image.src = preview;
+    image.onload = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.drawImage(image, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const toleranceValue = (tolerance[0] / 100) * 255;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        const diff = Math.sqrt(
+          Math.pow(r - backgroundColor.r, 2) +
+          Math.pow(g - backgroundColor.g, 2) +
+          Math.pow(b - backgroundColor.b, 2)
+        );
+
+        if (diff < toleranceValue) {
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      setResult(canvas.toDataURL('image/png'));
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview, tolerance, backgroundColor]);
 
   const handleDownload = () => {
     if (!result || !file) return;
@@ -179,13 +162,15 @@ export default function BackgroundRemoverPage() {
     document.body.removeChild(a);
   };
 
+  const bgColorString = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`;
+
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Basic Background Remover</CardTitle>
+          <CardTitle className="font-headline">Background Remover</CardTitle>
           <CardDescription>
-            Upload an image with a solid background to remove it. Works best with plain, contrasting backgrounds.
+            Upload an image, pick a color, and adjust the tolerance to remove the background.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -196,150 +181,95 @@ export default function BackgroundRemoverPage() {
                 'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
                 { 'border-primary bg-accent/50': isDragging }
               )}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragEvents}
-              onDrop={handleDrop}
+              onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
             >
               <UploadCloud className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">
-                Drag & drop your image here, or click to browse
-              </p>
-              <Input
-                id="image-upload"
-                type="file"
-                className="sr-only"
-                onChange={handleFileChange}
-                accept="image/*"
-              />
-              <Button asChild variant="outline" className="mt-4">
-                <span>Browse File</span>
-              </Button>
+              <p className="mt-4 text-muted-foreground">Drag & drop your image here, or click to browse</p>
+              <Input id="image-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
+              <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
             </label>
           ) : (
-            <div>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <h3 className="text-center font-semibold text-muted-foreground">Original Image</h3>
-                  <div className="relative aspect-square w-full overflow-hidden rounded-lg border">
+                  <p className="text-center text-xs text-muted-foreground">Click to pick a background color</p>
+                  <div className="relative mx-auto max-h-[40vh] w-full max-w-sm overflow-hidden rounded-lg border">
                     <Image
+                      ref={imageRef}
                       src={preview}
                       alt="Original image"
-                      fill
-                      className="object-contain"
+                      width={400}
+                      height={400}
+                      className="h-full w-full cursor-crosshair object-contain"
+                      onClick={handleColorPick}
                     />
-                     <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute right-2 top-2 z-10"
-                        onClick={resetState}
-                        disabled={isProcessing}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <h3 className="text-center font-semibold text-muted-foreground">Result</h3>
-                   <div className="relative aspect-square w-full overflow-hidden rounded-lg border">
-                    {isProcessing ? (
-                       <div className="flex h-full w-full flex-col items-center justify-center space-y-4 bg-muted/20">
-                         <Wand2 className="h-10 w-10 animate-pulse text-primary" />
-                         <p className="text-sm text-muted-foreground">Removing background...</p>
-                         <Skeleton className='absolute h-full w-full' />
-                       </div>
-                    ) : result ? (
+                   <p className="text-center text-xs text-muted-foreground">Live preview</p>
+                   <div className="relative mx-auto max-h-[40vh] w-full max-w-sm overflow-hidden rounded-lg border">
+                    {result ? (
                       <Image
                         src={result}
                         alt="Image with background removed"
-                        fill
-                        className="object-contain"
+                        width={400}
+                        height={400}
+                        className="h-full w-full object-contain"
                       />
-                    ) : error ? (
-                       <div className="flex h-full w-full flex-col items-center justify-center bg-destructive/10 p-4 text-center">
-                          <AlertTriangle className="h-10 w-10 text-destructive" />
-                           <p className="mt-4 text-sm text-destructive">{error}</p>
-                       </div>
                     ) : (
-                      <div className="flex h-full w-full flex-col items-center justify-center bg-muted/20 p-4 text-center">
-                        <Wand2 className="h-10 w-10 text-muted-foreground" />
-                        <p className="mt-4 text-sm text-muted-foreground">
-                          Your image with the background removed will appear here.
-                        </p>
+                      <div className="flex h-full w-full items-center justify-center bg-muted/20">
+                         <p className="text-sm text-muted-foreground">Processing...</p>
                       </div>
                     )}
+                     <canvas ref={canvasRef} className="hidden" />
                   </div>
                 </div>
               </div>
               
-              <div className="mx-auto mt-6 max-w-md space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tolerance">Tolerance: {tolerance[0]}</Label>
-                    <Slider 
-                      id="tolerance"
-                      min={0}
-                      max={255}
-                      step={1}
-                      value={tolerance}
-                      onValueChange={setTolerance}
-                      disabled={isProcessing || isDone}
-                    />
-                    <p className="text-xs text-muted-foreground">Adjust how much color variation to remove. Higher is more aggressive.</p>
-                  </div>
-              </div>
-
-
-              {!isDone && !error && (
-                <div className="mt-6 flex justify-center">
-                  <Button
-                    onClick={handleRemoveBackground}
-                    disabled={isProcessing}
-                    size="lg"
-                  >
-                    <Wand2 className="mr-2 h-5 w-5" />
-                    {isProcessing
-                      ? 'Processing...'
-                      : 'Remove Background'}
-                  </Button>
-                </div>
-              )}
-
-              {isDone && result && (
-                <Card className="mt-8 bg-muted/30">
-                  <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                    <CheckCircle2 className="h-12 w-12 text-green-500" />
-                    <h3 className="mt-4 text-xl font-bold">
-                      Background Removed!
-                    </h3>
-                    <p className="mt-2 text-muted-foreground">
-                      Your new image is ready for download.
-                    </p>
-                    <div className="mt-6 flex w-full max-w-sm flex-col gap-2 sm:flex-row">
-                      <Button className="w-full" onClick={handleDownload}>
-                        <Download className="mr-2 h-4 w-4" /> Download Image
-                      </Button>
-                      <Button
-                        className="w-full"
-                        variant="ghost"
-                        onClick={resetState}
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4" /> Start Over
-                      </Button>
+              <Card className="mx-auto w-full max-w-lg">
+                <CardContent className="space-y-6 p-6">
+                   <div className="space-y-4">
+                     <Label>Controls</Label>
+                    <div className="flex items-center gap-4 rounded-lg border p-3">
+                       <div className="flex flex-1 items-center gap-3">
+                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border" style={{ backgroundColor: bgColorString }}>
+                            <Palette className="h-5 w-5 mix-blend-difference" style={{ color: 'white'}} />
+                         </div>
+                         <div className="text-sm">
+                           <div className="font-medium">Selected Color</div>
+                           <div className="text-muted-foreground">{bgColorString}</div>
+                         </div>
+                       </div>
+                       <div className="w-px self-stretch bg-border" />
+                       <div className="flex-1">
+                          <Label htmlFor="tolerance" className="mb-2 block text-sm font-medium">Tolerance: {tolerance[0]}%</Label>
+                          <Slider
+                            id="tolerance"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={tolerance}
+                            onValueChange={setTolerance}
+                          />
+                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-
-               {error && (
-                 <div className="mt-6 flex justify-center">
+                  </div>
+                  <div className="flex w-full flex-col gap-2 sm:flex-row">
+                    <Button className="w-full" onClick={handleDownload} disabled={!result}>
+                      <Download className="mr-2 h-4 w-4" /> Download Image
+                    </Button>
                     <Button
-                        variant="outline"
-                        onClick={resetState}
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4" /> Try Again
-                      </Button>
-                 </div>
-                )}
+                      className="w-full"
+                      variant="outline"
+                      onClick={resetState}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" /> Start Over
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </CardContent>
@@ -347,5 +277,3 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
-
-    
