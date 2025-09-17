@@ -38,23 +38,6 @@ export async function removeBackground(
   return removeBackgroundFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'backgroundRemoverPrompt',
-  input: { schema: BackgroundRemoverInputSchema },
-  output: { schema: BackgroundRemoverOutputSchema },
-  prompt: `You are an expert image editor specializing in removing backgrounds.
-
-  Your task is to take the user's uploaded image and remove the background completely.
-
-  - The subject should be cleanly isolated.
-  - The output must be a PNG image.
-  - The background of the output image must be transparent.
-
-  Return the final image in the 'imageWithBackgroundRemoved' output field.
-
-  Image: {{media url=photoDataUri}}`,
-});
-
 const removeBackgroundFlow = ai.defineFlow(
   {
     name: 'removeBackgroundFlow',
@@ -62,10 +45,35 @@ const removeBackgroundFlow = ai.defineFlow(
     outputSchema: BackgroundRemoverOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    if (!output) {
-      throw new Error('The model did not return the expected output.');
+    const { media } = await ai.generate({
+      model: 'googleai/gemini-2.5-flash-image-preview',
+      prompt: [
+        {
+          media: {
+            url: input.photoDataUri,
+          },
+        },
+        {
+          text: `You are an expert image editor specializing in removing backgrounds.
+
+          Your task is to take the user's uploaded image and remove the background completely.
+        
+          - The subject should be cleanly isolated.
+          - The output must be a PNG image.
+          - The background of the output image must be transparent.`,
+        },
+      ],
+      config: {
+        responseModalities: ['IMAGE'],
+      },
+    });
+
+    if (!media?.url) {
+      throw new Error('The model did not return an image.');
     }
-    return output;
+
+    return {
+      imageWithBackgroundRemoved: media.url,
+    };
   }
 );
