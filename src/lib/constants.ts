@@ -3,6 +3,7 @@ import {
   Combine,
   CopyPlus,
   Crop,
+  FileOutput,
   FileText,
   Minimize,
   QrCode,
@@ -62,6 +63,12 @@ export const tools: Tool[] = [
     description: 'Extract pages from a PDF or save each page as a new PDF.',
     path: '/pdf-splitter',
     icon: Scissors,
+  },
+   {
+    name: 'PDF to Word',
+    description: 'Extract text from a PDF to edit in Word.',
+    path: '/pdf-to-word',
+    icon: FileOutput,
   },
   {
     name: 'QR Code Generator',
