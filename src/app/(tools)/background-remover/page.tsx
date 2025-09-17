@@ -16,7 +16,8 @@ import { cn } from '@/lib/utils';
 import { removeBackground } from '@/ai/flows/remove-background-flow';
 import { UploadCloud, Wand2, X, Download, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 
 export default function BackgroundRemoverPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,6 +27,7 @@ export default function BackgroundRemoverPage() {
   const [isDone, setIsDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tolerance, setTolerance] = useState([30]);
   const { toast } = useToast();
 
   const resetState = () => {
@@ -92,22 +94,18 @@ export default function BackgroundRemoverPage() {
     setResult(null);
     setError(null);
 
+    // Simulate a delay for user feedback, as canvas operation can be very fast
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
-      const resultData = await removeBackground({ photoDataUri: preview });
+      const resultData = await removeBackground({ photoDataUri: preview, tolerance: tolerance[0] });
       setResult(resultData.imageWithBackgroundRemoved);
       setIsDone(true);
     } catch (error) {
       console.error(error);
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred.';
-      
-      if (errorMessage.includes('REMOVE_BG_API_KEY')) {
-        setError('The remove.bg API key is not configured. Please add it to your .env file and restart the server.');
-      } else if (errorMessage.includes('402')) {
-        setError('You have exceeded your free credits for the remove.bg API. Please check your account on their website.');
-      } else {
-        setError('Failed to remove background. The API may be overloaded or the image format is not supported. Please try again.');
-      }
+      setError(`Failed to remove background. ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }
@@ -120,7 +118,7 @@ export default function BackgroundRemoverPage() {
     const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
     a.download = `${baseName}-no-bg.png`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
   };
 
@@ -128,10 +126,9 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">AI Background Remover</CardTitle>
+          <CardTitle className="font-headline">Basic Background Remover</CardTitle>
           <CardDescription>
-            Upload an image and let our AI automatically remove the background for
-            you.
+            Upload an image with a solid background to remove it. Works best with plain, contrasting backgrounds.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -217,6 +214,23 @@ a.click();
                   </div>
                 </div>
               </div>
+              
+              <div className="mx-auto mt-6 max-w-md space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tolerance">Tolerance: {tolerance[0]}</Label>
+                    <Slider 
+                      id="tolerance"
+                      min={0}
+                      max={255}
+                      step={1}
+                      value={tolerance}
+                      onValueChange={setTolerance}
+                      disabled={isProcessing || isDone}
+                    />
+                    <p className="text-xs text-muted-foreground">Adjust how much color variation to remove. Higher is more aggressive.</p>
+                  </div>
+              </div>
+
 
               {!isDone && !error && (
                 <div className="mt-6 flex justify-center">
