@@ -16,6 +16,7 @@ import {
   Diff,
   CreditCard,
   DatabaseZap,
+  Ticket,
 } from 'lucide-react';
 
 export type Tool = {
@@ -103,6 +104,12 @@ export const tools: Tool[] = [
     description: 'Create dummy data like names, emails, and addresses.',
     path: '/random-data-generator',
     icon: DatabaseZap,
+  },
+  {
+    name: 'Random Picker',
+    description: 'Randomly select an item from a list.',
+    path: '/random-picker',
+    icon: Ticket,
   },
 ];
 
