@@ -254,8 +254,8 @@ export default function PdfMergerPage() {
                     onDragOver={handleDragEvents}
                     onDrop={handleDrop}
                   >
-                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 text-muted-foreground">
                       Drag & drop more files, or click to browse
                     </p>
                     <Input
