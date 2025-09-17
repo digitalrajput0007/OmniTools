@@ -12,6 +12,7 @@ import {
   Scissors,
   Scaling,
   Wand2,
+  ALargeSmall,
 } from 'lucide-react';
 
 export type Tool = {
@@ -75,6 +76,12 @@ export const tools: Tool[] = [
     description: 'Quickly convert between different units of measurement.',
     path: '/unit-converter',
     icon: Scale,
+  },
+  {
+    name: 'Text Tools',
+    description: 'Count words, change case, and remove extra spaces.',
+    path: '/text-tools',
+    icon: ALargeSmall,
   },
 ];
 
