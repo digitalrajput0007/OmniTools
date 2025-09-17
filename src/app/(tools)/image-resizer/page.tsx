@@ -31,6 +31,7 @@ import ReactCrop, {
 } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Progress } from '@/components/ui/progress';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -115,7 +116,7 @@ function getResizedImg(
 }
 
 type Step = 'upload' | 'edit' | 'processing' | 'download';
-type EditMode = 'resize' | 'crop' | null;
+type EditMode = 'resize' | 'crop';
 
 export default function ImageResizerCropperPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -136,7 +137,7 @@ export default function ImageResizerCropperPage() {
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<Step>('upload');
-  const [editMode, setEditMode] = useState<EditMode>(null);
+  const [editMode, setEditMode] = useState<EditMode>('resize');
 
   const resetState = () => {
     setFile(null);
@@ -151,7 +152,7 @@ export default function ImageResizerCropperPage() {
     setCompletedCrop(undefined);
     setProgress(0);
     setStep('upload');
-    setEditMode(null);
+    setEditMode('resize');
     if (imgRef.current) imgRef.current = null;
   };
 
@@ -276,7 +277,6 @@ export default function ImageResizerCropperPage() {
     const { url, file: croppedFile } = await getCroppedImg(imgRef.current, completedCrop, file.name);
     setPreview(url);
     setFile(croppedFile);
-    setEditMode(null);
     toast({ title: "Crop Applied", description: "The image preview has been updated." });
   };
   
@@ -286,7 +286,6 @@ export default function ImageResizerCropperPage() {
     setPreview(lastPreview);
     dataUrlToFile(lastPreview, originalFile.name).then(setFile);
     setLastPreview(null);
-    setEditMode(null);
     toast({ title: "Undo Successful", description: "Reverted to the previous image state." });
   };
 
@@ -321,10 +320,6 @@ export default function ImageResizerCropperPage() {
     a.click();
     document.body.removeChild(a);
   };
-  
-  const toggleEditMode = (mode: EditMode) => {
-    setEditMode(current => current === mode ? null : mode);
-  }
   
   const renderContent = () => {
     switch(step) {
@@ -372,49 +367,68 @@ export default function ImageResizerCropperPage() {
 
             <div className="flex flex-col space-y-6">
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-lg">Resize</CardTitle>
-                    <Button variant={editMode === 'resize' ? 'secondary' : 'outline'} size="sm" onClick={() => toggleEditMode('resize')}>
-                      {editMode === 'resize' ? 'Cancel' : 'Select'}
-                    </Button>
+                  <CardHeader>
+                    <CardTitle>Edit Image</CardTitle>
+                    <CardDescription>Select an edit mode and apply your changes.</CardDescription>
                   </CardHeader>
-                  {editMode === 'resize' && (
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="width">Width (px)</Label>
-                          <Input id="width" type="number" value={width} onChange={handleWidthChange} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="height">Height (px)</Label>
-                          <Input id="height" type="number" value={height} onChange={handleHeightChange} />
-                        </div>
+                  <CardContent className="space-y-6">
+                    <RadioGroup
+                      value={editMode}
+                      onValueChange={(value) => setEditMode(value as EditMode)}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <div>
+                        <RadioGroupItem value="resize" id="mode-resize" className="peer sr-only" />
+                        <Label
+                          htmlFor="mode-resize"
+                          className="flex h-full flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                        >
+                          <Scaling className="mb-3 h-6 w-6" />
+                          Resize
+                        </Label>
                       </div>
-                      <div className="mt-4 flex items-center space-x-2">
-                        <Switch id="aspect-lock-resize" checked={aspectLock} onCheckedChange={setAspectLock}/>
-                        <Label htmlFor="aspect-lock-resize">Lock aspect ratio</Label>
+                      <div>
+                        <RadioGroupItem value="crop" id="mode-crop" className="peer sr-only" />
+                        <Label
+                          htmlFor="mode-crop"
+                          className="flex h-full flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                        >
+                          <CropIcon className="mb-3 h-6 w-6" />
+                          Crop
+                        </Label>
                       </div>
-                      <Button onClick={handleApplyResize} className="mt-4 w-full"><Scaling className="mr-2 h-4 w-4" /> Apply Resize</Button>
-                    </CardContent>
-                  )}
-                </Card>
+                    </RadioGroup>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-lg">Crop</CardTitle>
-                     <Button variant={editMode === 'crop' ? 'secondary' : 'outline'} size="sm" onClick={() => toggleEditMode('crop')}>
-                      {editMode === 'crop' ? 'Cancel' : 'Select'}
-                    </Button>
-                  </CardHeader>
-                  {editMode === 'crop' && (
-                    <CardContent>
-                      <div className="mt-4 flex items-center space-x-2">
-                        <Switch id="aspect-lock-crop" checked={aspectLock} onCheckedChange={setAspectLock}/>
-                        <Label htmlFor="aspect-lock-crop">Lock aspect ratio</Label>
+                    {editMode === 'resize' && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="width">Width (px)</Label>
+                            <Input id="width" type="number" value={width} onChange={handleWidthChange} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="height">Height (px)</Label>
+                            <Input id="height" type="number" value={height} onChange={handleHeightChange} />
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch id="aspect-lock-resize" checked={aspectLock} onCheckedChange={setAspectLock}/>
+                          <Label htmlFor="aspect-lock-resize">Lock aspect ratio</Label>
+                        </div>
+                        <Button onClick={handleApplyResize} className="w-full"><Scaling className="mr-2 h-4 w-4" /> Apply Resize</Button>
                       </div>
-                      <Button onClick={handleApplyCrop} className="mt-4 w-full" disabled={!completedCrop?.width}><CropIcon className="mr-2 h-4 w-4" /> Apply Crop</Button>
-                    </CardContent>
-                  )}
+                    )}
+
+                    {editMode === 'crop' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <Switch id="aspect-lock-crop" checked={aspectLock} onCheckedChange={setAspectLock}/>
+                          <Label htmlFor="aspect-lock-crop">Lock aspect ratio</Label>
+                        </div>
+                        <Button onClick={handleApplyCrop} className="w-full" disabled={!completedCrop?.width}><CropIcon className="mr-2 h-4 w-4" /> Apply Crop</Button>
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
 
                 <div className='flex-grow' />
@@ -482,3 +496,5 @@ export default function ImageResizerCropperPage() {
     </div>
   );
 }
+
+    
