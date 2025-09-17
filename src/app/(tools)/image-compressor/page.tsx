@@ -12,13 +12,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Slider } from '@/components/ui/slider';
 import { FileDown, UploadCloud, X } from 'lucide-react';
 
 export default function ImageCompressorPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [compression, setCompression] = useState(80);
+  const [targetSize, setTargetSize] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [compressed, setCompressed] = useState(false);
@@ -33,6 +32,7 @@ export default function ImageCompressorPage() {
       setProgress(0);
       setIsCompressing(false);
       setCompressedSize(null);
+      setTargetSize(String(Math.round(selectedFile.size / 1024 / 2))); // Default to 50%
     }
   };
 
@@ -42,10 +42,24 @@ export default function ImageCompressorPage() {
     setCompressed(false);
     setProgress(0);
     setCompressedSize(null);
+    setTargetSize('');
   };
 
   const handleCompress = () => {
-    if (!file) return;
+    if (!file || !targetSize) return;
+
+    const targetSizeKB = parseFloat(targetSize);
+    if (isNaN(targetSizeKB) || targetSizeKB <= 0) {
+      alert('Please enter a valid target size.');
+      return;
+    }
+
+    const originalSizeKB = file.size / 1024;
+    if (targetSizeKB >= originalSizeKB) {
+      alert('Target size must be smaller than the original size.');
+      return;
+    }
+
     setIsCompressing(true);
     setCompressed(false);
     setProgress(0);
@@ -57,8 +71,9 @@ export default function ImageCompressorPage() {
           clearInterval(interval);
           setIsCompressing(false);
           setCompressed(true);
-          const newSize = (file.size * (compression / 100)) / 1024;
-          setCompressedSize(newSize);
+          // For simulation, we'll just show the user's target size.
+          // In a real scenario, the actual compressed size might differ slightly.
+          setCompressedSize(targetSizeKB);
           return 100;
         }
         return prev + 10;
@@ -66,13 +81,15 @@ export default function ImageCompressorPage() {
     }, 200);
   };
 
+  const originalSizeInKB = file ? (file.size / 1024).toFixed(2) : '0';
+
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">Image Compressor</CardTitle>
           <CardDescription>
-            Upload an image, adjust the compression level, and download the
+            Upload an image, set a target file size, and download the
             optimized file.
           </CardDescription>
         </CardHeader>
@@ -121,10 +138,7 @@ export default function ImageCompressorPage() {
                   <h3 className="mb-2 font-semibold">File Information</h3>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>Name: {file?.name}</p>
-                    <p>
-                      Original Size:{' '}
-                      {file ? (file.size / 1024).toFixed(2) : 0} KB
-                    </p>
+                    <p>Original Size: {originalSizeInKB} KB</p>
                     {compressedSize !== null && (
                       <p className="font-medium text-foreground">
                         Compressed Size: {compressedSize.toFixed(2)} KB
@@ -132,25 +146,28 @@ export default function ImageCompressorPage() {
                     )}
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <Label htmlFor="compression">
-                    Compression Level: {compression}%
-                  </Label>
-                  <Slider
-                    id="compression"
-                    min={10}
-                    max={100}
-                    step={1}
-                    value={[compression]}
-                    onValueChange={(value) => setCompression(value[0])}
+                <div className="space-y-2">
+                  <Label htmlFor="target-size">Target Size (KB)</Label>
+                  <Input
+                    id="target-size"
+                    type="number"
+                    value={targetSize}
+                    onChange={(e) => setTargetSize(e.target.value)}
+                    placeholder={`e.g., ${Math.round(
+                      (file?.size || 0) / 1024 / 2
+                    )}`}
                     disabled={isCompressing || compressed}
                   />
+                   <p className="text-xs text-muted-foreground">
+                    Enter your desired file size in kilobytes.
+                  </p>
                 </div>
                 <div className="space-y-4">
                   {!isCompressing && !compressed && (
                     <Button
                       onClick={handleCompress}
                       className="w-full"
+                      disabled={!targetSize}
                     >
                       Compress Image
                     </Button>
