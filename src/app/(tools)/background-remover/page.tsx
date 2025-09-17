@@ -334,34 +334,42 @@ a.click();
   );
 
   const renderDoneStep = () => (
-    <div className="space-y-6">
-        <div className="mx-auto max-w-lg space-y-4 text-center">
-            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
-            <h2 className="text-3xl font-headline font-bold">Success!</h2>
-            <p className="text-muted-foreground">Your image is ready. You can now download it or start over.</p>
-        </div>
-        <div className="relative mx-auto flex h-80 w-full max-w-lg items-center justify-center overflow-hidden rounded-lg border">
-            {result && <Image
+    <div className="grid gap-8 md:grid-cols-2">
+      <div className="relative flex items-center justify-center overflow-hidden rounded-lg border bg-muted/20 p-4">
+        {result && (
+          <Image
             src={result}
             alt="Final result"
             width={500}
             height={500}
             className="h-auto max-h-full w-auto max-w-full object-contain"
             unoptimized
-            />}
+          />
+        )}
+      </div>
+
+      <div className="flex h-full flex-col items-center justify-center space-y-6 text-center">
+        <CheckCircle2 className="h-16 w-16 text-green-500" />
+        <div className="space-y-2">
+          <h2 className="text-3xl font-headline font-bold">Success!</h2>
+          <p className="text-muted-foreground">
+            Your image is ready to be downloaded.
+          </p>
         </div>
-        <div className="mx-auto flex w-full max-w-lg flex-col gap-2 sm:flex-row">
-            <Button className="w-full" onClick={handleDownload} disabled={!result}>
+        <div className="w-full space-y-1 rounded-lg border p-4 text-left text-sm">
+           <h4 className='font-medium'>File Information</h4>
+           <p className='text-muted-foreground'>Name: {file?.name}</p>
+           <p className='text-muted-foreground'>Original Size: {file ? (file.size / 1024).toFixed(2) : 0} KB</p>
+        </div>
+        <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+          <Button className="w-full" onClick={handleDownload} disabled={!result}>
             <Download className="mr-2 h-4 w-4" /> Download Image
-            </Button>
-            <Button
-            className="w-full"
-            variant="outline"
-            onClick={resetState}
-            >
+          </Button>
+          <Button className="w-full" variant="outline" onClick={resetState}>
             <RefreshCw className="mr-2 h-4 w-4" /> Start Over
-            </Button>
+          </Button>
         </div>
+      </div>
     </div>
   );
 
