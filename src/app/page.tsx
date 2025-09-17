@@ -32,7 +32,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-sm grid-cols-1 gap-6 py-12 sm:max-w-2xl sm:grid-cols-2 lg:max-w-4xl lg:grid-cols-3 xl:max-w-6xl xl:grid-cols-4">
+            <div className="mx-auto grid max-w-sm grid-cols-1 gap-6 py-12 sm:max-w-2xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
                   <Card className="h-full transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
