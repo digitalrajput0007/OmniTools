@@ -14,6 +14,7 @@ import {
   Wand2,
   ALargeSmall,
   Diff,
+  CreditCard,
 } from 'lucide-react';
 
 export type Tool = {
@@ -89,6 +90,12 @@ export const tools: Tool[] = [
     description: 'Compare two texts and highlight the differences.',
     path: '/text-diff',
     icon: Diff,
+  },
+  {
+    name: 'Credit Card Generator',
+    description: 'Generate dummy credit card numbers for testing.',
+    path: '/credit-card-generator',
+    icon: CreditCard,
   },
 ];
 
