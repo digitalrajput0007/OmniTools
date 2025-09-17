@@ -74,8 +74,8 @@ export default function ImageCompressorPage() {
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
 
-          let low = 0;
-          let high = 1;
+          let low = 0.0;
+          let high = 1.0;
           let quality = 0.9;
           let bestBlob: Blob | null = null;
           const maxAttempts = 10;
@@ -83,7 +83,20 @@ export default function ImageCompressorPage() {
 
           const search = () => {
             attempts++;
+            if (attempts > maxAttempts) {
+              if (bestBlob) {
+                resolve({
+                  compressedBlob: bestBlob,
+                  finalSizeKB: bestBlob.size / 1024,
+                });
+              } else {
+                reject(new Error('Could not achieve target size.'));
+              }
+              return;
+            }
+
             onProgress((attempts / maxAttempts) * 90);
+            quality = (low + high) / 2;
 
             canvas.toBlob(
               (blob) => {
@@ -94,14 +107,10 @@ export default function ImageCompressorPage() {
                 const currentSizeKB = blob.size / 1024;
                 bestBlob = blob;
 
-                if (
-                  attempts >= maxAttempts ||
-                  (Math.abs(currentSizeKB - targetSizeKB) < 10 &&
-                    currentSizeKB < targetSizeKB)
-                ) {
+                if (Math.abs(currentSizeKB - targetSizeKB) < 10) {
                   resolve({
-                    compressedBlob: bestBlob,
-                    finalSizeKB: bestBlob.size / 1024,
+                    compressedBlob: blob,
+                    finalSizeKB: currentSizeKB,
                   });
                   return;
                 }
@@ -111,7 +120,6 @@ export default function ImageCompressorPage() {
                 } else {
                   low = quality;
                 }
-                quality = (low + high) / 2;
                 search();
               },
               file.type,
