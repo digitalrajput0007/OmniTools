@@ -9,6 +9,7 @@ import {
   Replace,
   Scale,
   Scissors,
+  Scaling,
 } from 'lucide-react';
 
 export type Tool = {
@@ -41,7 +42,7 @@ export const tools: Tool[] = [
     name: 'Image Resizer/Cropper',
     description: 'Easily resize and crop your images to the perfect dimensions.',
     path: '/image-resizer',
-    icon: Crop,
+    icon: Scaling,
   },
   {
     name: 'PDF Merger',

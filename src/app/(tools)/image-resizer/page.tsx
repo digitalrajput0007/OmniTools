@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,6 +18,8 @@ import {
   Download,
   CheckCircle2,
   RefreshCw,
+  CropIcon,
+  Scaling,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -29,7 +31,6 @@ import ReactCrop, {
 import 'react-image-crop/dist/ReactCrop.css';
 import { Progress } from '@/components/ui/progress';
 
-// Function to get the cropped image
 function getCroppedImg(
   image: HTMLImageElement,
   crop: Crop,
@@ -71,7 +72,8 @@ function getCroppedImg(
           reject(new Error('Canvas is empty'));
           return;
         }
-        const file = new File([blob], fileName, { type: blob.type });
+        const newFileName = `cropped-${fileName}`;
+        const file = new File([blob], newFileName, { type: blob.type });
         resolve(file);
       },
       'image/png',
@@ -80,8 +82,40 @@ function getCroppedImg(
   });
 }
 
+function getResizedImg(
+  image: HTMLImageElement,
+  width: number,
+  height: number,
+  fileType: string,
+  fileName: string
+): Promise<{ url: string; file: File }> {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return Promise.reject(new Error('Failed to get canvas context'));
+  }
+  ctx.drawImage(image, 0, 0, width, height);
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        return;
+      }
+      const newFileName = `resized-${fileName}`;
+      const file = new File([blob], newFileName, { type: blob.type });
+      const url = URL.createObjectURL(file);
+      resolve({ url, file });
+    }, fileType);
+  });
+}
+
+type Step = 'upload' | 'choose' | 'resize' | 'crop' | 'processing' | 'download';
+
 export default function ImageResizerCropperPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [downloadableFile, setDownloadableFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [width, setWidth] = useState<number | string>('');
@@ -93,21 +127,23 @@ export default function ImageResizerCropperPage() {
 
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
-  const [isResizing, setIsResizing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [step, setStep] = useState<'upload' | 'resize' | 'crop'>('upload');
+  const [step, setStep] = useState<Step>('upload');
+  const [operation, setOperation] = useState<'resize' | 'crop' | null>(null);
 
   const resetState = () => {
     setFile(null);
+    setDownloadableFile(null);
     setPreview(null);
     setWidth('');
     setHeight('');
     setAspectLock(true);
     setCrop(undefined);
     setCompletedCrop(undefined);
-    setIsResizing(false);
     setProgress(0);
     setStep('upload');
+    setOperation(null);
+    if(imgRef.current) imgRef.current = null;
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -123,7 +159,7 @@ export default function ImageResizerCropperPage() {
     const reader = new FileReader();
     reader.addEventListener('load', () => {
       setPreview(reader.result as string);
-      setStep('resize');
+      setStep('choose');
     });
     reader.readAsDataURL(selectedFile);
   };
@@ -158,10 +194,11 @@ export default function ImageResizerCropperPage() {
   };
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    imgRef.current = e.currentTarget;
-    const { width, height } = e.currentTarget;
+    const img = e.currentTarget;
+    imgRef.current = img;
+    const { width, height } = img;
     setOriginalAspectRatio(width / height);
-    if (step === 'resize') {
+    if (step === 'choose') {
       setWidth(width);
       setHeight(height);
     }
@@ -174,15 +211,7 @@ export default function ImageResizerCropperPage() {
   ) => {
     setCrop(
       centerCrop(
-        makeAspectCrop(
-          {
-            unit: '%',
-            width: 90,
-          },
-          aspect,
-          mediaWidth,
-          mediaHeight
-        ),
+        makeAspectCrop({ unit: '%', width: 90 }, aspect, mediaWidth, mediaHeight),
         mediaWidth,
         mediaHeight
       )
@@ -193,7 +222,7 @@ export default function ImageResizerCropperPage() {
     const newWidth = e.target.value === '' ? '' : Number(e.target.value);
     setWidth(newWidth);
     if (aspectLock && newWidth !== '' && originalAspectRatio) {
-      setHeight(Math.round(newWidth / originalAspectRatio));
+      setHeight(Math.round(Number(newWidth) / originalAspectRatio));
     }
   };
 
@@ -201,14 +230,14 @@ export default function ImageResizerCropperPage() {
     const newHeight = e.target.value === '' ? '' : Number(e.target.value);
     setHeight(newHeight);
     if (aspectLock && newHeight !== '' && originalAspectRatio) {
-      setWidth(Math.round(newHeight * originalAspectRatio));
+      setWidth(Math.round(Number(newHeight) * originalAspectRatio));
     }
   };
 
-  const handleApplyResize = () => {
-    if (!preview || !imgRef.current) return;
-
-    setIsResizing(true);
+  const runWithProgress = async (
+    action: () => Promise<void>
+  ) => {
+    setStep('processing');
     setProgress(0);
     const startTime = Date.now();
     const minDuration = 3000;
@@ -217,262 +246,227 @@ export default function ImageResizerCropperPage() {
       const elapsedTime = Date.now() - startTime;
       const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
       setProgress(currentProgress);
-
       if (currentProgress >= 100) {
         clearInterval(interval);
-
-        const canvas = document.createElement('canvas');
-        const w = Number(width);
-        const h = Number(height);
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx || !imgRef.current) {
-          setIsResizing(false);
-          return;
-        }
-        ctx.drawImage(imgRef.current, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL(file?.type);
-        setPreview(dataUrl);
-
-        setIsResizing(false);
-        setStep('crop');
-        toast({
-          title: 'Resize Complete',
-          description:
-            'Your image has been resized. You can now crop it if needed.',
-        });
-        // We need to wait for the new image to load to set the crop correctly
-        setTimeout(() => {
-          if (imgRef.current) {
-            centerAspectCrop(
-              imgRef.current.width,
-              imgRef.current.height,
-              w / h
-            );
-          }
-        }, 100);
       }
     }, 50);
-  };
 
-  const handleDownload = async () => {
-    if (!completedCrop || !imgRef.current || !file) {
+    try {
+      await action();
+    } catch (error) {
       toast({
-        title: 'Cannot Download',
-        description: 'Please make sure you have an image and a crop selection.',
+        title: 'An error occurred',
+        description:
+          error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       });
+      resetState();
       return;
     }
-    try {
+    
+    // Ensure the progress bar runs for the minimum duration
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime < minDuration) {
+      await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
+    }
+
+    setStep('download');
+  };
+
+  const handleApplyResize = async () => {
+    if (!imgRef.current || !file) return;
+    const w = Number(width);
+    const h = Number(height);
+
+    await runWithProgress(async () => {
+      const { url, file: resizedFile } = await getResizedImg(
+        imgRef.current!,
+        w,
+        h,
+        file.type,
+        file.name
+      );
+      setPreview(url);
+      setDownloadableFile(resizedFile);
+    });
+  };
+
+  const handleApplyCrop = async () => {
+    if (!completedCrop || !imgRef.current || !file) return;
+
+    await runWithProgress(async () => {
       const croppedFile = await getCroppedImg(
-        imgRef.current,
+        imgRef.current!,
         completedCrop,
         file.name
       );
-      const url = URL.createObjectURL(croppedFile);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `resized-${file.name}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
-      toast({
-        title: 'Crop Failed',
-        description: 'An error occurred while cropping the image.',
-        variant: 'destructive',
-      });
-    }
+      setPreview(URL.createObjectURL(croppedFile));
+      setDownloadableFile(croppedFile);
+    });
+  };
+
+  const handleDownload = () => {
+    if (!preview || !downloadableFile) return;
+    const a = document.createElement('a');
+    a.href = preview;
+    a.download = downloadableFile.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
   
-  const handleProceedToCrop = () => {
-    if(imgRef.current) {
-      centerAspectCrop(imgRef.current.width, imgRef.current.height, originalAspectRatio);
+  const handleStartCrop = () => {
+    if (imgRef.current) {
+      const { width, height } = imgRef.current;
+      centerAspectCrop(width, height, width / height);
     }
+    setOperation('crop');
     setStep('crop');
+  }
+
+  const handleStartResize = () => {
+    setOperation('resize');
+    setStep('resize');
+  }
+  
+  const renderContent = () => {
+    switch(step) {
+      case 'upload':
+        return (
+          <label
+            htmlFor="image-upload"
+            className={cn(
+              'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+              { 'border-primary bg-accent/50': isDragging }
+            )}
+            onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
+          >
+            <UploadCloud className="h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">Drag & drop your image here, or click to browse</p>
+            <Input id="image-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
+            <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
+          </label>
+        );
+
+      case 'choose':
+      case 'resize':
+      case 'crop':
+        return (
+          <div className="grid gap-8 md:grid-cols-2">
+            <div className="relative">
+              {preview && (
+                <>
+                  {step === 'crop' ? (
+                     <ReactCrop
+                      crop={crop}
+                      onChange={(_, percentCrop) => setCrop(percentCrop)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={aspectLock ? (crop?.width && crop.height ? crop.width/crop.height : undefined) : undefined}
+                    >
+                      <img src={preview} alt="Image to crop" onLoad={onImageLoad} className="max-h-[60vh] w-full object-contain" />
+                    </ReactCrop>
+                  ) : (
+                     <img src={preview} alt="Image preview" onLoad={onImageLoad} className="max-h-[60vh] w-full object-contain" />
+                  )}
+                </>
+              )}
+               <Button variant="destructive" size="icon" className="absolute right-2 top-2 z-10" onClick={resetState}>
+                  <X className="h-4 w-4" />
+                </Button>
+            </div>
+
+            <div className="flex flex-col space-y-6">
+              {step === 'choose' && (
+                <div className="flex h-full flex-col justify-center space-y-4">
+                   <h3 className="mb-4 text-lg font-semibold text-center">
+                      Step 1: Choose an Operation
+                    </h3>
+                  <Button onClick={handleStartResize} className="w-full" size="lg"><Scaling className="mr-2"/> Resize Image</Button>
+                  <Button onClick={handleStartCrop} className="w-full" size="lg"><CropIcon className="mr-2"/> Crop Image</Button>
+                </div>
+              )}
+              {step === 'resize' && (
+                 <>
+                    <div>
+                      <h3 className="mb-4 text-lg font-semibold">
+                        Step 2: Set New Dimensions
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="width">Width (px)</Label>
+                          <Input id="width" type="number" value={width} onChange={handleWidthChange} placeholder="e.g., 1920" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="height">Height (px)</Label>
+                          <Input id="height" type="number" value={height} onChange={handleHeightChange} placeholder="e.g., 1080" />
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center space-x-2">
+                        <Switch id="aspect-lock" checked={aspectLock} onCheckedChange={setAspectLock}/>
+                        <Label htmlFor="aspect-lock">Lock aspect ratio</Label>
+                      </div>
+                      <Button onClick={handleApplyResize} className="mt-4 w-full"><RefreshCw className="mr-2 h-4 w-4" /> Apply Resize</Button>
+                      <Button onClick={() => setStep('choose')} className="mt-2 w-full" variant="ghost">Back</Button>
+                    </div>
+                  </>
+              )}
+              {step === 'crop' && (
+                <div className="flex h-full flex-col justify-center space-y-4">
+                  <h3 className="text-lg font-semibold">Step 2: Adjust Crop Selection</h3>
+                   <div className="mt-4 flex items-center space-x-2">
+                      <Switch id="aspect-lock-crop" checked={aspectLock} onCheckedChange={setAspectLock}/>
+                      <Label htmlFor="aspect-lock-crop">Lock aspect ratio</Label>
+                    </div>
+                  <Button onClick={handleApplyCrop} className="w-full" disabled={!completedCrop?.width}><CropIcon className="mr-2 h-4 w-4" /> Apply Crop</Button>
+                  <Button onClick={() => setStep('choose')} className="mt-2 w-full" variant="ghost">Back</Button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'processing':
+        return (
+          <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+            <Progress value={progress} className="w-full max-w-md" />
+            <p className="text-center text-sm text-muted-foreground">{operation === 'resize' ? 'Resizing...' : 'Cropping...'}</p>
+          </div>
+        );
+
+      case 'download':
+        return (
+          <div className="grid gap-8 md:grid-cols-2">
+            <div className="relative">
+              {preview && <img src={preview} alt="Final image" className="max-h-[60vh] w-full rounded-lg object-contain" />}
+            </div>
+            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
+              <h3 className="text-2xl font-bold">
+                {operation === 'resize' ? 'Resize' : 'Crop'} Complete
+              </h3>
+              <p className="text-muted-foreground">Your image is ready for download.</p>
+              <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                <Button className="w-full" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Image</Button>
+                <Button className="w-full" variant="ghost" onClick={resetState}>Start Over</Button>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   }
 
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">
-            Image Resizer & Cropper
-          </CardTitle>
-          <CardDescription>
-            Resize and crop your images with ease.
-          </CardDescription>
+          <CardTitle className="font-headline">Image Resizer & Cropper</CardTitle>
+          <CardDescription>Resize or crop your images with ease.</CardDescription>
         </CardHeader>
         <CardContent>
-          {step === 'upload' ? (
-            <label
-              htmlFor="image-upload"
-              className={cn(
-                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
-                {
-                  'border-primary bg-accent/50': isDragging,
-                }
-              )}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragEvents}
-              onDrop={handleDrop}
-            >
-              <UploadCloud className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">
-                Drag & drop your image here, or click to browse
-              </p>
-              <Input
-                id="image-upload"
-                type="file"
-                className="sr-only"
-                onChange={handleFileChange}
-                accept="image/*"
-              />
-              <Button asChild variant="outline" className="mt-4">
-                <span>Browse File</span>
-              </Button>
-            </label>
-          ) : (
-            <div className="grid gap-8 md:grid-cols-2">
-              <div className="relative">
-                {preview && (
-                  <>
-                    {step === 'resize' && (
-                      <img
-                        src={preview}
-                        alt="Image preview"
-                        onLoad={onImageLoad}
-                        ref={imgRef}
-                        className="max-h-[60vh] w-full object-contain"
-                      />
-                    )}
-                    {step === 'crop' && (
-                      <ReactCrop
-                        crop={crop}
-                        onChange={(_, percentCrop) => setCrop(percentCrop)}
-                        onComplete={(c) => setCompletedCrop(c)}
-                        aspect={aspectLock ? Number(width)/Number(height) : undefined}
-                      >
-                        <img
-                          src={preview}
-                          alt="Image preview"
-                          onLoad={onImageLoad}
-                          ref={imgRef}
-                          className="max-h-[60vh] w-full object-contain"
-                        />
-                      </ReactCrop>
-                    )}
-                  </>
-                )}
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute right-2 top-2 z-10"
-                  onClick={resetState}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex flex-col space-y-6">
-                {step === 'resize' && !isResizing && (
-                  <>
-                    <div>
-                      <h3 className="mb-4 text-lg font-semibold">
-                        Step 1: Resize (Optional)
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="width">Width (px)</Label>
-                          <Input
-                            id="width"
-                            type="number"
-                            value={width}
-                            onChange={handleWidthChange}
-                            placeholder="e.g., 1920"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="height">Height (px)</Label>
-                          <Input
-                            id="height"
-                            type="number"
-                            value={height}
-                            onChange={handleHeightChange}
-                            placeholder="e.g., 1080"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center space-x-2">
-                        <Switch
-                          id="aspect-lock"
-                          checked={aspectLock}
-                          onCheckedChange={setAspectLock}
-                        />
-                        <Label htmlFor="aspect-lock">Lock aspect ratio</Label>
-                      </div>
-                      <Button
-                        onClick={handleApplyResize}
-                        className="mt-4 w-full"
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Apply Resize
-                      </Button>
-                      <Button onClick={handleProceedToCrop} className="mt-2 w-full" variant="secondary">
-                        Skip and Proceed to Crop
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-                {isResizing && (
-                  <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <Progress value={progress} className="w-full" />
-                    <p className="text-center text-sm text-muted-foreground">
-                      Resizing...
-                    </p>
-                  </div>
-                )}
-
-                {step === 'crop' && (
-                  <div className="flex h-full flex-col justify-center space-y-4 text-center">
-                     <CheckCircle2 className="h-16 w-16 text-green-500" />
-                    <h3 className="text-2xl font-bold">
-                       Step 2: Crop Your Image
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Adjust the selection on the image to your desired crop.
-                      <br />
-                      Click download when you're ready.
-                    </p>
-
-                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
-                      <Button
-                        className="w-full"
-                        onClick={handleDownload}
-                        disabled={!completedCrop?.width}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Cropped Image
-                      </Button>
-                      <Button
-                        className="w-full"
-                        variant="ghost"
-                        onClick={resetState}
-                      >
-                        Start Over
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {renderContent()}
         </CardContent>
       </Card>
     </div>
