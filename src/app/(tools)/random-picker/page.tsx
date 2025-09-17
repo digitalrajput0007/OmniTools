@@ -214,14 +214,14 @@ export default function RandomPickerPage() {
              <p className="absolute top-2 left-4 text-sm text-muted-foreground font-medium">{winnerLabels[index]}</p>
              
               {winner ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-center justify-center gap-1">
                       <Trophy className={cn("text-yellow-500", index === 0 ? "h-6 w-6" : "h-5 w-5")} />
                       <p className={cn("font-bold font-headline", index === 0 ? "text-xl" : "text-lg")}>{winner}</p>
                   </div>
               ) : pickingFor === index ? (
                   <p className="text-xl font-bold font-headline blur-sm transition-all duration-100">{rouletteItem}</p>
               ) : (
-                 <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null || !!winners[index]} size="sm" className='w-full max-w-xs'>
+                 <Button onClick={() => handlePickWinner(index)} disabled={pickingFor !== null || !!winners[index]} size="sm" className='w-auto px-4'>
                       <Ticket className="mr-2 h-4 w-4" /> Pick Winner
                   </Button>
               )}
