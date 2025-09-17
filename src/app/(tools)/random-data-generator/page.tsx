@@ -9,18 +9,23 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, RefreshCw, ClipboardCopy } from 'lucide-react';
+import { Copy, RefreshCw, ClipboardCopy, FileDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];
@@ -56,19 +61,39 @@ const generators: Record<string, () => string> = {
 };
 
 type DataType = keyof typeof generators;
+type GeneratedRecord = Record<DataType, string>;
 
 export default function RandomDataGeneratorPage() {
-  const [dataType, setDataType] = useState<DataType>('Full Name');
+  const [selectedFields, setSelectedFields] = useState<DataType[]>(['Full Name', 'Email']);
   const [count, setCount] = useState(10);
-  const [generatedData, setGeneratedData] = useState<string[]>([]);
+  const [generatedData, setGeneratedData] = useState<GeneratedRecord[]>([]);
   const { toast } = useToast();
 
+  const handleFieldToggle = (field: DataType) => {
+    setSelectedFields(prev => 
+      prev.includes(field) 
+        ? prev.filter(f => f !== field)
+        : [...prev, field]
+    );
+  };
+
   const handleGenerate = () => {
-    const generator = generators[dataType];
-    if (generator) {
-      const newData = Array.from({ length: count }, generator);
-      setGeneratedData(newData);
+    if (selectedFields.length === 0) {
+      toast({
+        title: 'No Fields Selected',
+        description: 'Please select at least one data type to generate.',
+        variant: 'destructive',
+      });
+      return;
     }
+    const newData = Array.from({ length: count }, () => {
+      const record: Partial<GeneratedRecord> = {};
+      selectedFields.forEach(field => {
+        record[field] = generators[field]();
+      });
+      return record as GeneratedRecord;
+    });
+    setGeneratedData(newData);
   };
   
   const copyToClipboard = (text: string, fieldName: string) => {
@@ -89,9 +114,35 @@ export default function RandomDataGeneratorPage() {
 
   const copyAllToClipboard = () => {
     if(generatedData.length === 0) return;
-    const allData = generatedData.join('\n');
+    const header = selectedFields.join('\t');
+    const rows = generatedData.map(row => selectedFields.map(field => row[field]).join('\t'));
+    const allData = [header, ...rows].join('\n');
     copyToClipboard(allData, 'All generated data');
   }
+
+  const exportToPdf = () => {
+    if (generatedData.length === 0) return;
+    const doc = new jsPDF();
+    (doc as any).autoTable({
+      head: [selectedFields],
+      body: generatedData.map(row => selectedFields.map(field => row[field])),
+    });
+    doc.save('random-data.pdf');
+  };
+
+  const exportToExcel = () => {
+    if (generatedData.length === 0) return;
+    const worksheet = XLSX.utils.json_to_sheet(generatedData.map(row => {
+      const newRow: Record<string, string> = {};
+      selectedFields.forEach(field => {
+        newRow[field] = row[field];
+      });
+      return newRow;
+    }));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Random Data');
+    XLSX.writeFile(workbook, 'random-data.xlsx');
+  };
 
   // Generate initial data on load
   useState(() => {
@@ -108,22 +159,33 @@ export default function RandomDataGeneratorPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="grid gap-6 md:grid-cols-3">
-             <div className="space-y-2">
-                <Label htmlFor="data-type">Data Type</Label>
-                <Select value={dataType} onValueChange={(v) => setDataType(v as DataType)}>
-                  <SelectTrigger id="data-type">
-                    <SelectValue placeholder="Select data type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(generators).map(key => (
-                      <SelectItem key={key} value={key}>{key}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div className="md:col-span-3">
+              <Label>Data Fields to Generate</Label>
+              <Card className="mt-2">
+                <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {Object.keys(generators).map(key => (
+                    <div key={key} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={key}
+                        checked={selectedFields.includes(key as DataType)}
+                        onCheckedChange={() => handleFieldToggle(key as DataType)}
+                      />
+                      <label
+                        htmlFor={key}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {key}
+                      </label>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="count">Number of Items</Label>
+                <Label htmlFor="count">Number of Rows</Label>
                 <Input
                     id="count"
                     type="number"
@@ -132,40 +194,63 @@ export default function RandomDataGeneratorPage() {
                     min="1"
                 />
               </div>
-              <div className="flex items-end">
-                <Button onClick={handleGenerate} className="w-full">
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Generate
-                </Button>
-              </div>
+              <Button onClick={handleGenerate} className="w-full">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Generate Data
+              </Button>
+            </div>
           </div>
           
           <Card className="bg-muted/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <CardTitle className="text-lg">Generated Data</CardTitle>
-                <Button variant="outline" size="sm" onClick={copyAllToClipboard} disabled={generatedData.length === 0}>
-                    <ClipboardCopy className="mr-2 h-4 w-4" />
-                    Copy All
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={copyAllToClipboard} disabled={generatedData.length === 0}>
+                      <ClipboardCopy className="mr-2 h-4 w-4" />
+                      Copy All
+                  </Button>
+                   <Button variant="outline" size="sm" onClick={exportToPdf} disabled={generatedData.length === 0}>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportToExcel} disabled={generatedData.length === 0}>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Excel
+                  </Button>
+                </div>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-72 w-full">
-                    <div className="p-1">
+                <ScrollArea className="h-96 w-full rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {selectedFields.map(field => <TableHead key={field}>{field}</TableHead>)}
+                          <TableHead className="w-[50px] text-right">Copy</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {generatedData.length > 0 ? (
-                            generatedData.map((item, index) => (
-                                <div key={index} className="flex items-center justify-between gap-4 p-2 rounded-md hover:bg-background/50">
-                                    <p className="font-mono text-sm">{item}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(item, dataType)}>
-                                        <Copy className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))
+                          generatedData.map((row, rowIndex) => (
+                            <TableRow key={rowIndex}>
+                              {selectedFields.map(field => (
+                                <TableCell key={field} className="font-mono text-xs">{row[field]}</TableCell>
+                              ))}
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(selectedFields.map(field => row[field]).join(', '), 'Row')}>
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
                         ) : (
-                            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                                <p>Click "Generate" to create data.</p>
-                            </div>
+                          <TableRow>
+                            <TableCell colSpan={selectedFields.length + 1} className="h-24 text-center">
+                              No data generated. Select fields and click "Generate Data".
+                            </TableCell>
+                          </TableRow>
                         )}
-                    </div>
+                      </TableBody>
+                    </Table>
                 </ScrollArea>
             </CardContent>
           </Card>
