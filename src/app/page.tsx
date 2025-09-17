@@ -5,6 +5,8 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardContent,
+  CardFooter,
 } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 
@@ -32,29 +34,30 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-sm grid-cols-1 gap-6 py-12 sm:max-w-2xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
+            <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-2xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
-                  <Card className="h-full transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
-                    <CardHeader className="flex flex-row items-center gap-4">
+                  <Card className="flex h-full flex-col transition-all duration-300 hover:scale-105 hover:border-primary hover:shadow-lg">
+                    <CardHeader className="flex flex-row items-start gap-4">
                       <div className="rounded-md bg-primary/10 p-3">
                         <tool.icon className="h-6 w-6 text-primary" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="font-headline text-lg">
                           {tool.name}
                         </CardTitle>
-                        <CardDescription className="text-sm">
+                        <CardDescription className="mt-1 text-sm">
                           {tool.description}
                         </CardDescription>
                       </div>
                     </CardHeader>
-                    <div className="px-6 pb-4">
+                    <CardContent className="flex-grow" />
+                    <CardFooter>
                       <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:text-accent-foreground">
                         Use Tool{' '}
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </span>
-                    </div>
+                    </CardFooter>
                   </Card>
                 </Link>
               ))}
