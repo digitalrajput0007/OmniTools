@@ -371,7 +371,7 @@ a.click();
                       </Button>
                       <Button
                         className="w-full"
-                        variant="ghost"
+                        variant="secondary"
                         onClick={handleCompressAnother}
                       >
                         Compress another
@@ -432,3 +432,5 @@ a.click();
     </div>
   );
 }
+
+    

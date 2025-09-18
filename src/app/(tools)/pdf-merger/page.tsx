@@ -200,7 +200,7 @@ export default function PdfMergerPage() {
                   </Button>
                   <Button
                     className="w-full"
-                    variant="ghost"
+                    variant="secondary"
                     onClick={resetState}
                   >
                     Merge another
@@ -370,3 +370,5 @@ export default function PdfMergerPage() {
     </div>
   );
 }
+
+    

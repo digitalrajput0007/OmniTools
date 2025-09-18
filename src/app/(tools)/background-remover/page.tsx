@@ -412,7 +412,7 @@ export default function BackgroundRemoverPage() {
           <Button className="w-full" onClick={handleDownload} disabled={!result}>
             <Download className="mr-2 h-4 w-4" /> Download Image
           </Button>
-          <Button className="w-full" variant="outline" onClick={resetState}>
+          <Button className="w-full" variant="secondary" onClick={resetState}>
             <RefreshCw className="mr-2 h-4 w-4" /> Start Over
           </Button>
         </div>
@@ -500,3 +500,5 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
+
+    

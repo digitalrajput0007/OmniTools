@@ -344,7 +344,7 @@ export default function ImageFormatConverterPage() {
                       </Button>
                       <Button
                         className="w-full"
-                        variant="ghost"
+                        variant="secondary"
                         onClick={resetState}
                       >
                         Convert another
@@ -411,3 +411,5 @@ export default function ImageFormatConverterPage() {
     </div>
   );
 }
+
+    

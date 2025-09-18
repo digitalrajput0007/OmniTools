@@ -467,7 +467,7 @@ a.click();
               <p className="text-muted-foreground">Your image has been processed and is ready for download.</p>
               <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
                 <Button className="w-full" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Image</Button>
-                <Button className="w-full" variant="ghost" onClick={resetState}>Start Over</Button>
+                <Button className="w-full" variant="secondary" onClick={resetState}>Start Over</Button>
               </div>
             </div>
           </div>
@@ -539,3 +539,5 @@ a.click();
     </div>
   );
 }
+
+    

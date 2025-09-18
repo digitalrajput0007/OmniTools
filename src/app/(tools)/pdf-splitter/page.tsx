@@ -307,7 +307,7 @@ export default function PdfSplitterPage() {
                       </Button>
                       <Button
                         className="w-full"
-                        variant="ghost"
+                        variant="secondary"
                         onClick={resetState}
                       >
                         Split another
@@ -367,3 +367,5 @@ export default function PdfSplitterPage() {
     </div>
   );
 }
+
+    

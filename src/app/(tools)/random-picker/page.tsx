@@ -254,7 +254,7 @@ setIsPicking(false);
                             {isPicking ? 'Picking...' : `Pick ${currentLabel} Winner`}
                         </Button>
                     ) : (
-                        <Button onClick={handleReset} variant="outline" size="lg">
+                        <Button onClick={handleReset} variant="secondary" size="lg">
                             <RefreshCw className="mr-2" /> Start New Drawing
                         </Button>
                     )}
@@ -368,3 +368,5 @@ setIsPicking(false);
     </div>
   );
 }
+
+    

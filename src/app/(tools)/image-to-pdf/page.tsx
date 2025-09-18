@@ -230,7 +230,7 @@ export default function ImageToPdfPage() {
                       </Button>
                       <Button
                         className="w-full"
-                        variant="ghost"
+                        variant="secondary"
                         onClick={resetState}
                       >
                         Convert another
@@ -288,3 +288,5 @@ export default function ImageToPdfPage() {
     </div>
   );
 }
+
+    

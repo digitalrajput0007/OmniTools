@@ -148,7 +148,7 @@ export default function TextDiffPage() {
 
           <div className="flex justify-center">
             {showDiff ? (
-                <Button variant="outline" onClick={handleReset}>
+                <Button variant="secondary" onClick={handleReset}>
                   <Pencil className="mr-2 h-4 w-4" /> Make a New Comparison
                </Button>
             ) : (
@@ -207,3 +207,5 @@ export default function TextDiffPage() {
     </div>
   );
 }
+
+    
