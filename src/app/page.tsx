@@ -194,7 +194,7 @@ export default function Home() {
              <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-4xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
-                  <Card className="flex flex-col transition-all duration-300 hover:scale-[1.02] hover:border-primary hover:shadow-lg hover:shadow-primary/10">
+                  <Card className="transition-all duration-300 hover:scale-[1.02] hover:border-primary hover:shadow-lg hover:shadow-primary/10">
                     <CardHeader className="flex flex-row items-start gap-4">
                       <div className="rounded-md bg-primary/10 p-3">
                         <tool.icon className="h-6 w-6 text-primary" />
