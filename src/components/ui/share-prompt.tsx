@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { AppName, ShareIcon } from '@/lib/constants';
 import { Copy, Gift } from 'lucide-react';
@@ -15,14 +14,7 @@ interface SharePromptProps {
 }
 
 export function SharePrompt({ toolName, className }: SharePromptProps) {
-  const [showCopyFallback, setShowCopyFallback] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (typeof navigator.share === 'undefined') {
-      setShowCopyFallback(true);
-    }
-  }, []);
 
   const handleCopy = () => {
      navigator.clipboard.writeText(window.location.href).then(() => {
@@ -47,22 +39,24 @@ export function SharePrompt({ toolName, className }: SharePromptProps) {
       url: window.location.href,
     };
 
-    // Use Web Share API if available
+    // Always try to use the Web Share API first.
     if (navigator.share) {
       try {
         await navigator.share(shareData);
+        // The share was successful, so we don't need to do anything else.
+        return;
       } catch (error) {
         // If the user cancels the share dialog, do nothing.
-        // If another error occurs, fall back to copying the link.
-        if ((error as DOMException).name !== 'AbortError') {
-          console.error('Web Share API failed, falling back to copy:', error);
-          handleCopy();
+        // If another error occurs, we will fall back to copying the link.
+        if ((error as DOMException).name === 'AbortError') {
+          return;
         }
+        console.error('Web Share API failed:', error);
       }
-    } else {
-      // Fallback for browsers that do not support Web Share API
-      handleCopy();
     }
+    
+    // Fallback for browsers that do not support Web Share API or if it fails.
+    handleCopy();
   };
 
 
@@ -75,8 +69,8 @@ export function SharePrompt({ toolName, className }: SharePromptProps) {
                 <p className="text-sm text-muted-foreground">Share it with your friends and colleagues!</p>
             </div>
              <Button onClick={handleShare} size="sm">
-                {showCopyFallback ? <Copy className="mr-2 h-4 w-4" /> : <ShareIcon className="mr-2 h-4 w-4" />}
-                {showCopyFallback ? 'Copy Link' : 'Share Tool'}
+                <ShareIcon className="mr-2 h-4 w-4" />
+                Share Tool
             </Button>
         </CardContent>
     </Card>
