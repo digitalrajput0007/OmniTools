@@ -150,6 +150,7 @@ export default function PdfMergerPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>PDF Merger</CardTitle>
           <CardDescription className="text-base">
             Combine multiple PDF files into a single document.
           </CardDescription>
@@ -303,7 +304,7 @@ export default function PdfMergerPage() {
 
               {isMerging ? (
                 <div className="flex h-full flex-col items-center justify-center space-y-4">
-                  <Progress value={progress} className="w-full" />
+                  <CheckCircle2 className="h-16 w-16 text-green-500" />
                   <p className="text-center text-sm text-muted-foreground">
                     Merging...
                   </p>

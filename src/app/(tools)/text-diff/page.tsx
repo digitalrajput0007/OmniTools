@@ -13,7 +13,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { GitCompareArrows, Pencil } from 'lucide-react';
+import { GitCompareArrows, Pencil, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -67,6 +67,7 @@ export default function TextDiffPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Text Difference Checker</CardTitle>
           <CardDescription className="text-base">
             Paste two blocks of text to see the differences highlighted.
           </CardDescription>
@@ -140,7 +141,7 @@ export default function TextDiffPage() {
 
           {isComparing && (
             <div className="flex flex-col items-center justify-center space-y-2">
-              <Progress value={progress} className="w-full max-w-sm" />
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
               <p className="text-sm text-muted-foreground">Comparing...</p>
             </div>
           )}

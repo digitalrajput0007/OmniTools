@@ -125,6 +125,7 @@ export default function ImageToPdfPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Image to PDF Converter</CardTitle>
           <CardDescription className="text-base">
             Convert your JPG, PNG, and other images to a PDF document.
           </CardDescription>
@@ -203,7 +204,7 @@ export default function ImageToPdfPage() {
                 )}
                 {isConverting && !converted && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <Progress value={progress} className="w-full" />
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
                     <p className="text-center text-sm text-muted-foreground">
                       Converting...
                     </p>

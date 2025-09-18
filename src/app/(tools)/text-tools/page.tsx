@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CaseLower, CaseUpper, Pilcrow, VenetianMask } from 'lucide-react';
+import { CaseLower, CaseUpper, Pilcrow, VenetianMask, CheckCircle2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -94,6 +94,7 @@ export default function TextToolsPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Text Tools</CardTitle>
           <CardDescription className="text-base">
             A versatile set of tools to analyze and transform your text.
           </CardDescription>
@@ -151,7 +152,7 @@ export default function TextToolsPage() {
                 <CardContent className="flex flex-col items-center justify-center space-y-4">
                   {isProcessing ? (
                     <>
-                      <Progress value={progress} className="w-full max-w-sm" />
+                      <CheckCircle2 className="h-16 w-16 text-green-500" />
                       <p className="text-sm text-muted-foreground">
                         Processing...
                       </p>

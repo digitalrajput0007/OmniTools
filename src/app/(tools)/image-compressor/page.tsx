@@ -216,6 +216,7 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Image Compressor</CardTitle>
           <CardDescription className="text-base">
             Upload an image, adjust the compression level, and download the
             optimized file.
@@ -330,7 +331,7 @@ a.click();
 
                 {isCompressing && !compressed && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <Progress value={progress} className="w-full" />
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
                     <p className="text-center text-sm text-muted-foreground">
                       Compressing...
                     </p>

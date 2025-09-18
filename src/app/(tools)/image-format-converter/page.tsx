@@ -199,6 +199,7 @@ export default function ImageFormatConverterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Image Format Converter</CardTitle>
           <CardDescription className="text-base">
             Change the format of your images (e.g., JPG, PNG, WEBP).
           </CardDescription>
@@ -308,7 +309,7 @@ export default function ImageFormatConverterPage() {
 
                 {isConverting && !converted && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <Progress value={progress} className="w-full" />
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
                     <p className="text-center text-sm text-muted-foreground">
                       Converting...
                     </p>

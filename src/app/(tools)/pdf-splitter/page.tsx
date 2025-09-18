@@ -192,6 +192,7 @@ export default function PdfSplitterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>PDF Splitter</CardTitle>
           <CardDescription className="text-base">
             Extract specific pages or ranges from a PDF file.
           </CardDescription>
@@ -278,7 +279,7 @@ export default function PdfSplitterPage() {
 
                 {isSplitting && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <Progress value={progress} className="w-full" />
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
                     <p className="text-center text-sm text-muted-foreground">
                       Splitting...
                     </p>

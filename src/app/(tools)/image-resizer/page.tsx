@@ -453,7 +453,7 @@ a.click();
       case 'processing':
         return (
           <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-            <Progress value={progress} className="w-full max-w-md" />
+            <CheckCircle2 className="h-16 w-16 text-green-500" />
             <p className="text-center text-sm text-muted-foreground">Finalizing your image...</p>
           </div>
         );
@@ -487,6 +487,7 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Image Resizer & Cropper</CardTitle>
           <CardDescription className="text-base">Resize and crop your images with a live preview.</CardDescription>
         </CardHeader>
         <CardContent>

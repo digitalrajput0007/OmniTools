@@ -328,8 +328,8 @@ a.click();
 
   const renderProcessingStep = () => (
     <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+        <CheckCircle2 className="h-16 w-16 text-green-500" />
         <h2 className='text-2xl font-headline font-semibold'>Applying Changes...</h2>
-        <Progress value={progress} className="w-full max-w-md" />
         <p className="text-center text-sm text-muted-foreground">Please wait while we process your image.</p>
     </div>
   );
@@ -395,6 +395,7 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className='text-2xl'>Background Remover</CardTitle>
           <CardDescription className="text-base">
             Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
           </CardDescription>
