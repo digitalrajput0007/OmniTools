@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
@@ -195,7 +195,7 @@ export default function Home() {
               {tools.map((tool) => (
                 <Link href={tool.path} key={tool.name} className="group">
                   <Card className="transition-all duration-300 hover:scale-[1.02] hover:border-primary hover:shadow-lg hover:shadow-primary/10">
-                    <CardHeader className="flex flex-row items-start gap-4">
+                    <CardHeader className="flex-row items-start gap-4">
                       <div className="rounded-md bg-primary/10 p-3">
                         <tool.icon className="h-6 w-6 text-primary" />
                       </div>
@@ -208,7 +208,6 @@ export default function Home() {
                         </CardDescription>
                       </div>
                     </CardHeader>
-                    <CardContent />
                     <CardFooter>
                       <span className="flex items-center gap-1 text-sm font-semibold text-primary">
                         Use Tool{' '}
