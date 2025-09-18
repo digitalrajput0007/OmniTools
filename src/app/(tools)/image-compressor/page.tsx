@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -216,12 +217,17 @@ a.click();
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>Image Compressor</CardTitle>
-          <CardDescription className="text-base">
-            Upload an image, adjust the compression level, and download the
-            optimized file.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Image Compressor</CardTitle>
+              <CardDescription className="text-base">
+                Upload an image, adjust the compression level, and download the
+                optimized file.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Image Compressor" />
+          </div>
         </CardHeader>
         <CardContent>
           {!file ? (
@@ -433,5 +439,3 @@ a.click();
     </div>
   );
 }
-
-    

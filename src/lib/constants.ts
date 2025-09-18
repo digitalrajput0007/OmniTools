@@ -18,6 +18,7 @@ import {
   DatabaseZap,
   Ticket,
   Braces,
+  Share2,
 } from 'lucide-react';
 
 export type Tool = {
@@ -122,3 +123,4 @@ export const tools: Tool[] = [
 
 export const AppLogo = Combine;
 export const AppName = 'OmniToolbox';
+export const ShareIcon = Share2;

@@ -19,6 +19,7 @@ import Confetti from 'react-dom-confetti';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ShareButton } from '@/components/ui/share-button';
 
 const confettiConfig = {
   angle: 90,
@@ -304,11 +305,16 @@ setIsPicking(false);
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Random Picker</CardTitle>
-          <CardDescription className="text-base">
-            A fun and easy way to pick random winners for giveaways, contests, and more.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Random Picker</CardTitle>
+              <CardDescription className="text-base">
+                A fun and easy way to pick random winners for giveaways, contests, and more.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Random Picker" />
+          </div>
         </CardHeader>
         <CardContent>
           {isClient ? renderContent() : (
@@ -369,5 +375,3 @@ setIsPicking(false);
     </div>
   );
 }
-
-    

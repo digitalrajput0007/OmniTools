@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Braces, Copy, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ShareButton } from '@/components/ui/share-button';
 
 export default function JsonBeautifierPage() {
   const [jsonInput, setJsonInput] = useState('');
@@ -73,11 +74,16 @@ export default function JsonBeautifierPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">JSON Beautifier</CardTitle>
-          <CardDescription className="text-base">
-            Paste your JSON data to format and beautify it for better readability.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">JSON Beautifier</CardTitle>
+              <CardDescription className="text-base">
+                Paste your JSON data to format and beautify it for better readability.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="JSON Beautifier" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

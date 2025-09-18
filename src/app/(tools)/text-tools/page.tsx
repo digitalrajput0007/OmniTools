@@ -16,6 +16,7 @@ import { CaseLower, CaseUpper, Pilcrow, VenetianMask, CheckCircle2 } from 'lucid
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -94,11 +95,16 @@ export default function TextToolsPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>Text Tools</CardTitle>
-          <CardDescription className="text-base">
-            A versatile set of tools to analyze and transform your text.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Text Tools</CardTitle>
+              <CardDescription className="text-base">
+                A versatile set of tools to analyze and transform your text.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Text Tools" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs

@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -199,11 +200,16 @@ export default function ImageFormatConverterPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>Image Format Converter</CardTitle>
-          <CardDescription className="text-base">
-            Change the format of your images (e.g., JPG, PNG, WEBP).
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Image Format Converter</CardTitle>
+              <CardDescription className="text-base">
+                Change the format of your images (e.g., JPG, PNG, WEBP).
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Image Format Converter" />
+          </div>
         </CardHeader>
         <CardContent>
           {!file ? (
@@ -412,5 +418,3 @@ export default function ImageFormatConverterPage() {
     </div>
   );
 }
-
-    

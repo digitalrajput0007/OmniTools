@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 export default function ImageToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -125,11 +126,16 @@ export default function ImageToPdfPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>Image to PDF Converter</CardTitle>
-          <CardDescription className="text-base">
-            Convert your JPG, PNG, and other images to a PDF document.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Image to PDF Converter</CardTitle>
+              <CardDescription className="text-base">
+                Convert your JPG, PNG, and other images to a PDF document.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Image to PDF Converter" />
+          </div>
         </CardHeader>
         <CardContent>
           {!file ? (
@@ -289,5 +295,3 @@ export default function ImageToPdfPage() {
     </div>
   );
 }
-
-    

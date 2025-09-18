@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -192,11 +193,16 @@ export default function PdfSplitterPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>PDF Splitter</CardTitle>
-          <CardDescription className="text-base">
-            Extract specific pages or ranges from a PDF file.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">PDF Splitter</CardTitle>
+              <CardDescription className="text-base">
+                Extract specific pages or ranges from a PDF file.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="PDF Splitter" />
+          </div>
         </CardHeader>
         <CardContent>
           {!file ? (
@@ -368,5 +374,3 @@ export default function PdfSplitterPage() {
     </div>
   );
 }
-
-    

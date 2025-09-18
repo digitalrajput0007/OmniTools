@@ -29,6 +29,7 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ShareButton } from '@/components/ui/share-button';
 
 type Color = { r: number; g: number; b: number };
 
@@ -440,11 +441,16 @@ export default function BackgroundRemoverPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>Background Remover</CardTitle>
-          <CardDescription className="text-base">
-            Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Background Remover</CardTitle>
+              <CardDescription className="text-base">
+                Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Background Remover" />
+          </div>
         </CardHeader>
         <CardContent>
           {renderContent()}
@@ -500,5 +506,3 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
-
-    

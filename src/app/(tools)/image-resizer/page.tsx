@@ -34,6 +34,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -482,9 +483,14 @@ a.click();
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>Image Resizer & Cropper</CardTitle>
-          <CardDescription className="text-base">Resize and crop your images with a live preview.</CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Image Resizer & Cropper</CardTitle>
+              <CardDescription className="text-base">Resize and crop your images with a live preview.</CardDescription>
+            </div>
+            <ShareButton toolName="Image Resizer/Cropper" />
+          </div>
         </CardHeader>
         <CardContent>
           {renderContent()}
@@ -540,5 +546,3 @@ a.click();
     </div>
   );
 }
-
-    

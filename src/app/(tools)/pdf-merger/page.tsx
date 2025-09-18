@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ShareButton } from '@/components/ui/share-button';
 
 export default function PdfMergerPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -150,11 +151,16 @@ export default function PdfMergerPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className='text-2xl'>PDF Merger</CardTitle>
-          <CardDescription className="text-base">
-            Combine multiple PDF files into a single document.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">PDF Merger</CardTitle>
+              <CardDescription className="text-base">
+                Combine multiple PDF files into a single document.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="PDF Merger" />
+          </div>
         </CardHeader>
         <CardContent>
           {merged ? (
@@ -371,5 +377,3 @@ export default function PdfMergerPage() {
     </div>
   );
 }
-
-    

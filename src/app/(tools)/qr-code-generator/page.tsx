@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useDebounce } from '@/hooks/use-debounce';
 import { FileDown, Link as LinkIcon } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ShareButton } from '@/components/ui/share-button';
 
 export default function QrCodeGeneratorPage() {
   const [text, setText] = useState('https://omnibox.dev');
@@ -44,11 +45,16 @@ export default function QrCodeGeneratorPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">QR Code Generator</CardTitle>
-          <CardDescription className="text-base">
-            Enter text or a URL to generate a QR code instantly.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">QR Code Generator</CardTitle>
+              <CardDescription className="text-base">
+                Enter text or a URL to generate a QR code instantly.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="QR Code Generator" />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-8 md:grid-cols-2">

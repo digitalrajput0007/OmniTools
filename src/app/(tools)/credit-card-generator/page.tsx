@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Copy, RefreshCw, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ShareButton } from '@/components/ui/share-button';
 
 type CardType = 'visa' | 'mastercard' | 'amex' | 'discover';
 
@@ -168,11 +169,16 @@ export default function CreditCardGeneratorPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Credit Card Generator</CardTitle>
-          <CardDescription className="text-base">
-            Create valid-looking, but fake, credit card numbers for testing and validation purposes.
-          </CardDescription>
+        <CardHeader>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <CardTitle className="text-2xl">Credit Card Generator</CardTitle>
+              <CardDescription className="text-base">
+                Create valid-looking, but fake, credit card numbers for testing and validation purposes.
+              </CardDescription>
+            </div>
+            <ShareButton toolName="Credit Card Generator" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="grid gap-8 md:grid-cols-2">
