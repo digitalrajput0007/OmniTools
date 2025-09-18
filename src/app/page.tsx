@@ -21,6 +21,8 @@ import {
   Globe,
   ChevronDown,
   ALargeSmall,
+  Database,
+  PanelLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,17 +31,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
+const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
-
-const randomDataGeneratorTool = tools.find(t => t.name === 'Random Data Generator');
-const randomPickerTool = tools.find(t => t.name === 'Random Picker');
-const creditCardGeneratorTool = tools.find(t => t.name === 'Credit Card Generator');
-const jsonBeautifierTool = tools.find(t => t.name === 'JSON Beautifier');
-
 
 export const metadata: Metadata = {
   title: `${AppName} - Free Online Tools for Images, PDFs, and More`,
@@ -50,45 +48,31 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
         <Link href="/" className="flex items-center gap-3">
           <AppLogo className="h-8 w-8 text-primary" />
           <h1 className="font-headline text-2xl font-bold tracking-tighter">
             {AppName}
           </h1>
         </Link>
-        <nav className="hidden items-center gap-2 md:flex">
-            {randomDataGeneratorTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={randomDataGeneratorTool.path}>
-                        <randomDataGeneratorTool.icon className="mr-2" /> {randomDataGeneratorTool.name}
-                    </Link>
+        <nav className="hidden items-center gap-1 md:flex">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <Database className="mr-2" /> Data Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
-            )}
-
-            {randomPickerTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={randomPickerTool.path}>
-                        <randomPickerTool.icon className="mr-2" /> {randomPickerTool.name}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {dataTools.map(tool => (
+                   <DropdownMenuItem key={tool.name} asChild>
+                    <Link href={tool.path}>
+                      <tool.icon className="mr-2" />
+                      <span>{tool.name}</span>
                     </Link>
-                </Button>
-            )}
-
-            {creditCardGeneratorTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={creditCardGeneratorTool.path}>
-                        <creditCardGeneratorTool.icon className="mr-2" /> {creditCardGeneratorTool.name}
-                    </Link>
-                </Button>
-            )}
-            
-            {jsonBeautifierTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={jsonBeautifierTool.path}>
-                        <jsonBeautifierTool.icon className="mr-2" /> {jsonBeautifierTool.name}
-                    </Link>
-                </Button>
-            )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -164,6 +148,28 @@ export default function Home() {
                 </DropdownMenu>
             )}
         </nav>
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                    <PanelLeft className="h-5 w-5" />
+                    <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+                <nav className="grid gap-6 text-lg font-medium">
+                    <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+                        <AppLogo className="h-6 w-6" />
+                        <span className="sr-only">{AppName}</span>
+                    </Link>
+                    {tools.map((tool) => (
+                        <Link key={tool.name} href={tool.path} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                            <tool.icon className="h-5 w-5" />
+                            {tool.name}
+                        </Link>
+                    ))}
+                </nav>
+            </SheetContent>
+        </Sheet>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
