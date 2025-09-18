@@ -34,7 +34,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -461,16 +461,19 @@ a.click();
             <div className="relative flex items-center justify-center rounded-lg bg-muted/20 p-4">
               {preview && <img src={preview} alt="Final image" className="max-h-[60vh] w-full rounded-lg object-contain" />}
             </div>
-            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
-              <CheckCircle2 className="h-16 w-16 text-green-500" />
-              <h3 className="text-2xl font-bold">
-                Image Ready!
-              </h3>
-              <p className="text-muted-foreground">Your image has been processed and is ready for download.</p>
-              <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
-                <Button className="w-full" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Image</Button>
-                <Button className="w-full" variant="secondary" onClick={resetState}>Start Over</Button>
+            <div className="flex h-full flex-col items-center justify-center space-y-4">
+              <div className="text-center w-full space-y-2">
+                <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                <h3 className="text-2xl font-bold">
+                  Image Ready!
+                </h3>
+                <p className="text-muted-foreground">Your image has been processed and is ready for download.</p>
               </div>
+              <div className="flex w-full flex-col gap-2 pt-4">
+                <Button className="w-full" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Image</Button>
+                <Button className="w-full" variant="secondary" onClick={resetState}><RefreshCw className="mr-2 h-4 w-4" />Start Over</Button>
+              </div>
+              <SharePrompt toolName="Image Resizer/Cropper" />
             </div>
           </div>
         );
@@ -484,12 +487,9 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Image Resizer & Cropper</CardTitle>
-              <CardDescription className="text-base">Resize and crop your images with a live preview.</CardDescription>
-            </div>
-            <ShareButton toolName="Image Resizer/Cropper" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Resizer & Cropper</CardTitle>
+            <CardDescription className="text-base mt-2">Resize and crop your images with a live preview.</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

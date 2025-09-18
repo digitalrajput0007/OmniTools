@@ -19,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, X, CheckCircle2, FileDown } from 'lucide-react';
+import { UploadCloud, X, CheckCircle2, FileDown, RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -201,14 +201,11 @@ export default function ImageFormatConverterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Image Format Converter</CardTitle>
-              <CardDescription className="text-base">
-                Change the format of your images (e.g., JPG, PNG, WEBP).
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Image Format Converter" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Format Converter</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Change the format of your images (e.g., JPG, PNG, WEBP).
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -322,15 +319,17 @@ export default function ImageFormatConverterPage() {
                 )}
 
                 {converted && convertedSize !== null && (
-                  <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
-                    <h3 className="text-2xl font-bold">
-                      Conversion Complete
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Your image has been converted to {outputFormat.toUpperCase()}.
-                    </p>
-                    <div className="text-sm">
+                  <div className="flex h-full flex-col items-start justify-center space-y-4">
+                    <div className="w-full text-center space-y-2">
+                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                        <h3 className="text-2xl font-bold">
+                        Conversion Complete
+                        </h3>
+                        <p className="text-muted-foreground">
+                        Your image has been converted to {outputFormat.toUpperCase()}.
+                        </p>
+                    </div>
+                    <div className="w-full text-sm rounded-lg border p-4">
                       <p>
                         Original Size:{' '}
                         <span className="font-medium text-foreground">
@@ -344,7 +343,7 @@ export default function ImageFormatConverterPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                    <div className="flex w-full flex-col gap-2 pt-4">
                       <Button className="w-full" onClick={handleDownload}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Download Image
@@ -354,9 +353,11 @@ export default function ImageFormatConverterPage() {
                         variant="secondary"
                         onClick={resetState}
                       >
+                         <RefreshCcw className="mr-2 h-4 w-4" />
                         Convert another
                       </Button>
                     </div>
+                     <SharePrompt toolName="Image Format Converter" />
                   </div>
                 )}
               </div>

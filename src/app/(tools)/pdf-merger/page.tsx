@@ -18,12 +18,13 @@ import {
   X,
   File as FileIcon,
   CheckCircle2,
+  RefreshCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 export default function PdfMergerPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -152,14 +153,11 @@ export default function PdfMergerPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">PDF Merger</CardTitle>
-              <CardDescription className="text-base">
-                Combine multiple PDF files into a single document.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="PDF Merger" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">PDF Merger</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Combine multiple PDF files into a single document.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -186,13 +184,15 @@ export default function PdfMergerPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
-                <CheckCircle2 className="h-16 w-16 text-green-500" />
-                <h3 className="text-2xl font-bold">Merging Complete</h3>
-                <p className="text-muted-foreground">
-                  Your PDFs have been successfully merged.
-                </p>
-                <div className="text-sm">
+              <div className="flex h-full flex-col items-start justify-center space-y-4">
+                <div className="w-full text-center space-y-2">
+                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                    <h3 className="text-2xl font-bold">Merging Complete</h3>
+                    <p className="text-muted-foreground">
+                    Your PDFs have been successfully merged.
+                    </p>
+                </div>
+                <div className="w-full text-sm rounded-lg border p-4">
                   <p>
                     Files merged:{' '}
                     <span className="font-medium text-foreground">
@@ -200,7 +200,7 @@ export default function PdfMergerPage() {
                     </span>
                   </p>
                 </div>
-                <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                <div className="flex w-full flex-col gap-2 pt-4">
                   <Button className="w-full" onClick={downloadMergedPdf}>
                     <FileDown className="mr-2 h-4 w-4" />
                     Download Merged PDF
@@ -210,9 +210,11 @@ export default function PdfMergerPage() {
                     variant="secondary"
                     onClick={resetState}
                   >
+                    <RefreshCcw className="mr-2 h-4 w-4" />
                     Merge another
                   </Button>
                 </div>
+                <SharePrompt toolName="PDF Merger" />
               </div>
             </div>
           ) : (

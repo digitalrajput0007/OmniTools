@@ -19,12 +19,13 @@ import {
   X,
   File as FileIcon,
   CheckCircle2,
+  RefreshCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -194,14 +195,11 @@ export default function PdfSplitterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">PDF Splitter</CardTitle>
-              <CardDescription className="text-base">
-                Extract specific pages or ranges from a PDF file.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="PDF Splitter" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">PDF Splitter</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Extract specific pages or ranges from a PDF file.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -293,13 +291,15 @@ export default function PdfSplitterPage() {
                   </div>
                 )}
                 {split && (
-                  <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
-                    <h3 className="text-2xl font-bold">Splitting Complete</h3>
-                    <p className="text-muted-foreground">
-                      Your PDF has been split based on your selection.
-                    </p>
-                    <div className="text-sm">
+                  <div className="flex h-full flex-col items-start justify-center space-y-4">
+                    <div className="w-full text-center space-y-2">
+                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                        <h3 className="text-2xl font-bold">Splitting Complete</h3>
+                        <p className="text-muted-foreground">
+                        Your PDF has been split based on your selection.
+                        </p>
+                    </div>
+                    <div className="w-full text-sm rounded-lg border p-4">
                       <p>
                         Selected Pages:{' '}
                         <span className="font-medium text-foreground">
@@ -307,7 +307,7 @@ export default function PdfSplitterPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                    <div className="flex w-full flex-col gap-2 pt-4">
                       <Button className="w-full" onClick={downloadSplitPdf}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Download Split PDF
@@ -317,9 +317,11 @@ export default function PdfSplitterPage() {
                         variant="secondary"
                         onClick={resetState}
                       >
+                        <RefreshCcw className="mr-2 h-4 w-4" />
                         Split another
                       </Button>
                     </div>
+                    <SharePrompt toolName="PDF Splitter" />
                   </div>
                 )}
               </div>

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { ArrowRightLeft } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 type UnitCategory = 'length' | 'weight' | 'temperature';
 
@@ -119,14 +119,11 @@ export default function UnitConverterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Unit Converter</CardTitle>
-              <CardDescription className="text-base">
-                Convert between length, weight, temperature, and more.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Unit Converter" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Unit Converter</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Convert between length, weight, temperature, and more.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -199,6 +196,7 @@ export default function UnitConverterPage() {
               </Select>
             </div>
           </div>
+           {toValue && <div className="flex justify-center pt-4"><SharePrompt toolName="Unit Converter" /></div>}
         </CardContent>
       </Card>
       <Card>

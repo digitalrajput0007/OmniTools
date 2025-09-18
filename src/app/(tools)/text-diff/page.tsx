@@ -18,7 +18,7 @@ import { GitCompareArrows, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 type DiffPart = {
   value: string;
@@ -69,14 +69,11 @@ export default function TextDiffPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Text Difference Checker</CardTitle>
-              <CardDescription className="text-base">
-                Paste two blocks of text to see the differences highlighted.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Text Difference" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Text Difference Checker</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Paste two blocks of text to see the differences highlighted.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -150,6 +147,9 @@ export default function TextDiffPage() {
                     Removed
                   </span>
                 </div>
+                 <div className="flex justify-center pt-4">
+                    <SharePrompt toolName="Text Difference Checker" />
+                 </div>
             </div>
           )}
 

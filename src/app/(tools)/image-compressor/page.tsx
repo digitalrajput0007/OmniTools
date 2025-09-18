@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -218,15 +218,12 @@ a.click();
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Image Compressor</CardTitle>
-              <CardDescription className="text-base">
-                Upload an image, adjust the compression level, and download the
-                optimized file.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Image Compressor" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Compressor</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Upload an image, adjust the compression level, and download the
+              optimized file.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -344,18 +341,18 @@ a.click();
                 )}
 
                 {compressed && compressedSize !== null && (
-                  <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
-                    <h3 className="text-2xl font-bold">
-                      Compression Complete
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Your image has been compressed by {compressionPercentage}
-                      %.
-                      <br />
-                      Ready to download!
-                    </p>
-                    <div className="text-sm">
+                  <div className="flex h-full flex-col items-start justify-center space-y-4">
+                    <div className="text-center w-full space-y-2">
+                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                        <h3 className="text-2xl font-bold">
+                        Compression Complete
+                        </h3>
+                        <p className="text-muted-foreground">
+                        Your image has been compressed by {compressionPercentage}
+                        %.
+                        </p>
+                    </div>
+                    <div className="w-full text-sm rounded-lg border p-4">
                       <p>
                         Original Size:{' '}
                         <span className="font-medium text-foreground">
@@ -369,11 +366,12 @@ a.click();
                         </span>
                       </p>
                     </div>
-                    <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+                    <div className="flex w-full flex-col gap-2 pt-4">
                       <Button
                         className="w-full"
                         onClick={handleDownload}
                       >
+                        <FileDown className="mr-2 h-4 w-4" />
                         Download Image
                       </Button>
                       <Button
@@ -381,9 +379,11 @@ a.click();
                         variant="secondary"
                         onClick={handleCompressAnother}
                       >
+                        <RefreshCcw className="mr-2 h-4 w-4" />
                         Compress another
                       </Button>
                     </div>
+                    <SharePrompt toolName="Image Compressor" />
                   </div>
                 )}
               </div>

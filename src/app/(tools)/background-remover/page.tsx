@@ -29,7 +29,7 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 type Color = { r: number; g: number; b: number };
 
@@ -396,20 +396,20 @@ export default function BackgroundRemoverPage() {
         )}
       </div>
 
-      <div className="flex h-full flex-col items-center justify-center space-y-6 text-center">
-        <CheckCircle2 className="h-16 w-16 text-green-500" />
-        <div className="space-y-2">
-          <h2 className="text-3xl font-headline font-bold">Success!</h2>
-          <p className="text-muted-foreground">
-            Your image is ready to be downloaded.
-          </p>
+      <div className="flex h-full flex-col items-start justify-center space-y-6">
+        <div className="text-center w-full space-y-2">
+            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+            <h2 className="text-3xl font-headline font-bold">Success!</h2>
+            <p className="text-muted-foreground">
+                Your image is ready to be downloaded.
+            </p>
         </div>
         <div className="w-full space-y-1 rounded-lg border p-4 text-left text-sm">
            <h4 className='font-medium'>File Information</h4>
            <p className='text-muted-foreground'>Name: {file?.name}</p>
            <p className='text-muted-foreground'>Original Size: {file ? (file.size / 1024).toFixed(2) : 0} KB</p>
         </div>
-        <div className="flex w-full flex-col gap-2 pt-4 sm:flex-row">
+        <div className="flex w-full flex-col gap-2 pt-4">
           <Button className="w-full" onClick={handleDownload} disabled={!result}>
             <Download className="mr-2 h-4 w-4" /> Download Image
           </Button>
@@ -417,6 +417,7 @@ export default function BackgroundRemoverPage() {
             <RefreshCw className="mr-2 h-4 w-4" /> Start Over
           </Button>
         </div>
+        <SharePrompt toolName="Background Remover" />
       </div>
     </div>
   );
@@ -442,14 +443,11 @@ export default function BackgroundRemoverPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Background Remover</CardTitle>
-              <CardDescription className="text-base">
-                Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Background Remover" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Background Remover</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>

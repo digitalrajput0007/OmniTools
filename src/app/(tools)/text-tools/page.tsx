@@ -16,7 +16,7 @@ import { CaseLower, CaseUpper, Pilcrow, VenetianMask, CheckCircle2 } from 'lucid
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -46,15 +46,15 @@ export default function TextToolsPage() {
     return { wordCount, characterCount };
   }, [text]);
 
-  const handleRemoveExtraSpaces = () => {
-    if (isProcessing) return;
+  const handleTextTransform = (transformFn: (text: string) => string, successMessage: string) => {
+    if (isProcessing || !text) return;
 
     setIsProcessing(true);
     setProgress(0);
 
-    const duration = 1500;
+    const duration = 500;
     const startTime = Date.now();
-
+    
     const interval = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
       const p = Math.min((elapsedTime / duration) * 100, 100);
@@ -62,30 +62,34 @@ export default function TextToolsPage() {
 
       if (p >= 100) {
         clearInterval(interval);
-        setText((currentText) => currentText.replace(/\s+/g, ' ').trim());
+        setText(transformFn);
         setIsProcessing(false);
         toast({
           title: 'Success',
-          description: 'Extra spaces have been removed.',
+          description: successMessage,
         });
       }
     }, 50);
+  }
+
+  const handleRemoveExtraSpaces = () => {
+    handleTextTransform((currentText) => currentText.replace(/\s+/g, ' ').trim(), 'Extra spaces have been removed.');
   };
 
   const handleConvertToUppercase = () => {
-    setText(text.toUpperCase());
+    handleTextTransform(text.toUpperCase(), 'Text converted to UPPERCASE.');
   };
 
   const handleConvertToLowercase = () => {
-    setText(text.toLowerCase());
+    handleTextTransform(text.toLowerCase(), 'Text converted to lowercase.');
   };
 
   const handleConvertToTitleCase = () => {
-    setText(toTitleCase(text));
+    handleTextTransform(toTitleCase(text), 'Text converted to Title Case.');
   };
 
   const handleConvertToSentenceCase = () => {
-    setText(toSentenceCase(text));
+    handleTextTransform(toSentenceCase(text), 'Text converted to Sentence case.');
   };
 
   const handleClearText = () => {
@@ -96,14 +100,11 @@ export default function TextToolsPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Text Tools</CardTitle>
-              <CardDescription className="text-base">
-                A versatile set of tools to analyze and transform your text.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Text Tools" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Text Tools</CardTitle>
+            <CardDescription className="text-base mt-2">
+              A versatile set of tools to analyze and transform your text.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -144,6 +145,7 @@ export default function TextToolsPage() {
                       <p className="text-muted-foreground">Characters</p>
                     </div>
                   </div>
+                   {text && <SharePrompt toolName="Text Tools" />}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -184,19 +186,19 @@ export default function TextToolsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center justify-center gap-2">
-                  <Button onClick={handleConvertToUppercase} disabled={!text}>
+                  <Button onClick={handleConvertToUppercase} disabled={!text || isProcessing}>
                     <CaseUpper className="mr-2 h-4 w-4" />
                     UPPERCASE
                   </Button>
-                  <Button onClick={handleConvertToLowercase} disabled={!text}>
+                  <Button onClick={handleConvertToLowercase} disabled={!text || isProcessing}>
                     <CaseLower className="mr-2 h-4 w-4" />
-lowercase
+                    lowercase
                   </Button>
-                  <Button onClick={handleConvertToTitleCase} disabled={!text}>
+                  <Button onClick={handleConvertToTitleCase} disabled={!text || isProcessing}>
                     <Pilcrow className="mr-2 h-4 w-4" />
                     Title Case
                   </Button>
-                  <Button onClick={handleConvertToSentenceCase} disabled={!text}>
+                  <Button onClick={handleConvertToSentenceCase} disabled={!text || isProcessing}>
                     <Pilcrow className="mr-2 h-4 w-4" />
                     Sentence case
                   </Button>

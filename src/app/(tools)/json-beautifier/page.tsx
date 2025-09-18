@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Braces, Copy, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 export default function JsonBeautifierPage() {
   const [jsonInput, setJsonInput] = useState('');
@@ -35,6 +35,10 @@ export default function JsonBeautifierPage() {
       const parsedJson = JSON.parse(jsonInput);
       const beautified = JSON.stringify(parsedJson, null, 2);
       setFormattedJson(beautified);
+       toast({
+        title: 'JSON Beautified!',
+        description: 'The JSON has been successfully formatted.',
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast({
@@ -75,14 +79,11 @@ export default function JsonBeautifierPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">JSON Beautifier</CardTitle>
-              <CardDescription className="text-base">
-                Paste your JSON data to format and beautify it for better readability.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="JSON Beautifier" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">JSON Beautifier</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Paste your JSON data to format and beautify it for better readability.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -114,13 +115,16 @@ export default function JsonBeautifierPage() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4">
-            <Button onClick={handleFormat}>
-              <Braces className="mr-2 h-4 w-4" /> Beautify JSON
-            </Button>
-            <Button variant="outline" onClick={handleClear} disabled={!jsonInput && !formattedJson}>
-              <Trash2 className="mr-2 h-4 w-4" /> Clear
-            </Button>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="flex items-center gap-4">
+                <Button onClick={handleFormat}>
+                <Braces className="mr-2 h-4 w-4" /> Beautify JSON
+                </Button>
+                <Button variant="outline" onClick={handleClear} disabled={!jsonInput && !formattedJson}>
+                <Trash2 className="mr-2 h-4 w-4" /> Clear
+                </Button>
+            </div>
+            {formattedJson && <SharePrompt toolName="JSON Beautifier" />}
           </div>
         </CardContent>
       </Card>

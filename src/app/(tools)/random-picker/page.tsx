@@ -19,7 +19,7 @@ import Confetti from 'react-dom-confetti';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 const confettiConfig = {
   angle: 90,
@@ -262,6 +262,8 @@ setIsPicking(false);
                 </CardHeader>
             </Card>
 
+            {allWinnersPicked && <SharePrompt toolName="Random Picker" />}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {winners.some(w => w !== null) && (
                     <Card>
@@ -306,14 +308,11 @@ setIsPicking(false);
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Random Picker</CardTitle>
-              <CardDescription className="text-base">
-                A fun and easy way to pick random winners for giveaways, contests, and more.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Random Picker" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Random Picker</CardTitle>
+            <CardDescription className="text-base mt-2">
+              A fun and easy way to pick random winners for giveaways, contests, and more.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>

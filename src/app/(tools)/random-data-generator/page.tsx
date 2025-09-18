@@ -28,7 +28,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ShareButton } from '@/components/ui/share-button';
+import { SharePrompt } from '@/components/ui/share-prompt';
 
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];
@@ -205,14 +205,11 @@ export default function RandomDataGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="text-center flex-1">
-              <CardTitle className="text-2xl">Random Data Generator</CardTitle>
-              <CardDescription className="text-base">
-                Create various types of dummy data for your projects and testing needs.
-              </CardDescription>
-            </div>
-            <ShareButton toolName="Random Data Generator" />
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Random Data Generator</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Create various types of dummy data for your projects and testing needs.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -320,6 +317,7 @@ export default function RandomDataGeneratorPage() {
                     </Table>
                 </ScrollArea>
             </CardContent>
+             {generatedData.length > 0 && <CardFooter className="pt-4"><SharePrompt toolName="Random Data Generator" /></CardFooter>}
           </Card>
         </CardContent>
       </Card>
