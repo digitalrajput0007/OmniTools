@@ -15,35 +15,14 @@ interface SharePromptProps {
 }
 
 export function SharePrompt({ toolName, className }: SharePromptProps) {
-  const [showCopy, setShowCopy] = useState(false);
+  const [showCopyFallback, setShowCopyFallback] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (typeof navigator.share === 'undefined') {
-      setShowCopy(true);
+      setShowCopyFallback(true);
     }
   }, []);
-
-  const handleShare = async () => {
-    const shareData = {
-      title: `${toolName} | ${AppName}`,
-      text: `Check out this awesome ${toolName} tool on ${AppName}! It's free and easy to use.`,
-      url: window.location.href,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (error) {
-        // Fallback to copy if user cancels share dialog
-        if ((error as DOMException).name !== 'AbortError') {
-            handleCopy();
-        }
-      }
-    } else {
-      handleCopy();
-    }
-  };
 
   const handleCopy = () => {
      navigator.clipboard.writeText(window.location.href).then(() => {
@@ -61,6 +40,32 @@ export function SharePrompt({ toolName, className }: SharePromptProps) {
     });
   }
 
+  const handleShare = async () => {
+    const shareData = {
+      title: `${toolName} | ${AppName}`,
+      text: `Check out this awesome ${toolName} tool on ${AppName}! It's free and easy to use.`,
+      url: window.location.href,
+    };
+
+    // Use Web Share API if available
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        // If the user cancels the share dialog, do nothing.
+        // If another error occurs, fall back to copying the link.
+        if ((error as DOMException).name !== 'AbortError') {
+          console.error('Web Share API failed, falling back to copy:', error);
+          handleCopy();
+        }
+      }
+    } else {
+      // Fallback for browsers that do not support Web Share API
+      handleCopy();
+    }
+  };
+
+
   return (
     <Card className={cn("w-full bg-secondary/30", className)}>
         <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4 p-4 text-center">
@@ -70,8 +75,8 @@ export function SharePrompt({ toolName, className }: SharePromptProps) {
                 <p className="text-sm text-muted-foreground">Share it with your friends and colleagues!</p>
             </div>
              <Button onClick={handleShare} size="sm">
-                {showCopy ? <Copy className="mr-2 h-4 w-4" /> : <ShareIcon className="mr-2 h-4 w-4" />}
-                {showCopy ? 'Copy Link' : 'Share Tool'}
+                {showCopyFallback ? <Copy className="mr-2 h-4 w-4" /> : <ShareIcon className="mr-2 h-4 w-4" />}
+                {showCopyFallback ? 'Copy Link' : 'Share Tool'}
             </Button>
         </CardContent>
     </Card>
