@@ -17,6 +17,7 @@ import {
   CreditCard,
   DatabaseZap,
   Ticket,
+  Braces,
 } from 'lucide-react';
 
 export type Tool = {
@@ -80,6 +81,12 @@ export const tools: Tool[] = [
     description: 'Quickly convert between different units of measurement.',
     path: '/unit-converter',
     icon: Scale,
+  },
+  {
+    name: 'JSON Beautifier',
+    description: 'Format and beautify your JSON data for readability.',
+    path: '/json-beautifier',
+    icon: Braces,
   },
   {
     name: 'Text Tools',

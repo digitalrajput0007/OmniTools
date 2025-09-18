@@ -32,7 +32,7 @@ import {
 
 const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
-const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
+const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
 
 const randomDataGeneratorTool = tools.find(t => t.name === 'Random Data Generator');
