@@ -320,7 +320,12 @@ a.click();
                     <Input id="new-bg-color" type="color" value={newBgColor} onChange={(e) => setNewBgColor(e.target.value)} className="h-10 w-16 p-1" disabled={!useNewBg}/>
                 </div>
             </div>
-          <Button className="w-full" onClick={handleApply}>Apply Changes</Button>
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+            <Button className="w-full" onClick={handleApply}>Apply Changes</Button>
+            <Button className="w-full" variant="outline" onClick={resetState}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Start Over
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
