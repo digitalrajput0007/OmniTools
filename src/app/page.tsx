@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardContent,
   CardFooter,
 } from '@/components/ui/card';
 import {
@@ -49,7 +48,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
         <Link href="/" className="flex items-center gap-3">
           <AppLogo className="h-8 w-8 text-primary" />
           <h1 className="font-headline text-2xl font-bold tracking-tighter">
@@ -221,7 +220,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className="flex w-full shrink-0 flex-col items-center gap-2 border-t px-4 py-6 sm:flex-row md:px-6">
+      <footer className="flex w-full shrink-0 flex-col items-center gap-2 border-t bg-secondary px-4 py-6 sm:flex-row md:px-6">
         <p className="text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} {AppName}. All rights reserved.
         </p>
