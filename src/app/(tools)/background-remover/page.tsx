@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -19,12 +20,15 @@ import {
   RefreshCw,
   Palette,
   CheckCircle2,
+  X,
+  Trash2,
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Color = { r: number; g: number; b: number };
 
@@ -34,7 +38,7 @@ export default function BackgroundRemoverPage() {
   const [result, setResult] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [tolerance, setTolerance] = useState([10]); // Percentage
-  const [backgroundColor, setBackgroundColor] = useState<Color>({ r: 255, g: 255, b: 255 });
+  const [backgroundColors, setBackgroundColors] = useState<Color[]>([]);
   const [newBgColor, setNewBgColor] = useState('#ffffff');
   const [useNewBg, setUseNewBg] = useState(false);
   
@@ -50,7 +54,7 @@ export default function BackgroundRemoverPage() {
     setPreview(null);
     setResult(null);
     setTolerance([10]);
-    setBackgroundColor({ r: 255, g: 255, b: 255 });
+    setBackgroundColors([]);
     setNewBgColor('#ffffff');
     setUseNewBg(false);
     setStep('upload');
@@ -127,10 +131,23 @@ export default function BackgroundRemoverPage() {
     const pixelY = Math.floor(y * (naturalHeight / rect.height));
 
     const pixelData = ctx.getImageData(pixelX, pixelY, 1, 1).data;
-    setBackgroundColor({ r: pixelData[0], g: pixelData[1], b: pixelData[2] });
-    toast({ title: 'Color Picked', description: `New background color set to rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})` });
+    const newColor = { r: pixelData[0], g: pixelData[1], b: pixelData[2] };
+    
+    setBackgroundColors(prevColors => {
+      // Avoid adding duplicate colors
+      if (prevColors.some(c => c.r === newColor.r && c.g === newColor.g && c.b === newColor.b)) {
+        return prevColors;
+      }
+      return [...prevColors, newColor];
+    });
+
+    toast({ title: 'Color Added', description: `Added rgb(${newColor.r}, ${newColor.g}, ${newColor.b}) to removal list.` });
   };
   
+  const removeColor = (index: number) => {
+    setBackgroundColors(prev => prev.filter((_, i) => i !== index));
+  }
+
   const hexToRgb = (hex: string): Color | null => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -155,9 +172,14 @@ export default function BackgroundRemoverPage() {
 
       ctx.drawImage(image, 0, 0);
 
+      if (backgroundColors.length === 0) {
+        setResult(canvas.toDataURL());
+        return;
+      }
+
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
-      const toleranceValue = (tolerance[0] / 100) * 255 * 1.732; // Based on distance in RGB cube
+      const toleranceValue = (tolerance[0] / 100) * 255 * 1.732; 
 
       const newRgb = useNewBg ? hexToRgb(newBgColor) : null;
 
@@ -166,13 +188,16 @@ export default function BackgroundRemoverPage() {
         const g = data[i + 1];
         const b = data[i + 2];
 
-        const diff = Math.sqrt(
-          Math.pow(r - backgroundColor.r, 2) +
-          Math.pow(g - backgroundColor.g, 2) +
-          Math.pow(b - backgroundColor.b, 2)
-        );
+        const shouldRemove = backgroundColors.some(bgColor => {
+            const diff = Math.sqrt(
+              Math.pow(r - bgColor.r, 2) +
+              Math.pow(g - bgColor.g, 2) +
+              Math.pow(b - bgColor.b, 2)
+            );
+            return diff < toleranceValue;
+        });
 
-        if (diff < toleranceValue) {
+        if (shouldRemove) {
             if (newRgb) {
                 data[i] = newRgb.r;
                 data[i+1] = newRgb.g;
@@ -188,7 +213,7 @@ export default function BackgroundRemoverPage() {
       setResult(canvas.toDataURL(useNewBg ? 'image/jpeg' : 'image/png'));
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preview, tolerance, backgroundColor, useNewBg, newBgColor, step]);
+  }, [preview, tolerance, backgroundColors, useNewBg, newBgColor, step]);
 
   const handleApply = () => {
     setStep('processing');
@@ -221,7 +246,6 @@ export default function BackgroundRemoverPage() {
     document.body.removeChild(a);
   };
 
-  const bgColorString = `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`;
 
   const renderUploadStep = () => (
      <label
@@ -255,6 +279,14 @@ export default function BackgroundRemoverPage() {
               className="h-auto max-h-full w-auto max-w-full cursor-crosshair object-contain"
               onClick={handleColorPick}
             />}
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute right-2 top-2 z-10 h-7 w-7"
+              onClick={resetState}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         <div className="space-y-2">
@@ -284,19 +316,29 @@ export default function BackgroundRemoverPage() {
       <Card className="mx-auto w-full max-w-2xl">
         <CardContent className="space-y-6 p-6">
            <div className="grid gap-6 sm:grid-cols-2">
-             <div className="space-y-4">
-               <Label>Color to Remove</Label>
-              <div className="flex items-center gap-4 rounded-lg border p-3">
-                 <div className="flex flex-1 items-center gap-3">
-                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border" style={{ backgroundColor: bgColorString }}>
-                      <Palette className="h-5 w-5 mix-blend-difference" style={{ color: 'white'}} />
-                   </div>
-                   <div className="text-sm">
-                     <div className="font-medium">Selected</div>
-                     <div className="text-muted-foreground">{bgColorString}</div>
-                   </div>
-                 </div>
-              </div>
+             <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                    <Label>Colors to Remove ({backgroundColors.length})</Label>
+                    {backgroundColors.length > 0 && <Button variant="ghost" size="sm" onClick={() => setBackgroundColors([])}><Trash2 className="mr-2 h-4 w-4"/>Clear All</Button>}
+                </div>
+                <ScrollArea className="h-24 w-full rounded-md border">
+                    <div className="p-3 space-y-2">
+                        {backgroundColors.length === 0 && <p className="text-sm text-muted-foreground text-center pt-4">Click the image to select colors.</p>}
+                        {backgroundColors.map((color, index) => (
+                             <div key={index} className="flex items-center gap-4 rounded-lg border p-2">
+                                <div className="flex flex-1 items-center gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border" style={{ backgroundColor: `rgb(${color.r}, ${color.g}, ${color.b})` }}>
+                                    <Palette className="h-5 w-5 mix-blend-difference" style={{ color: 'white'}} />
+                                </div>
+                                <div className="text-sm">
+                                    <div className="font-medium text-muted-foreground">{`rgb(${color.r}, ${color.g}, ${color.b})`}</div>
+                                </div>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeColor(index)}><X className="h-4 w-4" /></Button>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
             </div>
             <div className="space-y-4">
               <Label htmlFor="tolerance">Tolerance: {tolerance[0]}%</Label>
@@ -322,9 +364,6 @@ export default function BackgroundRemoverPage() {
             </div>
           <div className="flex flex-col gap-2 pt-2 sm:flex-row">
             <Button className="w-full" onClick={handleApply}>Apply Changes</Button>
-            <Button className="w-full" variant="outline" onClick={resetState}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Start Over
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -436,10 +475,11 @@ export default function BackgroundRemoverPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your Image:</strong> Drag and drop an image or click to browse. Images with a clean, solid-color background work best.</li>
-                  <li><strong>Pick the Background Color:</strong> Click anywhere on the background of the original image. The tool will select that color as the one to remove.</li>
-                  <li><strong>Adjust Tolerance:</strong> Use the "Tolerance" slider to fine-tune the removal. A higher tolerance will remove a wider range of similar colors, which can help with shadows and gradients but may also remove parts of your subject if they are too similar to the background.</li>
+                  <li><strong>Pick Background Colors:</strong> Click anywhere on the background of the original image. The tool will add that color to a list of colors to be removed. You can add multiple colors to handle gradients or variations in lighting.</li>
+                  <li><strong>Manage Colors:</strong> You can see the list of selected colors in the control panel. Click the 'X' next to any color to remove it from the list if you made a mistake.</li>
+                  <li><strong>Adjust Tolerance:</strong> Use the "Tolerance" slider to fine-tune the removal. A higher tolerance will remove a wider range of similar colors, which can help with shadows but may also remove parts of your subject.</li>
                   <li><strong>(Optional) Replace Background:</strong> Toggle the "Replace background with color" switch and select a new color if you want to replace the background instead of making it transparent.</li>
-                  <li><strong>Apply & Download:</strong> Click "Apply Changes" to process the image. Once you're satisfied with the result, click "Download Image" to save it as a transparent PNG or a JPEG with the new background.</li>
+                  <li><strong>Apply & Download:</strong> Click "Apply Changes" to process the image. Once you're satisfied with the result, click "Download Image" to save it.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
@@ -448,9 +488,9 @@ export default function BackgroundRemoverPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ul className="list-disc list-inside space-y-2">
                   <li><strong>Use High-Contrast Images:</strong> The tool works best when the subject is clearly distinct from the background. An image of a blue shirt against a blue wall will be difficult to process.</li>
+                  <li><strong>Click on Different Shades:</strong> If the background has shadows or gradients, click on both the lighter and darker areas to add them to the removal list.</li>
                   <li><strong>Start with Low Tolerance:</strong> Begin with a low tolerance value and gradually increase it. This helps you remove the background without accidentally erasing parts of your subject.</li>
                   <li><strong>Lighting is Key:</strong> Even, consistent lighting on your background will make color-picking more accurate and lead to a cleaner result.</li>
-                  <li><strong>Transparent vs. Replaced:</strong> If you plan to use the image on various backgrounds, download it as a transparent PNG. If you just need a solid color background, using the replacement option is quick and easy.</li>
                 </ul>
               </AccordionContent>
             </AccordionItem>
@@ -460,5 +500,3 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
-
-    
