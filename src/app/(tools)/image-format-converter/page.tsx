@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -23,6 +22,7 @@ import { UploadCloud, X, CheckCircle2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -142,15 +142,12 @@ export default function ImageFormatConverterPage() {
 
     let convertedBlob: Blob | null = null;
     let conversionError: Error | null = null;
-
-    try {
-      convertedBlob = await convertImage(file, outputFormat);
-    } catch (error) {
-      conversionError =
-        error instanceof Error
-          ? error
-          : new Error('An unknown error occurred during conversion.');
-    }
+    
+    const conversionPromise = convertImage(file, outputFormat)
+        .then(blob => { convertedBlob = blob; })
+        .catch(error => {
+            conversionError = error instanceof Error ? error : new Error('An unknown error occurred during conversion.');
+        });
 
     const minDuration = 3000;
     const startTime = Date.now();
@@ -162,22 +159,25 @@ export default function ImageFormatConverterPage() {
 
       if (currentProgress >= 100) {
         clearInterval(progressInterval);
-        setIsConverting(false);
-
-        if (conversionError) {
-          toast({
-            title: 'Conversion Error',
-            description: conversionError.message,
-            variant: 'destructive',
-          });
-        } else if (convertedBlob) {
-          const finalSizeKB = convertedBlob.size / 1024;
-          setConvertedImageUrl(URL.createObjectURL(convertedBlob));
-          setConvertedSize(finalSizeKB);
-          setConverted(true);
-        }
       }
     }, 50);
+
+    await Promise.all([conversionPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+
+    setIsConverting(false);
+
+    if (conversionError) {
+      toast({
+        title: 'Conversion Error',
+        description: conversionError.message,
+        variant: 'destructive',
+      });
+    } else if (convertedBlob) {
+      const finalSizeKB = convertedBlob.size / 1024;
+      setConvertedImageUrl(URL.createObjectURL(convertedBlob));
+      setConvertedSize(finalSizeKB);
+      setConverted(true);
+    }
   };
 
   const handleDownload = () => {
@@ -264,7 +264,7 @@ export default function ImageFormatConverterPage() {
                 </div>
               </div>
               <div className="flex flex-col space-y-6">
-                {!converted && (
+                {!converted && !isConverting && (
                   <>
                     <div>
                       <h3 className="mb-2 font-semibold">File Information</h3>
@@ -273,43 +273,41 @@ export default function ImageFormatConverterPage() {
                         <p>Original Size: {originalSizeInKB.toFixed(2)} KB</p>
                       </div>
                     </div>
-                    {!isConverting && (
-                      <>
-                        <div className="space-y-2">
-                          <Label htmlFor="output-format">Output Format</Label>
-                          <Select
-                            value={outputFormat}
-                            onValueChange={(v) =>
-                              setOutputFormat(v as OutputFormat)
-                            }
-                          >
-                            <SelectTrigger id="output-format">
-                              <SelectValue placeholder="Select format" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="png">PNG</SelectItem>
-                              <SelectItem value="jpeg">JPEG</SelectItem>
-                              <SelectItem value="webp">WEBP</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-4">
-                          <Button
-                            onClick={handleConvert}
-                            className="w-full"
-                            disabled={isConverting}
-                          >
-                            Convert Image
-                          </Button>
-                        </div>
-                      </>
-                    )}
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="output-format">Output Format</Label>
+                        <Select
+                          value={outputFormat}
+                          onValueChange={(v) =>
+                            setOutputFormat(v as OutputFormat)
+                          }
+                        >
+                          <SelectTrigger id="output-format">
+                            <SelectValue placeholder="Select format" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="png">PNG</SelectItem>
+                            <SelectItem value="jpeg">JPEG</SelectItem>
+                            <SelectItem value="webp">WEBP</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-4">
+                        <Button
+                          onClick={handleConvert}
+                          className="w-full"
+                          disabled={isConverting}
+                        >
+                          Convert Image
+                        </Button>
+                      </div>
+                    </>
                   </>
                 )}
 
                 {isConverting && !converted && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <CircularProgress progress={progress} />
                     <p className="text-center text-sm text-muted-foreground">
                       Converting...
                     </p>

@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import {
   FileDown,
   UploadCloud,
@@ -23,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -279,7 +279,7 @@ export default function PdfSplitterPage() {
 
                 {isSplitting && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <CircularProgress progress={progress} />
                     <p className="text-center text-sm text-muted-foreground">
                       Splitting...
                     </p>

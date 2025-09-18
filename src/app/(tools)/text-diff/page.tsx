@@ -13,10 +13,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { GitCompareArrows, Pencil, CheckCircle2 } from 'lucide-react';
+import { GitCompareArrows, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 type DiffPart = {
   value: string;
@@ -37,7 +37,7 @@ export default function TextDiffPage() {
     setShowDiff(false);
 
     const startTime = Date.now();
-    const duration = 3000;
+    const duration = 1500; // Shorter duration for text processing
 
     const interval = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
@@ -73,91 +73,90 @@ export default function TextDiffPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="original-text">Original Text</Label>
-              <Textarea
-                id="original-text"
-                value={originalText}
-                onChange={(e) => {
-                  setOriginalText(e.target.value);
-                  handleReset();
-                }}
-                className="min-h-[300px] font-mono"
-                placeholder="Paste the first version of your text here."
-                readOnly={showDiff || isComparing}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="changed-text">Changed Text</Label>
-                {showDiff && (
-                   <Button variant="ghost" size="sm" onClick={handleReset}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
-                   </Button>
-                )}
+          {!isComparing && !showDiff && (
+             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="original-text">Original Text</Label>
+                  <Textarea
+                    id="original-text"
+                    value={originalText}
+                    onChange={(e) => setOriginalText(e.target.value)}
+                    className="min-h-[300px] font-mono"
+                    placeholder="Paste the first version of your text here."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="changed-text">Changed Text</Label>
+                  <Textarea
+                    id="changed-text"
+                    value={changedText}
+                    onChange={(e) => setChangedText(e.target.value)}
+                    className="min-h-[300px] font-mono"
+                    placeholder="Paste the second version of your text here."
+                  />
+                </div>
               </div>
-              
-              {showDiff ? (
-                 <ScrollArea className="h-[300px] w-full rounded-md border font-mono">
-                    <pre className="whitespace-pre-wrap p-2 text-sm">
-                      {differences.map((part, index) => (
-                        <span
-                          key={index}
-                          className={cn({
-                            'bg-red-100/80 dark:bg-red-900/50 text-red-900 dark:text-red-200': part.removed,
-                            'bg-green-100/80 dark:bg-green-900/50 text-green-900 dark:text-green-200': part.added,
-                          })}
-                        >
-                          {part.value}
-                        </span>
-                      ))}
-                    </pre>
-                 </ScrollArea>
-              ) : (
-                <Textarea
-                  id="changed-text"
-                  value={changedText}
-                  onChange={(e) => {
-                    setChangedText(e.target.value);
-                    handleReset();
-                  }}
-                  className="min-h-[300px] font-mono"
-                  placeholder="Paste the second version of your text here."
-                  readOnly={isComparing}
-                />
-              )}
-            </div>
-          </div>
-
-          {!showDiff && !isComparing && (
-            <div className="flex justify-center">
-              <Button onClick={handleCompare} disabled={!originalText || !changedText}>
-                <GitCompareArrows className="mr-2 h-4 w-4" /> Compare Texts
-              </Button>
-            </div>
           )}
-
+         
           {isComparing && (
-            <div className="flex flex-col items-center justify-center space-y-2">
-              <CheckCircle2 className="h-16 w-16 text-green-500" />
+            <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+              <CircularProgress progress={progress} />
               <p className="text-sm text-muted-foreground">Comparing...</p>
             </div>
           )}
-          
+
           {showDiff && (
-             <div className="flex justify-center rounded-md border p-2 text-sm text-muted-foreground">
-                <span className="mr-4 flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-sm bg-green-100/80 dark:bg-green-900/50"></span>
-                  Added
-                </span>
-                 <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-sm bg-red-100/80 dark:bg-red-900/50"></span>
-                  Removed
-                </span>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                 <div className="space-y-2">
+                    <Label>Original Text</Label>
+                     <ScrollArea className="h-[300px] w-full rounded-md border font-mono">
+                        <pre className="whitespace-pre-wrap p-2 text-sm">{originalText}</pre>
+                     </ScrollArea>
+                 </div>
+                 <div className="space-y-2">
+                    <Label>Compared Text</Label>
+                    <ScrollArea className="h-[300px] w-full rounded-md border font-mono">
+                        <pre className="whitespace-pre-wrap p-2 text-sm">
+                          {differences.map((part, index) => (
+                            <span
+                              key={index}
+                              className={cn({
+                                'bg-red-100/80 dark:bg-red-900/50 text-red-900 dark:text-red-200 line-through': part.removed,
+                                'bg-green-100/80 dark:bg-green-900/50 text-green-900 dark:text-green-200': part.added,
+                              })}
+                            >
+                              {part.value}
+                            </span>
+                          ))}
+                        </pre>
+                    </ScrollArea>
+                 </div>
               </div>
+               <div className="flex justify-center rounded-md border p-2 text-sm text-muted-foreground">
+                  <span className="mr-4 flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-sm bg-green-100/80 dark:bg-green-900/50"></span>
+                    Added
+                  </span>
+                   <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-sm bg-red-100/80 dark:bg-red-900/50"></span>
+                    Removed
+                  </span>
+                </div>
+            </div>
           )}
+
+          <div className="flex justify-center">
+            {showDiff ? (
+                <Button variant="outline" onClick={handleReset}>
+                  <Pencil className="mr-2 h-4 w-4" /> Make a New Comparison
+               </Button>
+            ) : (
+                <Button onClick={handleCompare} disabled={!originalText || !changedText || isComparing}>
+                  <GitCompareArrows className="mr-2 h-4 w-4" /> {isComparing ? 'Comparing...' : 'Compare Texts'}
+                </Button>
+            )}
+          </div>
           
         </CardContent>
       </Card>

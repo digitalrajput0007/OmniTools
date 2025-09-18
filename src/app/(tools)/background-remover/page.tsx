@@ -22,9 +22,9 @@ import {
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 type Color = { r: number; g: number; b: number };
 
@@ -328,9 +328,11 @@ a.click();
 
   const renderProcessingStep = () => (
     <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-        <CheckCircle2 className="h-16 w-16 text-green-500" />
-        <h2 className='text-2xl font-headline font-semibold'>Applying Changes...</h2>
-        <p className="text-center text-sm text-muted-foreground">Please wait while we process your image.</p>
+      <CircularProgress progress={progress} />
+      <h2 className="text-2xl font-headline font-semibold">Applying Changes...</h2>
+      <p className="text-center text-sm text-muted-foreground">
+        Please wait while we process your image.
+      </p>
     </div>
   );
 

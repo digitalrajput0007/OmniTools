@@ -30,9 +30,9 @@ import ReactCrop, {
   makeAspectCrop,
 } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -302,14 +302,9 @@ export default function ImageResizerCropperPage() {
       setProgress(currentProgress);
       if (currentProgress >= 100) {
         clearInterval(interval);
+        setStep('download');
       }
     }, 50);
-
-    const elapsedTime = Date.now() - startTime;
-    if (elapsedTime < minDuration) {
-      await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
-    }
-    setStep('download');
   };
   
   const handleDownload = () => {
@@ -453,7 +448,7 @@ a.click();
       case 'processing':
         return (
           <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
+            <CircularProgress progress={progress} />
             <p className="text-center text-sm text-muted-foreground">Finalizing your image...</p>
           </div>
         );

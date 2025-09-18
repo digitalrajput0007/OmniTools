@@ -12,7 +12,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Progress } from '@/components/ui/progress';
 import {
   FileDown,
   RefreshCcw,
@@ -23,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -142,14 +142,12 @@ export default function ImageCompressorPage() {
     let compressedBlob: Blob | null = null;
     let compressionError: Error | null = null;
 
-    try {
-      compressedBlob = await compressImage(file, compressionLevel[0]);
-    } catch (error) {
-      compressionError =
-        error instanceof Error
-          ? error
-          : new Error('An unknown error occurred during compression.');
-    }
+    const compressionPromise = compressImage(file, compressionLevel[0])
+      .then(blob => { compressedBlob = blob; })
+      .catch(error => {
+        compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
+      });
+
 
     const minDuration = 3000;
     const startTime = Date.now();
@@ -161,23 +159,25 @@ export default function ImageCompressorPage() {
 
       if (currentProgress >= 100) {
         clearInterval(progressInterval);
-        setIsCompressing(false);
-
-        if (compressionError) {
-          toast({
-            title: 'Compression Error',
-            description: compressionError.message,
-            variant: 'destructive',
-          });
-          handleGoBack();
-        } else if (compressedBlob) {
-          const finalSizeKB = compressedBlob.size / 1024;
-          setCompressedPreview(URL.createObjectURL(compressedBlob));
-          setCompressedSize(finalSizeKB);
-          setCompressed(true);
-        }
       }
     }, 50);
+
+    await Promise.all([compressionPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    
+    setIsCompressing(false);
+    if (compressionError) {
+      toast({
+        title: 'Compression Error',
+        description: compressionError.message,
+        variant: 'destructive',
+      });
+      handleGoBack();
+    } else if (compressedBlob) {
+      const finalSizeKB = compressedBlob.size / 1024;
+      setCompressedPreview(URL.createObjectURL(compressedBlob));
+      setCompressedSize(finalSizeKB);
+      setCompressed(true);
+    }
   };
 
   const handleGoBack = () => {
@@ -286,7 +286,7 @@ a.click();
                 </div>
               </div>
               <div className="flex flex-col space-y-6">
-                {!compressed && (
+                {!compressed && !isCompressing && (
                   <>
                     <div>
                       <h3 className="mb-2 font-semibold">File Information</h3>
@@ -295,43 +295,41 @@ a.click();
                         <p>Original Size: {originalSizeInKB.toFixed(2)} KB</p>
                       </div>
                     </div>
-                    {!isCompressing && (
-                      <>
-                        <div className="space-y-4">
-                          <Label htmlFor="compression-level">
-                            Compression Level: {compressionLevel[0]}%
-                          </Label>
-                          <Slider
-                            id="compression-level"
-                            min={0}
-                            max={100}
-                            step={1}
-                            value={compressionLevel}
-                            onValueChange={setCompressionLevel}
-                            disabled={isCompressing}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Lower percentage means smaller file size but lower
-                            quality.
-                          </p>
-                        </div>
-                        <div className="space-y-4">
-                          <Button
-                            onClick={handleCompress}
-                            className="w-full"
-                            disabled={isCompressing}
-                          >
-                            Compress Image
-                          </Button>
-                        </div>
-                      </>
-                    )}
+                    <>
+                      <div className="space-y-4">
+                        <Label htmlFor="compression-level">
+                          Compression Level: {compressionLevel[0]}%
+                        </Label>
+                        <Slider
+                          id="compression-level"
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={compressionLevel}
+                          onValueChange={setCompressionLevel}
+                          disabled={isCompressing}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Lower percentage means smaller file size but lower
+                          quality.
+                        </p>
+                      </div>
+                      <div className="space-y-4">
+                        <Button
+                          onClick={handleCompress}
+                          className="w-full"
+                          disabled={isCompressing}
+                        >
+                          Compress Image
+                        </Button>
+                      </div>
+                    </>
                   </>
                 )}
 
                 {isCompressing && !compressed && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <CircularProgress progress={progress} />
                     <p className="text-center text-sm text-muted-foreground">
                       Compressing...
                     </p>

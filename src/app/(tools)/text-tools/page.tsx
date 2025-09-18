@@ -12,9 +12,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CaseLower, CaseUpper, Pilcrow, VenetianMask, CheckCircle2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -50,7 +50,7 @@ export default function TextToolsPage() {
     setIsProcessing(true);
     setProgress(0);
 
-    const duration = 3000;
+    const duration = 1500;
     const startTime = Date.now();
 
     const interval = setInterval(() => {
@@ -151,12 +151,10 @@ export default function TextToolsPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center space-y-4">
                   {isProcessing ? (
-                    <>
-                      <CheckCircle2 className="h-16 w-16 text-green-500" />
-                      <p className="text-sm text-muted-foreground">
-                        Processing...
-                      </p>
-                    </>
+                    <div className="flex h-full flex-col items-center justify-center space-y-4 py-8">
+                        <CircularProgress progress={progress} />
+                        <p className="text-sm text-muted-foreground">Processing...</p>
+                    </div>
                   ) : (
                     <Button
                       onClick={handleRemoveExtraSpaces}

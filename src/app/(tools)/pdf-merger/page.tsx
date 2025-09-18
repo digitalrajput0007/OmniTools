@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import {
   FileDown,
   UploadCloud,
@@ -22,6 +21,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 export default function PdfMergerPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -304,7 +304,7 @@ export default function PdfMergerPage() {
 
               {isMerging ? (
                 <div className="flex h-full flex-col items-center justify-center space-y-4">
-                  <CheckCircle2 className="h-16 w-16 text-green-500" />
+                  <CircularProgress progress={progress} />
                   <p className="text-center text-sm text-muted-foreground">
                     Merging...
                   </p>

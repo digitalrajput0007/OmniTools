@@ -11,11 +11,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { FileDown, UploadCloud, X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 export default function ImageToPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -204,7 +204,7 @@ export default function ImageToPdfPage() {
                 )}
                 {isConverting && !converted && (
                   <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <CircularProgress progress={progress} />
                     <p className="text-center text-sm text-muted-foreground">
                       Converting...
                     </p>
