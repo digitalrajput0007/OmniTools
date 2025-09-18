@@ -217,7 +217,7 @@ export default function BackgroundRemoverPage() {
     const extension = useNewBg ? 'jpg' : 'png';
     a.download = `${baseName}-bg-removed.${extension}`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
   };
 
@@ -460,3 +460,5 @@ a.click();
     </div>
   );
 }
+
+    
