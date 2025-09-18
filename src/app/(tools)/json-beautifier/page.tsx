@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -73,6 +74,7 @@ export default function JsonBeautifierPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className="text-2xl">JSON Beautifier</CardTitle>
           <CardDescription className="text-base">
             Paste your JSON data to format and beautify it for better readability.
           </CardDescription>

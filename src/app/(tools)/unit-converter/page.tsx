@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -117,6 +118,7 @@ export default function UnitConverterPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Unit Converter</CardTitle>
           <CardDescription className="text-base">
             Convert between length, weight, temperature, and more.
           </CardDescription>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -168,6 +169,7 @@ export default function CreditCardGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Credit Card Generator</CardTitle>
           <CardDescription className="text-base">
             Create valid-looking, but fake, credit card numbers for testing and validation purposes.
           </CardDescription>

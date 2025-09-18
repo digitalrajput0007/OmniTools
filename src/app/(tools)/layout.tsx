@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +14,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from '@/components/ui/sidebar';
-import Header from '@/components/header';
 import { AppLogo, AppName, tools } from '@/lib/constants';
 
 // This is not how you generate dynamic metadata in the app router.
@@ -71,7 +71,6 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <Header />
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -203,6 +204,7 @@ export default function RandomDataGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Random Data Generator</CardTitle>
           <CardDescription className="text-base">
             Create various types of dummy data for your projects and testing needs.
           </CardDescription>

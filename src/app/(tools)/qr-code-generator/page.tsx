@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -44,6 +45,7 @@ export default function QrCodeGeneratorPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader className="text-center">
+          <CardTitle className="text-2xl">QR Code Generator</CardTitle>
           <CardDescription className="text-base">
             Enter text or a URL to generate a QR code instantly.
           </CardDescription>
