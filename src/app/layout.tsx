@@ -49,9 +49,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <head>
-        {/*
-          TODO: Add your analytics script here.
-          For example, for Google Analytics:
+        {/* 
+          PASTE YOUR GOOGLE ANALYTICS SNIPPET HERE.
+
+          It should look something like this, but with your actual ID.
+          You can get this from your Google Analytics dashboard.
+
           <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
           <script>
             window.dataLayer = window.dataLayer || [];
