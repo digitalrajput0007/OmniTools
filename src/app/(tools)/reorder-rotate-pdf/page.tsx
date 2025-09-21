@@ -152,11 +152,10 @@ export default function ReorderRotatePdfPage() {
           const pageIndices = previews.map(p => p.id - 1);
           const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndices);
 
-          previews.forEach((p, i) => {
-              const newPage = newPdfDoc.addPage(copiedPages[i]);
-              const originalPage = pdfDoc.getPage(pageIndices[i]);
-              const newRotation = (originalPage.getRotation().angle + p.rotation) % 360;
-              newPage.setRotation(newRotation);
+          copiedPages.forEach((page, index) => {
+            const newPage = newPdfDoc.addPage(page);
+            const preview = previews[index];
+            newPage.setRotation(preview.rotation);
           });
           
           const pdfBytes = await newPdfDoc.save();
@@ -171,7 +170,8 @@ export default function ReorderRotatePdfPage() {
           document.body.removeChild(a);
           setDone(true);
       } catch (error) {
-          toast({ title: "Error Saving PDF", variant: 'destructive' });
+          console.error(error);
+          toast({ title: "Error Saving PDF", description: "Something went wrong while saving.", variant: 'destructive' });
       } finally {
           setIsDownloading(false);
       }
@@ -214,7 +214,7 @@ export default function ReorderRotatePdfPage() {
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
-                        key={p.id} 
+                        key={`${p.id}-${index}`} 
                         className="relative group border rounded-lg p-2 flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing"
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
@@ -222,7 +222,7 @@ export default function ReorderRotatePdfPage() {
                         onDragEnd={handleDropDiv}
                         onDragOver={(e) => e.preventDefault()}
                       >
-                          <Image src={p.src} alt={`Page ${p.id}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
+                          <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={() => handleRotate(index)}>
                               <RotateCw className="h-4 w-4"/>
