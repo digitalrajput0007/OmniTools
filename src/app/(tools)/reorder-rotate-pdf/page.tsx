@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 let pdfjs: any;
 
@@ -180,7 +182,11 @@ export default function ReorderRotatePdfPage() {
             const previewForThisCopiedPage = previews[index];
             const addedPage = newPdfDoc.addPage(page);
             if (previewForThisCopiedPage) {
-              addedPage.setRotation(degrees(previewForThisCopiedPage.rotation));
+              // Get the original rotation from the source page and add our new rotation
+              const originalPage = pdfDoc.getPage(previewForThisCopiedPage.id - 1);
+              const originalRotation = originalPage.getRotation().angle;
+              const additionalRotation = previewForThisCopiedPage.rotation;
+              addedPage.setRotation(degrees(originalRotation + additionalRotation));
             }
           });
           
@@ -295,6 +301,49 @@ export default function ReorderRotatePdfPage() {
         </CardHeader>
         <CardContent>
           {renderContent()}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About the PDF Page Manager</CardTitle>
+          <CardDescription>
+            Learn how to easily rearrange and orient your PDF pages.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What is Page Reordering and Rotation?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  This tool gives you full control over the structure of your PDF. <strong>Reordering</strong> lets you change the sequence of pages, perfect for correcting a scanning order or organizing a document. <strong>Rotation</strong> allows you to change the orientation of individual pages, which is ideal for fixing pages that were scanned upside down or sideways.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Tool</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your PDF:</strong> Drag and drop your file or click to browse. The tool will generate a preview for every page.</li>
+                  <li><strong>Reorder Pages:</strong> Simply click and drag any page preview to a new position in the sequence.</li>
+                  <li><strong>Rotate a Page:</strong> Hover over a page and click the rotate icon (<RotateCw />) in the top-right corner. Each click rotates the page 90 degrees clockwise.</li>
+                  <li><strong>Save Changes:</strong> Once your pages are perfectly arranged and oriented, click the "Save Changes" button.</li>
+                  <li><strong>Download:</strong> Your new PDF with all the changes applied will be downloaded automatically.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Page Management</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Fix Scanning Errors:</strong> This is the perfect tool for correcting documents that were scanned out of order or with incorrect page orientations.</li>
+                  <li><strong>Combine with Other Tools:</strong> First, use the "PDF Merger" to combine several documents, then use this tool to arrange all the pages into a final, coherent order.</li>
+                  <li><strong>Visual Confirmation:</strong> The live previews ensure you know exactly how your document will look before you save it.</li>
+                  <li><strong>Secure and Private:</strong> All page manipulation happens directly in your browser. Your document is never sent to a server, keeping your information secure.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>
