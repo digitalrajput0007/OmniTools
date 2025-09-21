@@ -16,6 +16,7 @@ import {
 import {
   ArrowRight,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 export const metadata: Metadata = {
@@ -25,6 +26,25 @@ export const metadata: Metadata = {
 
 
 export default function Home() {
+  const iconColors = [
+    // Vibrant Palette
+    { bg: 'bg-rose-500/10', text: 'text-rose-500' },
+    { bg: 'bg-sky-500/10', text: 'text-sky-500' },
+    { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
+    { bg: 'bg-amber-500/10', text: 'text-amber-500' },
+    { bg: 'bg-violet-500/10', text: 'text-violet-500' },
+    { bg: 'bg-lime-500/10', text: 'text-lime-500' },
+    { bg: 'bg-pink-500/10', text: 'text-pink-500' },
+    { bg: 'bg-cyan-500/10', text: 'text-cyan-500' },
+    { bg: 'bg-fuchsia-500/10', text: 'text-fuchsia-500' },
+    { bg: 'bg-orange-500/10', text: 'text-orange-500' },
+    { bg: 'bg-teal-500/10', text: 'text-teal-500' },
+    { bg: 'bg-indigo-500/10', text: 'text-indigo-500' },
+    { bg: 'bg-red-500/10', text: 'text-red-500' },
+    { bg: 'bg-blue-500/10', text: 'text-blue-500' },
+    { bg: 'bg-yellow-500/10', text: 'text-yellow-500' },
+  ];
+
   return (
     <>
       <section className="w-full py-12 md:py-24 lg:py-32">
@@ -41,12 +61,12 @@ export default function Home() {
             </div>
           </div>
            <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-4xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
-            {tools.map((tool) => (
+            {tools.map((tool, index) => (
               <Link href={tool.path} key={tool.name} className="group">
-                <Card className="flex h-full flex-col transition-all duration-300 hover:scale-[1.02] hover:border-primary hover:shadow-lg hover:shadow-primary/10">
+                <Card className="flex h-full flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{ '--tool-color-text': `hsl(var(--${iconColors[index % iconColors.length].text.replace('text-','').replace('-500','')}))` } as React.CSSProperties}>
                   <CardHeader className="flex-grow flex-row items-start gap-4">
-                    <div className="rounded-md bg-primary/10 p-3">
-                      <tool.icon className="h-6 w-6 text-primary" />
+                    <div className={cn("rounded-md p-3", iconColors[index % iconColors.length].bg)}>
+                      <tool.icon className={cn("h-6 w-6", iconColors[index % iconColors.length].text)} />
                     </div>
                     <div className="flex-1">
                       <CardTitle className="font-headline text-lg">
@@ -58,7 +78,7 @@ export default function Home() {
                     </div>
                   </CardHeader>
                   <CardFooter>
-                    <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                    <span className={cn("flex items-center gap-1 text-sm font-semibold", iconColors[index % iconColors.length].text)}>
                       Use Tool{' '}
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
