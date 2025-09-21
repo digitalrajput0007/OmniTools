@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -13,6 +14,11 @@ export default {
         body: ['var(--font-body)', 'sans-serif'],
         headline: ['var(--font-headline)', 'sans-serif'],
         code: ['monospace'],
+        'great-vibes': ['var(--font-great-vibes)', 'cursive'],
+        'sacramento': ['var(--font-sacramento)', 'cursive'],
+        'allura': ['var(--font-allura)', 'cursive'],
+        'dancing-script': ['var(--font-dancing-script)', 'cursive'],
+        'sans': ['sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -97,3 +103,5 @@ export default {
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
+    

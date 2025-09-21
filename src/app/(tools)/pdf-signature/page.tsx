@@ -26,6 +26,8 @@ import {
   Trash2,
   Edit,
   Copy,
+  Upload,
+  Palette,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -36,6 +38,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+
 
 let pdfjs: any;
 
@@ -152,7 +156,7 @@ const DraggableItem = ({
       onMouseEnter={() => onHover(obj.id)}
       onMouseLeave={() => onHover(null)}
       className={cn(
-        "absolute cursor-move border border-dashed z-10",
+        "absolute cursor-move border border-dashed z-20",
         isSelected ? 'border-primary' : 'border-transparent'
       )}
       style={{
@@ -194,6 +198,8 @@ export default function PdfSignaturePage() {
   const [processedFile, setProcessedFile] = useState<Blob | null>(null);
   const [isAddTextOpen, setIsAddTextOpen] = useState(false);
   const [isAddSigOpen, setIsAddSigOpen] = useState(false);
+  const [isUploadImageOpen, setIsUploadImageOpen] = useState(false);
+  
   const [editingObject, setEditingObject] = useState<DraggableObject | null>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
   const [hoveredObjectId, setHoveredObjectId] = useState<number | null>(null);
@@ -201,10 +207,17 @@ export default function PdfSignaturePage() {
   
   // For text preview in dialog
   const [textPreview, setTextPreview] = useState({ text: '', font: 'font-dancing-script' as SignatureFont, color: 'black' as ColorName, fontSize: 24 });
+  
+  // For Image Upload and BG Removal
+  const [uploadedImage, setUploadedImage] = useState<string|null>(null);
+  const [uploadedImageType, setUploadedImageType] = useState<string>('image/png');
+  const [bgColorToRemove, setBgColorToRemove] = useState<{r:number, g:number, b:number}|null>(null);
+  const [tolerance, setTolerance] = useState([10]);
 
 
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageBgCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { toast } = useToast();
 
@@ -375,6 +388,93 @@ export default function PdfSignaturePage() {
     }
     setIsAddSigOpen(false);
   };
+  
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if(e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        if (!file.type.startsWith('image/')) {
+            toast({ title: 'Invalid File Type', variant: 'destructive' });
+            return;
+        }
+        setUploadedImageType(file.type);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setUploadedImage(reader.result as string);
+        }
+        reader.readAsDataURL(file);
+    }
+  }
+
+  const handlePickBgColor = (e: React.MouseEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const canvas = document.createElement('canvas');
+    const rect = img.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    
+    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+
+    const pixelX = Math.floor(x * (img.naturalWidth / rect.width));
+    const pixelY = Math.floor(y * (img.naturalHeight / rect.height));
+
+    const pixelData = ctx.getImageData(pixelX, pixelY, 1, 1).data;
+    setBgColorToRemove({ r: pixelData[0], g: pixelData[1], b: pixelData[2] });
+  };
+  
+  const addUploadedImage = () => {
+    const canvas = imageBgCanvasRef.current;
+    const image = new window.Image();
+    image.src = uploadedImage!;
+    image.onload = () => {
+        if(!canvas) return;
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if(!ctx) return;
+        
+        ctx.drawImage(image, 0, 0);
+
+        if(bgColorToRemove){
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const toleranceValue = (tolerance[0] / 100) * 255 * 1.732;
+
+             for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const diff = Math.sqrt(
+                    Math.pow(r - bgColorToRemove.r, 2) +
+                    Math.pow(g - bgColorToRemove.g, 2) +
+                    Math.pow(b - bgColorToRemove.b, 2)
+                );
+
+                if (diff < toleranceValue) {
+                    data[i + 3] = 0; // Make transparent
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        const finalImage = canvas.toDataURL('image/png');
+        const newObject: DraggableObject = {
+            id: Date.now(), type: 'image', pageIndex: -1, x: 50, y: 50, content: finalImage,
+            width: image.width > 200 ? 200 : image.width, height: (image.width > 200 ? 200 : image.width) * (image.height / image.width)
+        };
+        setObjects(prev => [...prev, newObject]);
+        setUploadedImage(null);
+        setBgColorToRemove(null);
+        setTolerance([10]);
+        setIsUploadImageOpen(false);
+    }
+  }
+
 
   const handleDeleteObject = (id: number) => {
     setObjects(prev => prev.filter(o => o.id !== id));
@@ -423,20 +523,22 @@ export default function PdfSignaturePage() {
 
         const loadFont = async (fontKey: SignatureFont) => {
             if (fontCache[fontKey]) return fontCache[fontKey]!;
-            if (fontKey === 'font-sans') {
-                fontCache[fontKey] = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            } else {
-                const fontName = signatureFonts[fontKey].replace(/\s/g, '');
-                const fontUrl = `https://fonts.gstatic.com/s/${fontName.toLowerCase()}/v25/${fontName}-Regular.ttf`;
-                try {
-                     const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-                     fontCache[fontKey] = await pdfDoc.embedFont(fontBytes);
-                } catch (e) {
-                    console.warn(`Could not load font ${fontName}, falling back to Helvetica.`);
-                    fontCache[fontKey] = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            let fontBytes;
+            try {
+                if (fontKey === 'font-sans') {
+                    fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                } else {
+                    const fontName = signatureFonts[fontKey].replace(/\s/g, '');
+                    const fontUrl = `https://fonts.gstatic.com/s/${fontName.toLowerCase()}/v25/${fontName}-Regular.ttf`;
+                    fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+                    fontBytes = await pdfDoc.embedFont(fontBytes);
                 }
+            } catch (e) {
+                console.warn(`Could not load font ${fontKey}, falling back to Helvetica.`);
+                fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
             }
-            return fontCache[fontKey]!;
+            fontCache[fontKey] = fontBytes;
+            return fontBytes;
         };
         
         const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
@@ -462,8 +564,6 @@ export default function PdfSignaturePage() {
                 const pngImage = await pdfDoc.embedPng(obj.content);
                 page.drawImage(pngImage, {
                     x, y, width: objFinalWidth, height: objFinalHeight,
-                    color: objColor,
-                    blendMode: 'Normal'
                 });
             }
         }
@@ -531,9 +631,34 @@ export default function PdfSignaturePage() {
                             <DialogTrigger asChild><Button variant="outline" className="w-full"><PenLine className="mr-2"/>Add Signature</Button></DialogTrigger>
                             <DialogContent><DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Draw'} Signature</DialogTitle></DialogHeader><div className="space-y-4"><canvas ref={canvasRef} className="border rounded-md w-full h-48 bg-gray-50" /> <div className="space-y-2"><Label>Color</Label><RadioGroup value={signatureColor} onValueChange={(v) => setSignatureColor(v as ColorName)} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`sig-${key}`}/><Label htmlFor={`sig-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div><div className="flex gap-2"><Button onClick={handleAddOrUpdateSignature} className="w-full">{editingObject ? 'Update' : 'Add'}</Button><Button variant="secondary" onClick={() => signaturePadRef.current?.clear()}>Clear</Button></div></div></DialogContent>
                         </Dialog>
+                         <Dialog open={isUploadImageOpen} onOpenChange={setIsUploadImageOpen}>
+                           <DialogTrigger asChild><Button variant="outline" className="w-full"><Upload className="mr-2"/>Upload Image</Button></DialogTrigger>
+                           <DialogContent className="max-w-2xl">
+                               <DialogHeader><DialogTitle>Upload & Prepare Image</DialogTitle></DialogHeader>
+                               {!uploadedImage ? (
+                                   <label htmlFor="image-upload" className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors"><UploadCloud className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Click to browse or drag & drop</p><Input id="image-upload" type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" /></label>
+                               ) : (
+                                   <div className="space-y-4">
+                                       <div className="mx-auto flex h-64 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border">
+                                          <Image src={uploadedImage} alt="Uploaded signature" width={300} height={200} className="h-auto max-h-full w-auto max-w-full cursor-crosshair object-contain" onClick={handlePickBgColor} />
+                                       </div>
+                                       <Card>
+                                           <CardContent className="space-y-4 p-4">
+                                               <p className="text-sm text-muted-foreground text-center">Optional: Click the image background to select a color to make transparent.</p>
+                                               {bgColorToRemove && <div className="flex items-center gap-4 rounded-lg border p-2"><div className="flex flex-1 items-center gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border" style={{ backgroundColor: `rgb(${bgColorToRemove.r}, ${bgColorToRemove.g}, ${bgColorToRemove.b})` }}><Palette className="h-5 w-5 mix-blend-difference" style={{ color: 'white'}} /></div><div className="text-sm"><div className="font-medium text-muted-foreground">{`rgb(${bgColorToRemove.r}, ${bgColorToRemove.g}, ${bgColorToRemove.b})`}</div></div></div><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBgColorToRemove(null)}><X className="h-4 w-4" /></Button></div>}
+                                               <div className="space-y-2"><Label htmlFor="tolerance">Tolerance: {tolerance[0]}%</Label><Slider id="tolerance" min={0} max={100} step={1} value={tolerance} onValueChange={setTolerance} disabled={!bgColorToRemove}/></div>
+                                                <canvas ref={imageBgCanvasRef} className="hidden" />
+                                           </CardContent>
+                                       </Card>
+                                       <Button onClick={addUploadedImage} className="w-full">Add Image to Objects</Button>
+                                   </div>
+                               )}
+                           </DialogContent>
+                         </Dialog>
+
                         <div className="space-y-2 pt-4">
                              {objects.filter(o => o.pageIndex === -1).map(obj => (
-                                <div key={obj.id} draggable onDragStart={(e) => { e.dataTransfer.setData('text/plain', obj.id.toString()); setSelectedObjectId(obj.id); }} className="border p-2 rounded-md cursor-grab flex items-center gap-2">
+                                <div key={obj.id} draggable onDragStart={(e) => { e.dataTransfer.setData('text/plain', obj.id.toString()); setSelectedObjectId(obj.id); }} className="border p-2 rounded-md cursor-grab flex items-center gap-2 bg-secondary/50">
                                     {obj.type === 'text' ? <Type className="h-5 w-5 shrink-0"/> : <PenLine className="h-5 w-5 shrink-0"/>}
                                     <p className="truncate text-sm flex-1">{obj.type === 'text' ? obj.content : "Signature"}</p>
                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteObject(obj.id)}><Trash2 className="h-4 w-4"/></Button>
@@ -585,7 +710,7 @@ export default function PdfSignaturePage() {
           <div className="text-center">
              <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add Signature / Fill Form</CardTitle>
              <CardDescription className="text-base mt-2">
-              Add, edit, resize, and delete text or signatures on your PDF document.
+              Draw, type, or upload a signature and place it on your PDF. Add text to fill out forms.
             </CardDescription>
           </div>
         </CardHeader>
@@ -600,9 +725,9 @@ export default function PdfSignaturePage() {
         <CardContent className="space-y-4 text-muted-foreground">
           <ol className="list-decimal list-inside space-y-2">
             <li><strong>Upload PDF:</strong> Drag and drop your PDF file or click to browse.</li>
-            <li><strong>Add Objects:</strong> Use the "Add Text" or "Add Signature" buttons to create items with your desired colors and fonts. They will appear in the left panel.</li>
+            <li><strong>Add Objects:</strong> Use the "Add Text", "Add Signature", or "Upload Image" buttons to create items. They will appear in the left panel.</li>
             <li><strong>Position Objects:</strong> Drag your created text or signature from the panel and drop it onto the desired location on any page.</li>
-            <li><strong>Select & Manipulate:</strong> Click on an object on the page to select it. Drag the object to a new position. Hover over the object to see controls to Duplicate, Edit, or Delete it.</li>
+            <li><strong>Manipulate Objects:</strong> Hover over an object on the page to see controls to Duplicate, Edit, or Delete it. Click and drag an object to move it.</li>
             <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes" to generate and download your new PDF.</li>
           </ol>
         </CardContent>
@@ -610,3 +735,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
