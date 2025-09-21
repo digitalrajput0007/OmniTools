@@ -139,7 +139,8 @@ const DraggableItem = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      if (isDraggingRef.current) {
+      if (isDraggingRef.current && pageContainerRef.current) {
+        const parentRect = pageContainerRef.current.getBoundingClientRect();
         const dx = e.clientX - dragStartPos.current.x;
         const dy = e.clientY - dragStartPos.current.y;
         
@@ -147,11 +148,8 @@ const DraggableItem = ({
         let newY = dragStartPos.current.objY + dy;
         
         // Constrain within parent page boundaries
-        if (pageContainerRef.current) {
-            const parentRect = pageContainerRef.current.getBoundingClientRect();
-            newX = Math.max(0, Math.min(newX, parentRect.width - obj.width));
-            newY = Math.max(0, Math.min(newY, parentRect.height - obj.height));
-        }
+        newX = Math.max(0, Math.min(newX, parentRect.width - obj.width));
+        newY = Math.max(0, Math.min(newY, parentRect.height - obj.height));
 
         onUpdate({ ...obj, x: newX, y: newY });
       } else if (isResizing) {
@@ -422,14 +420,9 @@ export default function PdfSignaturePage() {
     const text = textPreview.text;
     const { fontSize, color, font } = textPreview;
     if (!text) return;
-
-    const tempSpan = document.createElement('span');
-    tempSpan.innerText = text;
-    tempSpan.style.font = `${fontSize}px ${font.replace('font-', '')}`;
-    tempSpan.style.visibility = 'hidden';
-    document.body.appendChild(tempSpan);
-    const textWidth = tempSpan.offsetWidth;
-    document.body.removeChild(tempSpan);
+    
+    // This is a simplified estimation. A canvas-based measurement would be more accurate.
+    const textWidth = text.length * (fontSize / 1.8);
     const textHeight = fontSize * 1.2;
 
     if (editingObject) {

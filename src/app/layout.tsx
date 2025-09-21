@@ -1,6 +1,6 @@
 
 import type { Metadata, Viewport } from 'next';
-import { Poppins, PT_Sans, Great_Vibes, Dancing_Script } from 'next/font/google';
+import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppName, tools } from '@/lib/constants';
@@ -16,18 +16,6 @@ const ptSans = PT_Sans({
   weight: ['400', '700'],
   variable: '--font-body',
 });
-
-const greatVibes = Great_Vibes({
-  subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-great-vibes',
-});
-
-const dancingScript = Dancing_Script({
-  subsets: ['latin'],
-  variable: '--font-dancing-script',
-});
-
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {
   // find the current tool based on the URL
@@ -59,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable} ${greatVibes.variable} ${dancingScript.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

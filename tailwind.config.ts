@@ -14,8 +14,6 @@ export default {
         body: ['var(--font-body)', 'sans-serif'],
         headline: ['var(--font-headline)', 'sans-serif'],
         code: ['monospace'],
-        'great-vibes': ['var(--font-great-vibes)', 'cursive'],
-        'dancing-script': ['var(--font-dancing-script)', 'cursive'],
         'sans': ['sans-serif'],
         'serif': ['serif'],
         'mono': ['monospace'],
