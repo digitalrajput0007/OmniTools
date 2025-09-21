@@ -6,7 +6,7 @@ import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { FileDown, UploadCloud, X, File as FileIcon, CheckCircle2, RefreshCcw } from 'lucide-react';
+import { FileDown, UploadCloud, X, File as FileIcon, CheckCircle2, RefreshCcw, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CircularProgress } from '@/components/ui/circular-progress';
@@ -72,6 +72,7 @@ export default function WatermarkPdfPage() {
   const [done, setDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [processedFile, setProcessedFile] = useState<Blob | null>(null);
+  const [isLibraryLoaded, setIsLibraryLoaded] = useState(false);
   
   const { toast } = useToast();
   const previewImageRef = useRef<HTMLImageElement>(null);
@@ -83,6 +84,7 @@ export default function WatermarkPdfPage() {
         'pdfjs-dist/build/pdf.worker.mjs',
         import.meta.url
       ).toString();
+      setIsLibraryLoaded(true);
     });
   }, []);
 
@@ -154,9 +156,10 @@ export default function WatermarkPdfPage() {
   };
   
   const handleDragEvents = (e: React.DragEvent<HTMLElement>) => { e.preventDefault(); e.stopPropagation(); };
-  const handleDragEnter = (e: React.DragEvent<HTMLElement>) => { handleDragEvents(e); setIsDragging(true); };
+  const handleDragEnter = (e: React.DragEvent<HTMLElement>) => { if (!isLibraryLoaded) return; handleDragEvents(e); setIsDragging(true); };
   const handleDragLeave = (e: React.DragEvent<HTMLElement>) => { handleDragEvents(e); setIsDragging(false); };
   const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+    if (!isLibraryLoaded) return;
     handleDragEvents(e);
     setIsDragging(false);
     if (e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]);
@@ -227,7 +230,7 @@ export default function WatermarkPdfPage() {
                 if (position === 'center') {
                     page.drawText(text, {
                         x: pageWidthPt / 2 - textWidthPt / 2,
-                        y: pageHeightPt / 2 - textHeightPt / 4, // Adjusted for better vertical centering
+                        y: pageHeightPt / 2 - textHeightPt / 4,
                         font,
                         size: fontSize,
                         color,
@@ -334,8 +337,20 @@ export default function WatermarkPdfPage() {
   const renderContent = () => {
     if (!file) {
        return (
-        <label htmlFor="pdf-upload" className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}>
-            <UploadCloud className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p><Input id="pdf-upload" type="file" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} accept="application/pdf" /><Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
+        <label htmlFor="pdf-upload" className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging, 'opacity-50 cursor-not-allowed': !isLibraryLoaded })} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}>
+            {isLibraryLoaded ? (
+              <>
+                <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
+                <Input id="pdf-upload" type="file" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} accept="application/pdf" disabled={!isLibraryLoaded} />
+                <Button asChild variant="outline" className="mt-4" disabled={!isLibraryLoaded}><span>Browse File</span></Button>
+              </>
+            ) : (
+               <>
+                <Loader2 className="h-12 w-12 text-muted-foreground animate-spin" />
+                <p className="mt-4 text-muted-foreground">Loading PDF library...</p>
+               </>
+            )}
         </label>
       );
     }
