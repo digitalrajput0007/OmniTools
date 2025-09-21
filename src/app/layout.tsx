@@ -1,6 +1,6 @@
 
 import type { Metadata, Viewport } from 'next';
-import { Poppins, PT_Sans } from 'next/font/google';
+import { Poppins, PT_Sans, Great_Vibes, Sacramento, Allura, Dancing_Script } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppName, tools } from '@/lib/constants';
@@ -15,6 +15,29 @@ const ptSans = PT_Sans({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-body',
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-great-vibes',
+});
+
+const sacramento = Sacramento({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-sacramento',
+});
+
+const allura = Allura({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-allura',
+});
+
+const dancingScript = Dancing_Script({
+  subsets: ['latin'],
+  variable: '--font-dancing-script',
 });
 
 
@@ -48,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable} ${greatVibes.variable} ${sacramento.variable} ${allura.variable} ${dancingScript.variable}`}>
       <head>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-EVQ8C8X2H3"></script>
         <script
