@@ -421,10 +421,8 @@ export default function PdfSignaturePage() {
     const { fontSize, color, font } = textPreview;
     if (!text) return;
     
-    // This is a simplified estimation. A canvas-based measurement would be more accurate.
     const tempSpan = document.createElement('span');
-    tempSpan.style.fontFamily = getComputedStyle(document.body).getPropertyValue(`--font-${font.split('-')[1]}`);
-    tempSpan.style.fontSize = `${fontSize}px`;
+    tempSpan.style.font = `${fontSize}px ${font.split('-')[1] || 'sans-serif'}`;
     tempSpan.style.whiteSpace = 'nowrap';
     tempSpan.style.visibility = 'hidden';
     tempSpan.innerText = text;
@@ -600,75 +598,74 @@ export default function PdfSignaturePage() {
     setIsProcessing(true);
     setDone(false);
     setProgress(0);
-    
+
     const startTime = Date.now();
     const minDuration = 3000;
-    
+
     const savePromise = (async () => {
-        try {
-            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-            const fontCache: Partial<Record<SignatureFont, PDFFont>> = {};
-            
-            const fontMap: Record<SignatureFont, StandardFonts> = {
-                'font-sans': StandardFonts.Helvetica,
-                'font-serif': StandardFonts.TimesRoman,
-                'font-mono': StandardFonts.Courier,
-            };
+      try {
+        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+        const fontCache: Partial<Record<SignatureFont, PDFFont>> = {};
+        
+        const fontMap: Record<SignatureFont, StandardFonts> = {
+            'font-sans': StandardFonts.Helvetica,
+            'font-serif': StandardFonts.TimesRoman,
+            'font-mono': StandardFonts.Courier,
+        };
 
-            const loadFont = async (fontKey: SignatureFont) => {
-                if (fontCache[fontKey]) return fontCache[fontKey]!;
-                const fontToEmbed = await pdfDoc.embedFont(fontMap[fontKey]);
-                fontCache[fontKey] = fontToEmbed;
-                return fontToEmbed;
-            };
-            
-            const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
+        const loadFont = async (fontKey: SignatureFont) => {
+            if (fontCache[fontKey]) return fontCache[fontKey]!;
+            const fontToEmbed = await pdfDoc.embedFont(fontMap[fontKey]);
+            fontCache[fontKey] = fontToEmbed;
+            return fontToEmbed;
+        };
+        
+        const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
 
-            for (const obj of objectsToPlace) {
-                const page = pdfDoc.getPage(obj.pageIndex);
-                const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
-                const { previewWidthPx, previewHeightPx } = obj;
+        for (const obj of objectsToPlace) {
+          const page = pdfDoc.getPage(obj.pageIndex);
+          const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
+          const { previewWidthPx, previewHeightPx } = obj;
 
-                if (!previewWidthPx || !previewHeightPx) continue;
-                
-                const scaleX = pageWidthPt / previewWidthPx;
-                const scaleY = pageHeightPt / previewHeightPx;
+          if (!previewWidthPx || !previewHeightPx) continue;
+          
+          const scaleX = pageWidthPt / previewWidthPx;
+          const scaleY = pageHeightPt / previewHeightPx;
 
-                const finalWidthPt = obj.width * scaleX;
-                const finalHeightPt = obj.height * scaleY;
+          const finalWidthPt = obj.width * scaleX;
+          const finalHeightPt = obj.height * scaleY;
 
-                // Adjust Y for pdf-lib's bottom-left origin
-                const finalYPt = pageHeightPt - (obj.y * scaleY) - finalHeightPt;
-                const finalXPt = obj.x * scaleX;
+          const finalYPt = pageHeightPt - (obj.y * scaleY) - finalHeightPt;
+          const finalXPt = obj.x * scaleX;
 
-                const objColor = colorOptions[obj.color || 'black'].rgb;
+          const objColor = colorOptions[obj.color || 'black'].rgb;
 
-                if (obj.type === 'text' && obj.fontSize) {
-                    const fontToEmbed = await loadFont(obj.font || 'font-sans');
-                    page.drawText(obj.content, {
-                        x: finalXPt,
-                        y: finalYPt,
-                        font: fontToEmbed,
-                        size: obj.fontSize * scaleY, // Scale font size based on height
-                        color: objColor,
-                    });
-                } else if (obj.type === 'image') {
-                    const pngImage = await pdfDoc.embedPng(obj.content);
-                    page.drawImage(pngImage, {
-                        x: finalXPt,
-                        y: finalYPt,
-                        width: finalWidthPt,
-                        height: finalHeightPt,
-                    });
-                }
-            }
-            
-            const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
-            setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
-        } catch (error) {
-            toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
-            console.error(error);
+          if (obj.type === 'text' && obj.fontSize) {
+            const fontToEmbed = await loadFont(obj.font || 'font-sans');
+            page.drawText(obj.content, {
+              x: finalXPt,
+              y: finalYPt,
+              font: fontToEmbed,
+              size: obj.fontSize * scaleY,
+              color: objColor,
+            });
+          } else if (obj.type === 'image') {
+            const pngImage = await pdfDoc.embedPng(obj.content);
+            page.drawImage(pngImage, {
+              x: finalXPt,
+              y: finalYPt,
+              width: finalWidthPt,
+              height: finalHeightPt,
+            });
+          }
         }
+        
+        const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
+        setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
+      } catch (error) {
+        toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
+        console.error(error);
+      }
     })();
 
     const progressInterval = setInterval(() => {
@@ -682,6 +679,7 @@ export default function PdfSignaturePage() {
     setIsProcessing(false);
     setDone(true);
   };
+
 
   const handleDownload = () => {
     if (!processedFile || !file) return;
@@ -917,3 +915,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
