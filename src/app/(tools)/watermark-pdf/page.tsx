@@ -204,6 +204,7 @@ export default function WatermarkPdfPage() {
                 font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
             }
         } catch(e) {
+            console.warn(`Could not load custom font, falling back to default.`);
             toast({ title: "Custom Font Failed", description: "Could not load custom font, falling back to default.", variant: 'destructive'});
             font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         }
@@ -230,7 +231,7 @@ export default function WatermarkPdfPage() {
                         size: fontSize,
                         color: color,
                         opacity: opacity[0],
-                        rotate: degrees(rotation[0]),
+                        rotate: degrees(-rotation[0]),
                     });
                 } else { // Tiled
                     const tileGap = 150;
@@ -242,7 +243,7 @@ export default function WatermarkPdfPage() {
                                 font, size: fontSize,
                                 color: color,
                                 opacity: opacity[0],
-                                rotate: degrees(rotation[0]),
+                                rotate: degrees(-rotation[0]),
                             });
                         }
                     }
@@ -259,7 +260,7 @@ export default function WatermarkPdfPage() {
                         width: imgWidthPt,
                         height: imgHeightPt,
                         opacity: opacity[0],
-                        rotate: degrees(rotation[0]),
+                        rotate: degrees(-rotation[0]),
                     });
                 } else {
                     const tileWidthPt = 150;
@@ -273,7 +274,7 @@ export default function WatermarkPdfPage() {
                                 width: tileWidthPt,
                                 height: tileHeightPt,
                                 opacity: opacity[0],
-                                rotate: degrees(rotation[0]),
+                                rotate: degrees(-rotation[0]),
                             });
                         }
                     }
