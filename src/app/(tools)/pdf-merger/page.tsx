@@ -91,7 +91,7 @@ export default function PdfMergerPage() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
   
-  const createMergedPdf = async (): Promise<Blob | null> => {
+  const createMergedPdf = async (): Promise<Blob> => {
       const mergedPdf = await PDFDocument.create();
       for (const file of files) {
         const arrayBuffer = await file.arrayBuffer();
@@ -125,32 +125,35 @@ export default function PdfMergerPage() {
     
     const minDuration = 3000;
     const startTime = Date.now();
+    
+    const mergePromise = createMergedPdf()
+      .then(blob => { mergedBlob = blob; })
+      .catch(error => {
+          mergeError = error instanceof Error ? error : new Error('An unknown error occurred during merge.');
+      });
 
     const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        const p = Math.min((elapsedTime / minDuration) * 100, 100);
-        setProgress(p);
+        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(currentProgress);
+        if (currentProgress >= 100) {
+            clearInterval(progressInterval);
+        }
     }, 50);
 
-    try {
-        mergedBlob = await createMergedPdf();
-        await new Promise(resolve => setTimeout(resolve, Math.max(0, minDuration - (Date.now() - startTime))));
-    } catch (error) {
-        mergeError = error as Error;
-    } finally {
-        clearInterval(progressInterval);
-        setIsMerging(false);
+    await Promise.all([mergePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    
+    setIsMerging(false);
 
-        if (mergeError) {
-             toast({
-                title: 'Error Merging PDFs',
-                description: mergeError.message,
-                variant: 'destructive',
-            });
-        } else {
-            setMerged(true);
-            setMergedFile(mergedBlob);
-        }
+    if (mergeError) {
+         toast({
+            title: 'Error Merging PDFs',
+            description: mergeError.message,
+            variant: 'destructive',
+        });
+    } else {
+        setMerged(true);
+        setMergedFile(mergedBlob);
     }
   };
   
@@ -322,5 +325,3 @@ export default function PdfMergerPage() {
     </div>
   );
 }
-
-    
