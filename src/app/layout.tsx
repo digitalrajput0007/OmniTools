@@ -52,13 +52,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <head>
-        {/* 
-          ============================================================
-          == PASTE YOUR GOOGLE ANALYTICS SNIPPET HERE.              ==
-          == You can get this from your Google Analytics dashboard. ==
-          == It's crucial for tracking your website's performance.  ==
-          ============================================================
-        */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-EVQ8C8X2H3"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-EVQ8C8X2H3');
+            `,
+          }}
+        />
       </head>
       <body className="font-body antialiased bg-background text-foreground flex min-h-dvh flex-col" suppressHydrationWarning>
         <Header />
