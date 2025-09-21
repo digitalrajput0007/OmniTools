@@ -53,19 +53,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <head>
         {/* 
-          PASTE YOUR GOOGLE ANALYTICS SNIPPET HERE.
-          
-          It should look something like this, but with your actual ID.
-          You can get this from your Google Analytics dashboard.
-          
-          <!-- Google tag (gtag.js) -->
-          <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
-          <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'YOUR_GA_ID');
-          </script>
+          ============================================================
+          == PASTE YOUR GOOGLE ANALYTICS SNIPPET HERE.              ==
+          == You can get this from your Google Analytics dashboard. ==
+          == It's crucial for tracking your website's performance.  ==
+          ============================================================
         */}
       </head>
       <body className="font-body antialiased bg-background text-foreground flex min-h-dvh flex-col" suppressHydrationWarning>
