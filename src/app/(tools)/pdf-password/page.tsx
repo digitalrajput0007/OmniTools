@@ -99,7 +99,7 @@ export default function PdfPasswordPage() {
                 pdfDoc.setCreator('OmniBox');
                 newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
-                pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password, userPassword: password });
+                pdfDoc = await PDFDocument.load(existingPdfBytes, { userPassword: password });
                 newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
