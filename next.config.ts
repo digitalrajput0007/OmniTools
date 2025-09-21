@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -35,6 +36,13 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  webpack: (config, { isServer }) => {
+    // Exclude qpdf-wasm from server-side bundle
+    if (isServer) {
+      config.externals.push('qpdf-wasm');
+    }
+    return config;
   },
 };
 
