@@ -233,6 +233,10 @@ export default function PdfSignaturePage() {
       toast({ title: 'Invalid File Type', variant: 'destructive' });
       return;
     }
+    if (!pdfjs) {
+        toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+        return;
+    }
     resetState();
     setFile(selectedFile);
     setIsProcessing(true);
