@@ -27,7 +27,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-const imageTools = tools.filter(t => ['Image Compressor', 'Image & PDF Converter', 'PDF to Image', 'Image Format Converter', 'Image Resizer', 'Background Remover'].includes(t.name));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
@@ -41,7 +41,7 @@ export const AppLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDivEle
       className
     )}
   >
-    <span className="text-sm font-bold text-primary-foreground">OJP</span>
+    <span className="font-bold text-primary-foreground">OJP</span>
   </div>
 );
 
