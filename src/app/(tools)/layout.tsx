@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -71,7 +72,7 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <div className="flex-1 p-4 md:p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

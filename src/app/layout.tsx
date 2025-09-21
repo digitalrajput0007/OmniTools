@@ -4,6 +4,8 @@ import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppName, tools } from '@/lib/constants';
+import Header from '@/components/ui/header';
+import Footer from '@/components/ui/footer';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -66,8 +68,12 @@ export default function RootLayout({
           </script>
         */}
       </head>
-      <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning>
-        {children}
+      <body className="font-body antialiased bg-background text-foreground flex min-h-dvh flex-col" suppressHydrationWarning>
+        <Header />
+        <main className="flex-1">
+            {children}
+        </main>
+        <Footer />
         <Toaster />
       </body>
     </html>
