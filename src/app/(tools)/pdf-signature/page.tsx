@@ -668,7 +668,7 @@ export default function PdfSignaturePage() {
             toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
             console.error(error);
         }
-    });
+    })();
 
     const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
