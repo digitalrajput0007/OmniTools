@@ -175,9 +175,8 @@ export default function ImageCompressorPage() {
       });
       handleGoBack();
     } else if (compressedBlob) {
-      const finalSizeKB = compressedBlob.size / 1024;
       setCompressedPreview(URL.createObjectURL(compressedBlob));
-      setCompressedSize(finalSizeKB);
+      setCompressedSize(compressedBlob.size);
       setCompressed(true);
     }
   };
@@ -208,10 +207,18 @@ a.click();
     document.body.removeChild(a);
   };
 
-  const originalSizeInKB = file ? file.size / 1024 : 0;
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  };
+  
   const compressionPercentage =
     file && compressedSize
-      ? Math.round(((originalSizeInKB - compressedSize) / originalSizeInKB) * 100)
+      ? Math.round(((file.size - compressedSize) / file.size) * 100)
       : 0;
 
   return (
@@ -296,7 +303,7 @@ a.click();
                       <h3 className="mb-2 font-semibold">File Information</h3>
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <p>Name: {file?.name}</p>
-                        <p>Original Size: {originalSizeInKB.toFixed(2)} KB</p>
+                        <p>Original Size: {formatFileSize(file?.size)}</p>
                       </div>
                     </div>
                     <>
@@ -356,13 +363,13 @@ a.click();
                       <p>
                         Original Size:{' '}
                         <span className="font-medium text-foreground">
-                          {originalSizeInKB.toFixed(2)} KB
+                          {formatFileSize(file?.size)}
                         </span>
                       </p>
                       <p>
                         Compressed Size:{' '}
                         <span className="font-medium text-foreground">
-                          {compressedSize.toFixed(2)} KB
+                          {formatFileSize(compressedSize)}
                         </span>
                       </p>
                     </div>
@@ -439,3 +446,5 @@ a.click();
     </div>
   );
 }
+
+    

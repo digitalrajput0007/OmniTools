@@ -175,9 +175,8 @@ export default function ImageFormatConverterPage() {
         variant: 'destructive',
       });
     } else if (convertedBlob) {
-      const finalSizeKB = convertedBlob.size / 1024;
       setConvertedImageUrl(URL.createObjectURL(convertedBlob));
-      setConvertedSize(finalSizeKB);
+      setConvertedSize(convertedBlob.size);
       setConverted(true);
     }
   };
@@ -195,7 +194,14 @@ export default function ImageFormatConverterPage() {
     document.body.removeChild(a);
   };
 
-  const originalSizeInKB = file ? file.size / 1024 : 0;
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  };
 
   return (
     <div className="grid gap-6">
@@ -274,7 +280,7 @@ export default function ImageFormatConverterPage() {
                       <h3 className="mb-2 font-semibold">File Information</h3>
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <p>Name: {file?.name}</p>
-                        <p>Original Size: {originalSizeInKB.toFixed(2)} KB</p>
+                        <p>Original Size: {formatFileSize(file?.size)}</p>
                       </div>
                     </div>
                     <>
@@ -333,13 +339,13 @@ export default function ImageFormatConverterPage() {
                       <p>
                         Original Size:{' '}
                         <span className="font-medium text-foreground">
-                          {originalSizeInKB.toFixed(2)} KB
+                          {formatFileSize(file?.size)}
                         </span>
                       </p>
                       <p>
                         New Size:{' '}
                         <span className="font-medium text-foreground">
-                          {convertedSize.toFixed(2)} KB
+                          {formatFileSize(convertedSize)}
                         </span>
                       </p>
                     </div>
@@ -419,3 +425,5 @@ export default function ImageFormatConverterPage() {
     </div>
   );
 }
+
+    

@@ -246,6 +246,15 @@ export default function BackgroundRemoverPage() {
     a.click();
     document.body.removeChild(a);
   };
+  
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  };
 
 
   const renderUploadStep = () => (
@@ -407,7 +416,7 @@ export default function BackgroundRemoverPage() {
         <div className="w-full space-y-1 rounded-lg border p-4 text-left text-sm">
            <h4 className='font-medium'>File Information</h4>
            <p className='text-muted-foreground'>Name: {file?.name}</p>
-           <p className='text-muted-foreground'>Original Size: {file ? (file.size / 1024).toFixed(2) : 0} KB</p>
+           <p className='text-muted-foreground'>Original Size: {formatFileSize(file?.size)}</p>
         </div>
         <div className="flex w-full flex-col gap-2 pt-4">
           <Button className="w-full" onClick={handleDownload} disabled={!result}>
@@ -504,3 +513,5 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
+
+    

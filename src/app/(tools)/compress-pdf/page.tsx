@@ -178,6 +178,15 @@ export default function CompressPdfPage() {
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
+  
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  };
 
   const compressionPercentage =
     originalSize && compressedSize
@@ -211,8 +220,8 @@ export default function CompressPdfPage() {
                     </p>
                 </div>
                 <div className="w-full text-sm rounded-lg border p-4">
-                    <p>Original Size: <span className="font-medium text-foreground">{(originalSize || 0 / 1024).toFixed(2)} KB</span></p>
-                    <p>Compressed Size: <span className="font-medium text-foreground">{(compressedSize || 0 / 1024).toFixed(2)} KB</span></p>
+                    <p>Original Size: <span className="font-medium text-foreground">{formatFileSize(originalSize)}</span></p>
+                    <p>Compressed Size: <span className="font-medium text-foreground">{formatFileSize(compressedSize)}</span></p>
                 </div>
                 <div className="flex w-full flex-col gap-2 pt-4">
                   <Button className="w-full" onClick={handleDownload}>
@@ -234,7 +243,7 @@ export default function CompressPdfPage() {
            <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
                 <FileIcon className="h-24 w-24 text-muted-foreground" />
                 <p className="truncate text-lg font-medium">{file.name}</p>
-                <p className="text-sm text-muted-foreground">{(originalSize || 0 / 1024).toFixed(2)} KB</p>
+                <p className="text-sm text-muted-foreground">{formatFileSize(originalSize)}</p>
                 <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
                     <X className="h-4 w-4" />
                 </Button>
@@ -353,3 +362,5 @@ export default function CompressPdfPage() {
     </div>
   );
 }
+
+    

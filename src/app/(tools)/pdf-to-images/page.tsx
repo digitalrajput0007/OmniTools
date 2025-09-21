@@ -168,6 +168,15 @@ export default function PdfToImagesPage() {
     return new Blob([u8arr], { type: mime });
   }
 
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  };
+  
   const renderContent = () => {
     if (isProcessing) {
       return (
@@ -210,7 +219,7 @@ export default function PdfToImagesPage() {
                     <FileIcon className="h-16 w-16 text-muted-foreground" />
                     <p className="truncate text-sm font-medium">{file.name}</p>
                      <p className="text-xs text-muted-foreground">
-                        {(file.size / 1024).toFixed(2)} KB
+                        {formatFileSize(file.size)}
                     </p>
                     <Button
                         variant="destructive"
@@ -300,3 +309,5 @@ export default function PdfToImagesPage() {
     </div>
   );
 }
+
+    

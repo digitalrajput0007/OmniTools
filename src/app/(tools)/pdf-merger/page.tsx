@@ -148,6 +148,15 @@ export default function PdfMergerPage() {
       });
     }
   };
+  
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  };
 
   return (
     <div className="grid gap-6">
@@ -177,7 +186,7 @@ export default function PdfMergerPage() {
                           {file.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024).toFixed(2)} KB
+                          {formatFileSize(file.size)}
                         </p>
                       </div>
                     </div>
@@ -292,7 +301,7 @@ export default function PdfMergerPage() {
                               {file.name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {(file.size / 1024).toFixed(2)} KB
+                              {formatFileSize(file.size)}
                             </p>
                           </div>
                           <Button
@@ -379,3 +388,5 @@ export default function PdfMergerPage() {
     </div>
   );
 }
+
+    
