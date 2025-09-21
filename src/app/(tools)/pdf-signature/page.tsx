@@ -582,7 +582,7 @@ export default function PdfSignaturePage() {
       const objectToDuplicate = objects.find(o => o.id === id);
       if (!objectToDuplicate) return;
       
-      const newObject = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 20, y: objectToDuplicate.y + 20, pageIndex: currentPage };
+      const newObject = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 20, y: objectToDuplicate.y + 20 };
       
       if(objectToDuplicate.pageIndex === -1) {
          setObjects(prev => [...prev, newObject]);
@@ -758,6 +758,19 @@ export default function PdfSignaturePage() {
             <div
               className="md:col-span-2 space-y-4 relative"
             >
+               {previews.length > 1 && (
+                  <div className="flex items-center justify-center gap-4">
+                      <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                          <ChevronLeft className="mr-2 h-4 w-4"/> Previous
+                      </Button>
+                      <span className="text-sm font-medium text-muted-foreground">
+                          Page {currentPage + 1} of {previews.length}
+                      </span>
+                      <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(previews.length - 1, p + 1))} disabled={currentPage === previews.length - 1}>
+                          Next <ChevronRight className="ml-2 h-4 w-4"/>
+                      </Button>
+                  </div>
+              )}
               <div
                 ref={pageContainerRef}
                 className="relative z-0 border rounded-lg overflow-hidden shadow-md bg-white"
@@ -785,20 +798,6 @@ export default function PdfSignaturePage() {
                   </div>
                 )}
               </div>
-              
-              {previews.length > 1 && (
-                  <div className="flex items-center justify-center gap-4">
-                      <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
-                          <ChevronLeft className="mr-2 h-4 w-4"/> Previous
-                      </Button>
-                      <span className="text-sm font-medium text-muted-foreground">
-                          Page {currentPage + 1} of {previews.length}
-                      </span>
-                      <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(previews.length - 1, p + 1))} disabled={currentPage === previews.length - 1}>
-                          Next <ChevronRight className="ml-2 h-4 w-4"/>
-                      </Button>
-                  </div>
-              )}
             </div>
             <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4">
                  <Card>
