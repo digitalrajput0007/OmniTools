@@ -15,7 +15,6 @@ export default function TermsOfServicePage() {
           <CardTitle className="text-3xl font-headline">Terms of Service for {AppName}</CardTitle>
         </CardHeader>
         <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
-            <p className="text-red-500 font-bold">[IMPORTANT: This is a generic template. You must consult with a legal professional to draft terms that are suitable for your specific situation and jurisdiction.]</p>
             
             <p>Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
@@ -40,13 +39,13 @@ export default function TermsOfServicePage() {
             <p>We may terminate or suspend access to our Service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.</p>
 
             <h2 className="text-xl font-semibold text-foreground">6. Governing Law</h2>
-            <p>These Terms shall be governed and construed in accordance with the laws of [Your Country/State], without regard to its conflict of law provisions.</p>
+            <p>These Terms shall be governed and construed in accordance with the laws of Your Country/State, without regard to its conflict of law provisions.</p>
 
             <h2 className="text-xl font-semibold text-foreground">7. Changes to These Terms</h2>
             <p>We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms on this page.</p>
 
             <h2 className="text-xl font-semibold text-foreground">8. Contact Us</h2>
-            <p>If you have any questions about these Terms, please contact us at [your-email@example.com].</p>
+            <p>If you have any questions about these Terms, please contact us at admin@onlinejpgpdf.com.</p>
         </CardContent>
       </Card>
     </div>
