@@ -211,15 +211,6 @@ export default function CompressPdfPage() {
       : 0;
 
   const renderContent = () => {
-    if (isProcessing) {
-      return (
-        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-          <CircularProgress progress={progress} />
-          <p className="text-center text-sm text-muted-foreground">Compressing PDF... This may take a moment.</p>
-        </div>
-      );
-    }
-
     if (done) {
       return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -260,27 +251,42 @@ export default function CompressPdfPage() {
            <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
                 <FileIcon className="h-24 w-24 text-muted-foreground" />
                 <p className="truncate text-lg font-medium">{file.name}</p>
-                <p className="text-sm text-muted-foreground">{formatFileSize(originalSize)}</p>
                 <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
                     <X className="h-4 w-4" />
                 </Button>
             </div>
             <div className="flex flex-col space-y-6 justify-center">
-                <div className="space-y-4">
-                  <Label htmlFor="compression-quality">Compression Quality: {compressionQuality[0]}%</Label>
-                  <Slider
-                    id="compression-quality"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={compressionQuality}
-                    onValueChange={setCompressionQuality}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Lower percentage means smaller file size but lower image quality.
-                  </p>
-                </div>
-                 <Button onClick={handleCompress} size="lg" className="w-full">Compress PDF</Button>
+              {isProcessing ? (
+                 <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <CircularProgress progress={progress} />
+                    <p className="text-center text-sm text-muted-foreground">Compressing PDF... This may take a moment.</p>
+                 </div>
+              ) : (
+                <>
+                  <div>
+                    <h3 className="mb-2 font-semibold">File Information</h3>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <p>Name: {file?.name}</p>
+                      <p>Original Size: {formatFileSize(file?.size)}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <Label htmlFor="compression-quality">Compression Quality: {compressionQuality[0]}%</Label>
+                    <Slider
+                      id="compression-quality"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={compressionQuality}
+                      onValueChange={setCompressionQuality}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Lower percentage means smaller file size but lower image quality.
+                    </p>
+                  </div>
+                  <Button onClick={handleCompress} size="lg" className="w-full">Compress PDF</Button>
+                </>
+              )}
             </div>
         </div>
       );
@@ -373,5 +379,3 @@ export default function CompressPdfPage() {
     </div>
   );
 }
-
-    
