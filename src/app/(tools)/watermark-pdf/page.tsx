@@ -157,7 +157,7 @@ export default function WatermarkPdfPage() {
 
   const handleApplyWatermark = async () => {
     if (!file || (mode === 'text' && !text) || (mode === 'image' && !imageFile) || !previewDimensions) {
-      toast({ title: 'Missing Information', description: 'Please provide a PDF and watermark content.', variant: 'destructive' });
+      toast({ title: 'Missing Information', description: 'Please provide a PDF and configure the watermark.', variant: 'destructive' });
       return;
     }
     setIsProcessing(true);
@@ -188,16 +188,11 @@ export default function WatermarkPdfPage() {
         };
         
         let font;
-        let customFontUsed = false;
         try {
-            if (fontStyle === 'font-dancing-script') {
-                const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
+            if (fontStyle === 'font-dancing-script' || fontStyle === 'font-great-vibes') {
+                const fontName = fontStyle === 'font-dancing-script' ? 'DancingScript-Regular' : 'GreatVibes-Regular';
+                const fontBytes = await fetch(`/fonts/${fontName}.ttf`).then(res => res.arrayBuffer());
                 font = await pdfDoc.embedFont(fontBytes);
-                customFontUsed = true;
-            } else if (fontStyle === 'font-great-vibes') {
-                const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
-                font = await pdfDoc.embedFont(fontBytes);
-                customFontUsed = true;
             } else {
                 font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
             }
@@ -213,63 +208,57 @@ export default function WatermarkPdfPage() {
 
         for (const page of pdfDoc.getPages()) {
           const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
-          const scaleX = pageWidthPt / previewDimensions.width;
-          const scaleY = pageHeightPt / previewDimensions.height;
-
-          const commonOptions = {
-              opacity: opacity[0],
-              rotate: degrees(rotation[0]),
-          };
-
+          
           if (mode === 'text') {
-              const textWidth = font.widthOfTextAtSize(text, fontSize);
-              const scaledFontSize = fontSize * scaleY;
+              const scaledFontSize = (fontSize / previewDimensions.height) * pageHeightPt;
+              const textWidthPt = font.widthOfTextAtSize(text, scaledFontSize);
+              const textHeightPt = font.heightAtSize(scaledFontSize);
 
               if (position === 'center') {
                  page.drawText(text, {
-                    ...commonOptions,
-                    x: pageWidthPt / 2 - (textWidth * scaleX) / 2,
-                    y: pageHeightPt / 2,
+                    x: pageWidthPt / 2 - textWidthPt / 2,
+                    y: pageHeightPt / 2 - textHeightPt / 2,
                     font,
                     size: scaledFontSize,
                     color: rgb(color.r, color.g, color.b),
+                    opacity: opacity[0],
+                    rotate: degrees(rotation[0]),
                 });
               } else { // Tiled
-                  const textWidthPt = font.widthOfTextAtSize(text, scaledFontSize);
-                  const tileGap = 150 * scaleX;
-                  for (let x = 0; x < pageWidthPt + pageHeightPt; x += textWidthPt + tileGap) {
-                      for (let y = 0; y < pageHeightPt + pageWidthPt; y += scaledFontSize + tileGap) {
+                  const tileGap = 150;
+                  for (let x = -pageHeightPt; x < pageWidthPt + pageHeightPt; x += (textWidthPt + tileGap)) {
+                      for (let y = -pageWidthPt; y < pageHeightPt + pageWidthPt; y += (textHeightPt + tileGap)) {
                            page.drawText(text, {
-                            ...commonOptions,
                             x, y, font, size: scaledFontSize,
                             color: rgb(color.r, color.g, color.b),
+                            opacity: opacity[0],
+                            rotate: degrees(rotation[0]),
                         });
                       }
                   }
               }
           } else if (watermarkImage) {
-            let imgWidthPt = watermarkImageDims.width * scaleX;
-            let imgHeightPt = watermarkImageDims.height * scaleY;
-            const maxDimPt = 150 * scaleX;
-            if (imgWidthPt > maxDimPt || imgHeightPt > maxDimPt) {
-                const scale = Math.min(maxDimPt / imgWidthPt, maxDimPt / imgHeightPt);
-                imgWidthPt *= scale;
-                imgHeightPt *= scale;
-            }
+            const maxDimPt = Math.min(pageWidthPt, pageHeightPt) * 0.5;
+            const imgScale = Math.min(maxDimPt / watermarkImageDims.width, maxDimPt / watermarkImageDims.height, 1);
+            let imgWidthPt = watermarkImageDims.width * imgScale;
+            let imgHeightPt = watermarkImageDims.height * imgScale;
 
              if(position === 'center') {
                 page.drawImage(watermarkImage, {
-                    ...commonOptions,
                     x: pageWidthPt / 2 - imgWidthPt / 2,
                     y: pageHeightPt / 2 - imgHeightPt / 2,
                     width: imgWidthPt,
                     height: imgHeightPt,
+                    opacity: opacity[0],
+                    rotate: degrees(rotation[0]),
                 });
              } else {
-                 const tileGap = 50 * scaleX;
-                 for (let x = 0; x < pageWidthPt; x += imgWidthPt + tileGap) {
-                     for (let y = 0; y < pageHeightPt; y += imgHeightPt + tileGap) {
-                         page.drawImage(watermarkImage, { ...commonOptions, x, y, width: imgWidthPt, height: imgHeightPt });
+                 const tileWidth = 150;
+                 const tileHeight = (tileWidth / watermarkImageDims.width) * watermarkImageDims.height;
+                 const tileGap = 50;
+                 for (let x = 0; x < pageWidthPt; x += tileWidth + tileGap) {
+                     for (let y = 0; y < pageHeightPt; y += tileHeight + tileGap) {
+                         page.drawImage(watermarkImage, { x, y, width: tileWidth, height: tileHeight, opacity: opacity[0], rotate: degrees(rotation[0]) });
                      }
                  }
              }
@@ -278,6 +267,7 @@ export default function WatermarkPdfPage() {
         newPdfBytes = await pdfDoc.save();
       } catch (error) {
         processError = error instanceof Error ? error : new Error('An unknown error occurred.');
+        console.error("Watermark Error:", processError);
       }
     })();
     
