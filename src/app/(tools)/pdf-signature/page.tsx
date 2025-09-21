@@ -581,8 +581,15 @@ export default function PdfSignaturePage() {
   const handleDuplicateObject = (id: number) => {
       const objectToDuplicate = objects.find(o => o.id === id);
       if (!objectToDuplicate) return;
-      const newObject = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 20, y: objectToDuplicate.y + 20 };
-      setObjects(prev => [...prev, newObject]);
+      
+      const newObject = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 20, y: objectToDuplicate.y + 20, pageIndex: currentPage };
+      
+      if(objectToDuplicate.pageIndex === -1) {
+         setObjects(prev => [...prev, newObject]);
+      } else {
+         const newCopy = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 20, y: objectToDuplicate.y + 20 };
+         setObjects(prev => [...prev, newCopy]);
+      }
   }
   
   const handleSave = async () => {
@@ -707,7 +714,43 @@ export default function PdfSignaturePage() {
   const renderContent = () => {
     if (isProcessing && previews.length === 0) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Loading PDF...</p></div>;
     if (isProcessing && previews.length > 0) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Saving PDF...</p></div>;
-    if (done) return <div className="text-center space-y-4"><CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" /><h3 className="text-2xl font-bold">PDF Saved!</h3><p className="text-muted-foreground">Your changes have been applied.</p><div className="flex flex-col sm:flex-row gap-2 justify-center"><Button onClick={handleDownload}><FileDown className="mr-2"/>Download PDF</Button><Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2"/>Start Over</Button></div><SharePrompt toolName="PDF Signature Tool" /></div>;
+    if (done) return (
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="relative flex items-center justify-center overflow-hidden rounded-lg border bg-muted/20 p-4">
+          {previews[0] && (
+            <Image
+              src={previews[0]}
+              alt="Final result preview"
+              width={500}
+              height={700}
+              className="h-auto max-h-full w-auto max-w-full object-contain"
+            />
+          )}
+        </div>
+        <div className="flex h-full flex-col items-start justify-center space-y-6">
+          <div className="w-full space-y-2 text-center">
+            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
+            <h2 className="text-3xl font-bold font-headline">Success!</h2>
+            <p className="text-muted-foreground">
+              Your document has been processed and is ready.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2 pt-4">
+            <Button className="w-full" onClick={handleDownload} disabled={!processedFile}>
+              <FileDown className="mr-2 h-4 w-4" /> Download PDF
+            </Button>
+            <Button
+              className="w-full"
+              variant="secondary"
+              onClick={resetState}
+            >
+              <RefreshCcw className="mr-2 h-4 w-4" /> Start Over
+            </Button>
+          </div>
+          <SharePrompt toolName="PDF Signature Tool" />
+        </div>
+      </div>
+    );
 
     if (previews.length > 0) {
       return (
