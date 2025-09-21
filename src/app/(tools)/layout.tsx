@@ -47,7 +47,7 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
       <Sidebar>
         <SidebarHeader>
           <Link href="/" className="flex items-center gap-2">
-            <AppLogo className="h-7 w-7 text-primary" />
+            <AppLogo className="h-7 w-7" />
             <span className="font-headline text-lg font-semibold text-foreground group-data-[collapsible=icon]:hidden">
               {AppName}
             </span>
