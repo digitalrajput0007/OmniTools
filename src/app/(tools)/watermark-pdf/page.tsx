@@ -221,20 +221,17 @@ export default function WatermarkPdfPage() {
             
             if (mode === 'text') {
                 const textWidthPt = font.widthOfTextAtSize(text, fontSize);
+                const textHeightPt = font.heightAtSize(fontSize);
                 
                 if (position === 'center') {
                     page.drawText(text, {
-                        x: pageWidthPt / 2,
-                        y: pageHeightPt / 2,
+                        x: pageWidthPt / 2 - textWidthPt / 2,
+                        y: pageHeightPt / 2 - textHeightPt / 2,
                         font,
                         size: fontSize,
                         color,
                         opacity: opacity[0],
-                        rotate: {
-                            type: 'degrees',
-                            angle: -rotation[0],
-                            origin: { x: pageWidthPt / 2 - textWidthPt / 2, y: pageHeightPt / 2 }
-                        }
+                        rotate: degrees(-rotation[0]),
                     });
                 } else { // Tiled
                     const tileGap = 150;
@@ -242,7 +239,7 @@ export default function WatermarkPdfPage() {
                         for (let y = 0; y < pageHeightPt + pageHeightPt; y += (fontSize + tileGap)) {
                              page.drawText(text, {
                                 x: x - pageHeightPt,
-                                y: y - pageHeightPt,
+                                y: y,
                                 font, size: fontSize,
                                 color: color,
                                 opacity: opacity[0],
@@ -258,16 +255,12 @@ export default function WatermarkPdfPage() {
 
                 if(position === 'center') {
                     page.drawImage(watermarkImage, {
-                        x: pageWidthPt / 2,
-                        y: pageHeightPt / 2,
+                        x: pageWidthPt / 2 - imgWidthPt / 2,
+                        y: pageHeightPt / 2 - imgHeightPt / 2,
                         width: imgWidthPt,
                         height: imgHeightPt,
                         opacity: opacity[0],
-                        rotate: {
-                            type: 'degrees',
-                            angle: -rotation[0],
-                            origin: { x: pageWidthPt / 2, y: pageHeightPt / 2 }
-                        }
+                        rotate: degrees(-rotation[0]),
                     });
                 } else {
                     const tileWidthPt = 150;
