@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFInvalidObjectError } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -25,6 +25,10 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+
+type CompressionLevel = 'recommended' | 'high' | 'basic';
 
 export default function CompressPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -35,6 +39,7 @@ export default function CompressPdfPage() {
   const [done, setDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [compressedFile, setCompressedFile] = useState<Blob | null>(null);
+  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('recommended');
   const { toast } = useToast();
 
   const resetState = () => {
@@ -45,6 +50,7 @@ export default function CompressPdfPage() {
     setProgress(0);
     setDone(false);
     setCompressedFile(null);
+    setCompressionLevel('recommended');
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -105,37 +111,59 @@ export default function CompressPdfPage() {
     let newPdfBytes: Uint8Array | null = null;
 
     const compressionPromise = (async () => {
-        try {
-            const existingPdfBytes = await file.arrayBuffer();
-            // This is a basic form of "compression" with pdf-lib, which re-builds the PDF.
-            // It can reduce file size if the original has unoptimized structures, but it's not a true compression algorithm.
-            const pdfDoc = await PDFDocument.load(existingPdfBytes, { 
-                // This option can break some PDFs, but is key to size reduction
-                updateMetadata: false 
-            });
-            newPdfBytes = await pdfDoc.save({ useObjectStreams: false });
-        } catch (error) {
-            compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
+      try {
+        const existingPdfBytes = await file.arrayBuffer();
+        
+        // pdf-lib's compression is about how it structures the file.
+        // `useObjectStreams: true` is generally better for compression.
+        // For 'high' compression, we can try to remove metadata.
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        
+        if (compressionLevel === 'high') {
+            pdfDoc.setTitle('');
+            pdfDoc.setAuthor('');
+            pdfDoc.setSubject('');
+            pdfDoc.setCreator('');
+            pdfDoc.setProducer('');
+            pdfDoc.setKeywords([]);
         }
+
+        newPdfBytes = await pdfDoc.save({
+            useObjectStreams: compressionLevel !== 'basic'
+        });
+
+      } catch (error) {
+        compressionError =
+          error instanceof Error
+            ? error
+            : new Error('An unknown error occurred during compression.');
+      }
     })();
-    
+
     const progressInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
-        setProgress(currentProgress);
+      const elapsedTime = Date.now() - startTime;
+      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+      setProgress(currentProgress);
     }, 50);
 
-    await Promise.all([compressionPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    await Promise.all([
+      compressionPromise,
+      new Promise((resolve) => setTimeout(resolve, minDuration)),
+    ]);
     clearInterval(progressInterval);
     setIsProcessing(false);
 
     if (compressionError) {
-        toast({ title: 'Compression Error', description: compressionError.message, variant: 'destructive' });
+      toast({
+        title: 'Compression Error',
+        description: compressionError.message,
+        variant: 'destructive',
+      });
     } else if (newPdfBytes) {
-        setDone(true);
-        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-        setCompressedFile(blob);
-        setCompressedSize(blob.size);
+      setDone(true);
+      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      setCompressedFile(blob);
+      setCompressedSize(blob.size);
     }
   };
 
@@ -150,14 +178,14 @@ export default function CompressPdfPage() {
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
-  
+
   const compressionPercentage =
     originalSize && compressedSize
       ? Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100))
       : 0;
 
   const renderContent = () => {
-     if (isProcessing) {
+    if (isProcessing) {
       return (
         <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
           <CircularProgress progress={progress} />
@@ -165,61 +193,106 @@ export default function CompressPdfPage() {
         </div>
       );
     }
-    
+
     if (done) {
-        return (
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="text-center space-y-2">
-                <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-                <h3 className="text-2xl font-bold">Compression Complete</h3>
-                <p className="text-muted-foreground">
-                Your PDF has been compressed by {compressionPercentage}%.
-                </p>
+      return (
+        <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
+                <FileIcon className="h-24 w-24 text-primary" />
+                <p className="truncate text-lg font-medium">{file?.name}</p>
+                <p className="text-sm text-muted-foreground">Your compressed PDF is ready!</p>
             </div>
-            <div className="w-full max-w-sm text-sm rounded-lg border p-4 space-y-2">
-                <p>Original Size: <span className="font-medium text-foreground">{(originalSize || 0 / 1024).toFixed(2)} KB</span></p>
-                <p>Compressed Size: <span className="font-medium text-foreground">{(compressedSize || 0 / 1024).toFixed(2)} KB</span></p>
+            <div className="flex h-full flex-col items-start justify-center space-y-4">
+                <div className="w-full text-center space-y-2">
+                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                    <h3 className="text-2xl font-bold">Compression Complete</h3>
+                    <p className="text-muted-foreground">
+                    Your PDF has been compressed by {compressionPercentage}%.
+                    </p>
+                </div>
+                <div className="w-full text-sm rounded-lg border p-4">
+                    <p>Original Size: <span className="font-medium text-foreground">{(originalSize || 0 / 1024).toFixed(2)} KB</span></p>
+                    <p>Compressed Size: <span className="font-medium text-foreground">{(compressedSize || 0 / 1024).toFixed(2)} KB</span></p>
+                </div>
+                <div className="flex w-full flex-col gap-2 pt-4">
+                  <Button className="w-full" onClick={handleDownload}>
+                    <FileDown className="mr-2 h-4 w-4" /> Download Compressed PDF
+                  </Button>
+                  <Button className="w-full" variant="secondary" onClick={resetState}>
+                    <RefreshCcw className="mr-2 h-4 w-4" /> Compress Another
+                  </Button>
+                </div>
+                <SharePrompt toolName="Compress PDF" />
             </div>
-            <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
-              <Button className="w-full" onClick={handleDownload}>
-                <FileDown className="mr-2 h-4 w-4" /> Download Compressed PDF
-              </Button>
-              <Button className="w-full" variant="secondary" onClick={resetState}>
-                <RefreshCcw className="mr-2 h-4 w-4" /> Compress Another
-              </Button>
-            </div>
-            <SharePrompt toolName="Compress PDF" />
-          </div>
-        );
+        </div>
+      );
     }
 
     if (file) {
       return (
-        <div className="flex flex-col items-center space-y-6">
-            <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8 w-full max-w-md">
-                <FileIcon className="h-16 w-16 text-muted-foreground" />
-                <p className="truncate text-sm font-medium">{file.name}</p>
-                <p className="text-xs text-muted-foreground">{(originalSize || 0 / 1024).toFixed(2)} KB</p>
+        <div className="grid gap-6 md:grid-cols-2">
+           <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
+                <FileIcon className="h-24 w-24 text-muted-foreground" />
+                <p className="truncate text-lg font-medium">{file.name}</p>
+                <p className="text-sm text-muted-foreground">{(originalSize || 0 / 1024).toFixed(2)} KB</p>
                 <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
                     <X className="h-4 w-4" />
                 </Button>
             </div>
-            <Button onClick={handleCompress} size="lg" className="w-full max-w-md">Compress PDF</Button>
+            <div className="flex flex-col space-y-6">
+                <div>
+                  <h3 className="mb-4 font-semibold">Compression Level</h3>
+                  <RadioGroup value={compressionLevel} onValueChange={(v) => setCompressionLevel(v as CompressionLevel)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="recommended" id="level-recommended" />
+                      <Label htmlFor="level-recommended" className="flex-1">Recommended</Label>
+                      <p className='text-xs text-muted-foreground'>Good balance between size and quality.</p>
+                    </div>
+                     <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="high" id="level-high" />
+                      <Label htmlFor="level-high" className="flex-1">High Compression</Label>
+                       <p className='text-xs text-muted-foreground'>Smaller size, might reduce quality.</p>
+                    </div>
+                     <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="basic" id="level-basic" />
+                      <Label htmlFor="level-basic" className="flex-1">Basic Compression</Label>
+                       <p className='text-xs text-muted-foreground'>Less size reduction, preserves structure.</p>
+                    </div>
+                  </RadioGroup>
+                </div>
+                 <Button onClick={handleCompress} size="lg" className="w-full">Compress PDF</Button>
+            </div>
         </div>
       );
     }
-    
+
     return (
-        <label
-            htmlFor="pdf-upload"
-            className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })}
-            onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
-        >
-            <UploadCloud className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
-            <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
-            <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
-        </label>
+      <label
+        htmlFor="pdf-upload"
+        className={cn(
+          'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+          { 'border-primary bg-accent/50': isDragging }
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragEvents}
+        onDrop={handleDrop}
+      >
+        <UploadCloud className="h-12 w-12 text-muted-foreground" />
+        <p className="mt-4 text-muted-foreground">
+          Drag & drop your PDF here, or click to browse
+        </p>
+        <Input
+          id="pdf-upload"
+          type="file"
+          className="sr-only"
+          onChange={handleFileChange}
+          accept="application/pdf"
+        />
+        <Button asChild variant="outline" className="mt-4">
+          <span>Browse File</span>
+        </Button>
+      </label>
     );
   };
 
@@ -234,9 +307,7 @@ export default function CompressPdfPage() {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
-          {renderContent()}
-        </CardContent>
+        <CardContent>{renderContent()}</CardContent>
       </Card>
       <Card>
         <CardHeader>
@@ -260,6 +331,7 @@ export default function CompressPdfPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file into the upload area, or click to browse and select it from your device.</li>
+                  <li><strong>Choose a Compression Level:</strong> Select the desired level of compression. "Recommended" offers a good balance, while "High" prioritizes smaller file size.</li>
                   <li><strong>Start Compression:</strong> Click the "Compress PDF" button. Our tool will analyze and rebuild the PDF to reduce its size.</li>
                   <li><strong>Download:</strong> Once complete, the tool will show you the original and new file sizes. Click "Download Compressed PDF" to save the optimized file.</li>
                 </ol>
@@ -270,7 +342,7 @@ export default function CompressPdfPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ul className="list-disc list-inside space-y-2">
                   <li><strong>Client-Side Processing:</strong> Your privacy is our priority. The entire compression process happens in your web browser. Your PDF is never uploaded to a server.</li>
-                  <li><strong>How It Works:</strong> This tool uses a method of re-saving the PDF, which can remove redundant data and use more efficient formatting. The reduction in size can vary greatly depending on the original file's structure.</li>
+                  <li><strong>How It Works:</strong> This tool uses different methods of re-saving the PDF, such as using object streams and removing metadata, which can remove redundant data and use more efficient formatting. The reduction in size can vary greatly depending on the original file's structure.</li>
                   <li><strong>When to Use:</strong> This tool is ideal for PDFs that need to be shared quickly or for meeting file size limits on web portals and email clients.</li>
                 </ul>
               </AccordionContent>
