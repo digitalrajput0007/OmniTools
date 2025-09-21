@@ -65,8 +65,8 @@ type DraggableObject = {
   id: number;
   type: 'image' | 'text';
   pageIndex: number;
-  x: number; // as percentage of page width
-  y: number; // as percentage of page height
+  x: number; // position on page in pixels
+  y: number; // position on page in pixels
   content: string; // data URL for image, text content for text
   width: number; // width in pixels
   height: number; // height in pixels
@@ -78,6 +78,8 @@ type DraggableObject = {
 
 const DraggableItem = ({
   obj,
+  pageOffsets,
+  containerRef,
   isSelected,
   onSelect,
   onUpdate,
@@ -86,6 +88,8 @@ const DraggableItem = ({
   onDuplicate,
 }: {
   obj: DraggableObject;
+  pageOffsets: number[];
+  containerRef: React.RefObject<HTMLDivElement>;
   isSelected: boolean;
   onSelect: (e: React.MouseEvent, id: number) => void;
   onUpdate: (updatedObj: DraggableObject) => void;
@@ -101,24 +105,16 @@ const DraggableItem = ({
   const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Prevent deselecting when clicking on controls or resize handles
     if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || (e.target as HTMLElement).classList.contains('resize-handle')) {
-        e.stopPropagation();
         return;
     }
     onSelect(e, obj.id);
     setIsDragging(true);
     
-    const pageRect = e.currentTarget.parentElement?.getBoundingClientRect();
-    if (pageRect) {
-      const currentX = (obj.x / 100) * pageRect.width;
-      const currentY = (obj.y / 100) * pageRect.height;
-      
-      dragStartPos.current = {
-        x: e.clientX - pageRect.left - currentX,
-        y: e.clientY - pageRect.top - currentY,
-      };
-    }
+    dragStartPos.current = {
+      x: e.clientX - obj.x,
+      y: e.clientY - obj.y,
+    };
     e.stopPropagation();
   };
 
@@ -137,14 +133,22 @@ const DraggableItem = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const parent = itemRef.current?.parentElement;
-      if (!parent) return;
-      const pageRect = parent.getBoundingClientRect();
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
 
       if (isDragging) {
-        let newX = ((e.clientX - pageRect.left - dragStartPos.current.x) / pageRect.width) * 100;
-        let newY = ((e.clientY - pageRect.top - dragStartPos.current.y) / pageRect.height) * 100;
-        onUpdate({ ...obj, x: newX, y: newY });
+        let newX = e.clientX - dragStartPos.current.x;
+        let newY = e.clientY - dragStartPos.current.y;
+        
+        let newPageIndex = 0;
+        for(let i = 0; i < pageOffsets.length; i++) {
+          if (newY + containerRect.top > pageOffsets[i]) {
+            newPageIndex = i;
+          }
+        }
+        
+        onUpdate({ ...obj, x: newX, y: newY, pageIndex: newPageIndex });
+
       } else if (isResizing) {
           const dx = e.clientX - resizeStartPos.current.x;
           let newWidth = resizeStartPos.current.width + dx;
@@ -168,7 +172,9 @@ const DraggableItem = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, obj, onUpdate]);
+  }, [isDragging, isResizing, obj, onUpdate, containerRef, pageOffsets]);
+
+  const topOffset = pageOffsets[obj.pageIndex] - (containerRef.current?.getBoundingClientRect().top || 0);
 
   return (
     <div
@@ -180,11 +186,10 @@ const DraggableItem = ({
         isDragging || isResizing ? 'z-30' : ''
       )}
       style={{
-        left: `${obj.x}%`,
-        top: `${obj.y}%`,
+        left: obj.x,
+        top: obj.y - topOffset,
         width: obj.width,
         height: obj.height,
-        transform: 'translate(-50%, -50%)',
       }}
     >
       {obj.type === 'image' ? (
@@ -216,6 +221,8 @@ export default function PdfSignaturePage() {
   const [file, setFile] = useState<File | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
   const [pageDimensions, setPageDimensions] = useState<{width: number, height: number}[]>([]);
+  const [pageOffsets, setPageOffsets] = useState<number[]>([]);
+
   const [objects, setObjects] = useState<DraggableObject[]>([]);
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -231,15 +238,13 @@ export default function PdfSignaturePage() {
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
   const [signatureColor, setSignatureColor] = useState<ColorName>('black');
   
-  // For text preview in dialog
   const [textPreview, setTextPreview] = useState({ text: '', font: 'font-dancing-script' as SignatureFont, color: 'black' as ColorName, fontSize: 24 });
   
-  // For Image Upload and BG Removal
   const [uploadedImage, setUploadedImage] = useState<string|null>(null);
   const [bgColorToRemove, setBgColorToRemove] = useState<{r:number, g:number, b:number}|null>(null);
   const [tolerance, setTolerance] = useState([10]);
 
-
+  const pageContainerRef = useRef<HTMLDivElement>(null);
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageBgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -265,7 +270,8 @@ export default function PdfSignaturePage() {
           canvas.width = canvas.offsetWidth * ratio;
           canvas.height = canvas.offsetHeight * ratio;
           const ctx = canvas.getContext("2d");
-          ctx?.scale(ratio, ratio);
+          if(!ctx) return;
+          ctx.scale(ratio, ratio);
           
           signaturePadRef.current = new SignaturePad(canvas, {
               penColor: colorOptions[signatureColor].value,
@@ -287,13 +293,27 @@ export default function PdfSignaturePage() {
         signaturePadRef.current = null;
       };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAddSigOpen, editingObject, signatureColor]);
+
+  const updatePageOffsets = () => {
+    if (!pageContainerRef.current) return;
+    const pageElements = pageContainerRef.current.querySelectorAll('[data-page-index]');
+    const newOffsets = Array.from(pageElements).map(el => el.getBoundingClientRect().top);
+    setPageOffsets(newOffsets);
+  }
+
+  useEffect(() => {
+    updatePageOffsets();
+    window.addEventListener('resize', updatePageOffsets);
+    return () => window.removeEventListener('resize', updatePageOffsets);
+  }, [previews]);
+
 
   const resetState = () => {
     setFile(null);
     setPreviews([]);
     setPageDimensions([]);
+    setPageOffsets([]);
     setObjects([]);
     setIsProcessing(false);
     setProgress(0);
@@ -360,11 +380,14 @@ export default function PdfSignaturePage() {
     e.preventDefault();
     const objectId = parseInt(e.dataTransfer.getData('text/plain'), 10);
     const pageElement = e.currentTarget.getBoundingClientRect();
-    
+    const containerRect = pageContainerRef.current?.getBoundingClientRect();
+
+    if (!containerRect) return;
+
     setObjects(prev => prev.map(obj => {
       if (obj.id === objectId) {
-        const x = ((e.clientX - pageElement.left) / pageElement.width) * 100;
-        const y = ((e.clientY - pageElement.top) / pageElement.height) * 100;
+        const x = e.clientX - pageElement.left;
+        const y = e.clientY - containerRect.top;
         return { ...obj, pageIndex, x, y };
       }
       return obj;
@@ -535,7 +558,7 @@ export default function PdfSignaturePage() {
   const handleDuplicateObject = (id: number) => {
       const objectToDuplicate = objects.find(o => o.id === id);
       if (!objectToDuplicate) return;
-      const newObject = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 5, y: objectToDuplicate.y + 5 };
+      const newObject = { ...objectToDuplicate, id: Date.now(), x: objectToDuplicate.x + 20, y: objectToDuplicate.y + 20 };
       setObjects(prev => [...prev, newObject]);
   }
   
@@ -576,24 +599,26 @@ export default function PdfSignaturePage() {
         for (const obj of objectsToPlace) {
             const page = pages[obj.pageIndex];
             const { width: pageWidth, height: pageHeight } = page.getSize();
+            const pageDim = pageDimensions[obj.pageIndex];
+            const scale = pageWidth / pageDim.width;
             
-            const objFinalWidth = obj.width;
-            const objFinalHeight = obj.height;
+            const objFinalWidth = obj.width * scale;
+            const objFinalHeight = obj.height * scale;
 
-            const x = (obj.x / 100 * pageWidth) - (objFinalWidth / 2);
-            const y = pageHeight - ((obj.y / 100 * pageHeight) + (objFinalHeight / 2));
+            const x = obj.x * scale;
+            const y = pageHeight - (obj.y - (pageOffsets[obj.pageIndex] - (pageContainerRef.current?.getBoundingClientRect().top || 0))) * scale;
             
             const objColor = colorOptions[obj.color || 'black'].rgb;
 
             if (obj.type === 'text') {
                  const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
                  page.drawText(obj.content, {
-                    x, y: y, font: fontToEmbed, size: obj.fontSize, color: objColor,
+                    x, y: y - objFinalHeight, font: fontToEmbed, size: (obj.fontSize || 24) * scale, color: objColor,
                 });
             } else if (obj.type === 'image') {
                 const pngImage = await pdfDoc.embedPng(obj.content);
                 page.drawImage(pngImage, {
-                    x, y, width: objFinalWidth, height: objFinalHeight,
+                    x, y: y - objFinalHeight, width: objFinalWidth, height: objFinalHeight,
                 });
             }
         }
@@ -699,23 +724,25 @@ export default function PdfSignaturePage() {
 
                   {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>}
             </div>
-            <div className="md:col-span-3 space-y-4">
+            <div ref={pageContainerRef} className="md:col-span-3 space-y-4 relative">
                 {previews.map((src, index) => (
-                    <div key={index} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white z-10">
+                    <div key={index} data-page-index={index} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white">
                         <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto" />
-                         {objects.filter(o => o.pageIndex === index).map(obj => (
-                            <DraggableItem
-                              key={obj.id}
-                              obj={obj}
-                              isSelected={selectedObjectId === obj.id}
-                              onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
-                              onUpdate={handleUpdateObject}
-                              onDelete={handleDeleteObject}
-                              onEdit={handleEditObject}
-                              onDuplicate={handleDuplicateObject}
-                            />
-                        ))}
                     </div>
+                ))}
+                 {objects.filter(o => o.pageIndex !== -1).map(obj => (
+                    <DraggableItem
+                      key={obj.id}
+                      obj={obj}
+                      pageOffsets={pageOffsets}
+                      containerRef={pageContainerRef}
+                      isSelected={selectedObjectId === obj.id}
+                      onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
+                      onUpdate={handleUpdateObject}
+                      onDelete={handleDeleteObject}
+                      onEdit={handleEditObject}
+                      onDuplicate={handleDuplicateObject}
+                    />
                 ))}
             </div>
         </div>
