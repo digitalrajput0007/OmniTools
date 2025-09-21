@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PDFDocument, Passwords } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -91,11 +91,10 @@ export default function PdfPasswordPage() {
     const processPromise = (async () => {
         try {
             const existingPdfBytes = await file.arrayBuffer();
-            const passwords = password ? Passwords.of(password) : undefined;
             const pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password, userPassword: password });
             
             if (mode === 'encrypt') {
-                newPdfBytes = await pdfDoc.save({ ...passwords });
+                newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
                 newPdfBytes = await pdfDoc.save();
             }
