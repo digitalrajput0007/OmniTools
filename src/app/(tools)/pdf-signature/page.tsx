@@ -76,9 +76,17 @@ export default function PdfSignaturePage() {
   }, []);
 
   useEffect(() => {
+    let signaturePad: SignaturePad | null = null;
     if (isAddSigOpen && canvasRef.current) {
-        signaturePadRef.current = new SignaturePad(canvasRef.current);
+        signaturePad = new SignaturePad(canvasRef.current);
+        signaturePadRef.current = signaturePad;
     }
+    return () => {
+        // When the dialog is closed, ensure we clean up the signature pad
+        if (signaturePad) {
+            signaturePad.off();
+        }
+    };
   }, [isAddSigOpen]);
 
   const resetState = () => {
@@ -186,11 +194,11 @@ export default function PdfSignaturePage() {
   };
   
   const handleAddSignature = () => {
-    if (signaturePadRef.current?.isEmpty()) {
+    if (!signaturePadRef.current || signaturePadRef.current.isEmpty()) {
       toast({ title: "Signature is empty", variant: 'destructive' });
       return;
     }
-    const dataUrl = signaturePadRef.current!.toDataURL('image/png');
+    const dataUrl = signaturePadRef.current.toDataURL('image/png');
     
     const newObject: DraggableObject = {
       id: Date.now(),
@@ -371,3 +379,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
