@@ -78,16 +78,20 @@ export default function PdfSignaturePage() {
   useEffect(() => {
     if (isAddSigOpen && canvasRef.current) {
       const canvas = canvasRef.current;
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      
+      // Adjust canvas size for high DPI displays
+      const ratio =  Math.max(window.devicePixelRatio || 1, 1);
       canvas.width = canvas.offsetWidth * ratio;
       canvas.height = canvas.offsetHeight * ratio;
-      canvas.getContext('2d')?.scale(ratio, ratio);
+      canvas.getContext("2d")?.scale(ratio, ratio);
       
-      const signaturePad = new SignaturePad(canvas);
-      signaturePadRef.current = signaturePad;
-      
+      // Initialize SignaturePad
+      signaturePadRef.current = new SignaturePad(canvas);
+
+      // Cleanup
       return () => {
-        signaturePad.off();
+        signaturePadRef.current?.off();
+        signaturePadRef.current = null;
       };
     }
   }, [isAddSigOpen]);
