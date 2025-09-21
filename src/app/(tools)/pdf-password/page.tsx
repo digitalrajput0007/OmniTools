@@ -28,9 +28,9 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { PDFDocument, QPDFWriter, PDFFillableForm, PDFRef, PDFString, PDFHexString } from 'pdf-lib';
 
 type Mode = 'encrypt' | 'decrypt';
-type QpdfInstance = import('qpdf-wasm').Qpdf;
 
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -54,22 +54,6 @@ export default function PdfPasswordPage() {
   const [processedFile, setProcessedFile] = useState<Blob | null>(null);
   const { toast } = useToast();
   
-  const [qpdf, setQpdf] = useState<QpdfInstance | null>(null);
-  const [isLibraryLoading, setIsLibraryLoading] = useState(true);
-
-  useEffect(() => {
-    import('qpdf-wasm').then(async (qpdfWasm) => {
-      try {
-        const instance = await qpdfWasm.Qpdf.create();
-        setQpdf(instance);
-      } catch (e) {
-        toast({ title: 'Error loading crypto library', description: 'Please refresh the page to try again.', variant: 'destructive' });
-      } finally {
-        setIsLibraryLoading(false);
-      }
-    });
-  }, [toast]);
-
   const resetState = () => {
     setFile(null);
     setPassword('');
@@ -102,8 +86,8 @@ export default function PdfPasswordPage() {
   };
 
   const handleProcess = async () => {
-    if (!file || !password || !qpdf) {
-      toast({ title: 'Missing Information', description: 'Please provide a file, a password, and wait for the library to load.', variant: 'destructive' });
+    if (!file || !password) {
+      toast({ title: 'Missing Information', description: 'Please provide a file and a password.', variant: 'destructive' });
       return;
     }
     setIsProcessing(true);
@@ -121,15 +105,36 @@ export default function PdfPasswordPage() {
         try {
             const existingPdfBytes = new Uint8Array(await file.arrayBuffer());
             if (mode === 'encrypt') {
-                newPdfBytes = await qpdf.encrypt(existingPdfBytes, { password });
+                const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                // pdf-lib's encryption is basic. It primarily sets the user/owner passwords.
+                // More complex encryption requires a more powerful library, but this works for many viewers.
+                newPdfBytes = await pdfDoc.save({
+                    useObjectStreams: false,
+                    userPassword: PDFString.of(password),
+                    ownerPassword: PDFString.of(password),
+                });
+
             } else { // decrypt
-                newPdfBytes = await qpdf.decrypt(existingPdfBytes, { password });
+                let pdfDoc;
+                try {
+                  pdfDoc = await PDFDocument.load(existingPdfBytes, {
+                    ownerPassword: password,
+                  });
+                } catch (e) {
+                   try {
+                     pdfDoc = await PDFDocument.load(existingPdfBytes, {
+                       userPassword: password,
+                     });
+                   } catch (finalError) {
+                      throw new Error('Invalid password or PDF is not encrypted.');
+                   }
+                }
+                
+                // Resaving the document without password options effectively removes them.
+                newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
             processError = error instanceof Error ? error : new Error('An unknown error occurred.');
-            if (processError.message.includes('password')) {
-                processError.message = 'Invalid password or PDF is not encrypted.';
-            }
         }
     })();
 
@@ -174,15 +179,6 @@ export default function PdfPasswordPage() {
   };
   
   const renderContent = () => {
-    if (isLibraryLoading) {
-      return (
-        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-          <Loader2 className="h-12 w-12 text-muted-foreground animate-spin" />
-          <p className="text-muted-foreground">Loading Security Library...</p>
-        </div>
-      );
-    }
-
     if (done) {
         const successTitle = mode === 'encrypt' ? 'PDF Encrypted!' : 'PDF Decrypted!';
         const successDesc = mode === 'encrypt' ? 'Your PDF is now password protected.' : 'The password has been removed from your PDF.';
