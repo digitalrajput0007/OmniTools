@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,8 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 type Mode = 'encrypt' | 'decrypt';
 
@@ -81,6 +83,7 @@ export default function PdfPasswordPage() {
     setIsProcessing(true);
     setDone(false);
     setProgress(0);
+    setProcessedFile(null);
     
     let processError: Error | null = null;
     let newPdfBytes: Uint8Array | null = null;
@@ -95,16 +98,25 @@ export default function PdfPasswordPage() {
 
             if (mode === 'encrypt') {
                 pdfDoc = await PDFDocument.load(existingPdfBytes);
-                // Set both userPassword and ownerPassword to ensure compatibility
+                // The key is to set both passwords. Many viewers ignore the userPassword if an ownerPassword isn't set.
+                pdfDoc.setProducer('OnlineJPGPDF.com');
+                pdfDoc.setCreator('OnlineJPGPDF.com');
                 newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
-                pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password });
+                try {
+                     pdfDoc = await PDFDocument.load(existingPdfBytes, { userPassword: password });
+                } catch(e) {
+                     // pdf-lib has a bug where it requires ownerPassword for decryption. Try that as a fallback.
+                     pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password });
+                }
+                pdfDoc.setProducer('OnlineJPGPDF.com');
+                pdfDoc.setCreator('OnlineJPGPDF.com');
                 newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
             processError = error instanceof Error ? error : new Error('An unknown error occurred.');
-            if (error.message.includes('Invalid password') || error.message.includes('password')) {
-                processError = new Error('Invalid password. Please check and try again.');
+            if (error.message.includes('password') || error.message.toLowerCase().includes('encrypted')) {
+                 processError = new Error('Invalid password or already encrypted. Please check and try again.');
             }
         }
     })();
@@ -121,6 +133,8 @@ export default function PdfPasswordPage() {
 
     if (processError) {
         toast({ title: 'Processing Error', description: processError.message, variant: 'destructive' });
+        // Don't reset state, allow user to correct password
+        setDone(false);
     } else if (newPdfBytes) {
         setDone(true);
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
@@ -182,15 +196,15 @@ export default function PdfPasswordPage() {
                     <TabsTrigger value="encrypt"><Lock className="mr-2 h-4 w-4" />Encrypt</TabsTrigger>
                     <TabsTrigger value="decrypt"><Unlock className="mr-2 h-4 w-4" />Decrypt</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="encrypt" className="pt-4">
+                  <TabsContent value="encrypt" className="pt-4 space-y-2">
                       <Label htmlFor="password-encrypt">Set a Password</Label>
                       <Input id="password-encrypt" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password to protect file" />
-                      <Button onClick={handleProcess} className="w-full mt-4" size="lg">Add Password</Button>
+                      <Button onClick={handleProcess} className="w-full mt-4" size="lg" disabled={!password}>Add Password</Button>
                   </TabsContent>
-                  <TabsContent value="decrypt" className="pt-4">
+                  <TabsContent value="decrypt" className="pt-4 space-y-2">
                       <Label htmlFor="password-decrypt">Current Password</Label>
                       <Input id="password-decrypt" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password to unlock file" />
-                      <Button onClick={handleProcess} className="w-full mt-4" size="lg">Remove Password</Button>
+                      <Button onClick={handleProcess} className="w-full mt-4" size="lg" disabled={!password}>Remove Password</Button>
                   </TabsContent>
               </Tabs>
           </div>
@@ -223,6 +237,53 @@ export default function PdfPasswordPage() {
           </div>
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>About PDF Password Protection</CardTitle>
+          <CardDescription>
+            Understand how to secure and manage access to your PDF documents.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Why Protect a PDF?</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <p>
+                  Password-protecting a PDF is a crucial step for securing sensitive information. It ensures that only individuals with the correct password can open and view the document's contents. This is ideal for sharing confidential reports, private records, or any document that should not be publicly accessible.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>How to Use the Tool</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file or click to browse and select it.</li>
+                  <li><strong>Choose a Mode:</strong> Select "Encrypt" to add a password, or "Decrypt" to remove one.</li>
+                  <li><strong>Enter Password:</strong>
+                     <ul className="list-disc list-inside pl-4 mt-1">
+                        <li>If encrypting, enter the new password you want to set.</li>
+                        <li>If decrypting, enter the PDF's current password.</li>
+                    </ul>
+                  </li>
+                  <li><strong>Process & Download:</strong> Click the button to apply your changes. Once complete, your new, secure (or unlocked) PDF will be ready for download.</li>
+                </ol>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>Tips for Security and Large Files</AccordionTrigger>
+              <AccordionContent className="space-y-2 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-2">
+                    <li><strong>Strong Passwords:</strong> When encrypting, use a strong, unique password that includes a mix of letters, numbers, and symbols to maximize security.</li>
+                    <li><strong>Client-Side Security:</strong> The entire encryption and decryption process happens in your browser. Your PDF and your password are never sent to a server, ensuring maximum privacy.</li>
+                    <li><strong>Large File Handling:</strong> For very large PDFs, the process may take a few moments as your browser needs to load and rebuild the entire file. Please be patient, as the tool is working locally on your machine.</li>
+                    <li><strong>Forgot Your Password?</strong> This tool cannot recover lost passwords. If you forget the password to an encrypted PDF, you will not be able to open it.</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
       </Card>
     </div>
   );
