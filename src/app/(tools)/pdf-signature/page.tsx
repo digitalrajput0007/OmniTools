@@ -29,6 +29,7 @@ import {
   Palette,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -45,11 +46,9 @@ import { Slider } from '@/components/ui/slider';
 let pdfjs: any;
 
 const signatureFonts = {
-    'font-great-vibes': 'Great Vibes',
-    'font-sacramento': 'Sacramento',
-    'font-allura': 'Allura',
-    'font-dancing-script': 'Dancing Script',
-    'font-sans': 'Sans Serif'
+    'font-sans': 'Sans Serif',
+    'font-serif': 'Serif',
+    'font-mono': 'Monospaced',
 }
 
 type SignatureFont = keyof typeof signatureFonts;
@@ -242,7 +241,7 @@ export default function PdfSignaturePage() {
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
   const [signatureColor, setSignatureColor] = useState<ColorName>('black');
   
-  const [textPreview, setTextPreview] = useState({ text: '', font: 'font-dancing-script' as SignatureFont, color: 'black' as ColorName, fontSize: 24 });
+  const [textPreview, setTextPreview] = useState({ text: '', font: 'font-sans' as SignatureFont, color: 'black' as ColorName, fontSize: 24 });
   
   const [uploadedImage, setUploadedImage] = useState<string|null>(null);
   const [bgColorToRemove, setBgColorToRemove] = useState<{r:number, g:number, b:number}|null>(null);
@@ -376,8 +375,8 @@ export default function PdfSignaturePage() {
   };
 
   const handleDragEvents = (e: React.DragEvent<HTMLElement>) => { e.preventDefault(); e.stopPropagation(); };
-  const handleDragEnter = (e: React.DragEvent<HTMLElement>) => { handleDragEvents(e); setIsDragging(true); };
-  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => { handleDragEvents(e); setIsDragging(false); };
+  const handleDragEnter = (e: React.DragEvent<HTMLElement>) => { setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => { setIsDragging(false); };
   const handleDrop = (e: React.DragEvent<HTMLElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
@@ -395,6 +394,7 @@ export default function PdfSignaturePage() {
     
     const x = e.clientX - containerRect.left - (draggedObject.width / 2);
     const y = e.clientY - containerRect.top - (draggedObject.height / 2);
+    
     const commonProps = {
         pageIndex: currentPage, 
         x: Math.max(0, Math.min(x, containerRect.width - draggedObject.width)),
@@ -402,8 +402,9 @@ export default function PdfSignaturePage() {
         previewWidthPx: containerRect.width,
         previewHeightPx: containerRect.height,
     };
-
-    if (draggedObject.pageIndex === -1) { // Dropping from library
+    
+    // If dropping from the library, create a copy.
+    if (draggedObject.pageIndex === -1) {
       const newObject: DraggableObject = {
         ...draggedObject,
         id: Date.now(),
@@ -567,7 +568,7 @@ export default function PdfSignaturePage() {
     if(objectToEdit.type === 'text') {
       setTextPreview({
           text: objectToEdit.content,
-          font: objectToEdit.font || 'font-dancing-script',
+          font: objectToEdit.font || 'font-sans',
           color: objectToEdit.color || 'black',
           fontSize: objectToEdit.fontSize || 24,
       });
@@ -605,27 +606,18 @@ export default function PdfSignaturePage() {
         try {
             const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
             const fontCache: Partial<Record<SignatureFont, PDFFont>> = {};
+            
+            const fontMap: Record<SignatureFont, StandardFonts> = {
+                'font-sans': StandardFonts.Helvetica,
+                'font-serif': StandardFonts.TimesRoman,
+                'font-mono': StandardFonts.Courier,
+            };
 
             const loadFont = async (fontKey: SignatureFont) => {
                 if (fontCache[fontKey]) return fontCache[fontKey]!;
-                let fontBytes;
-                try {
-                    if (fontKey === 'font-sans') {
-                        fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
-                    } else {
-                        const fontName = signatureFonts[fontKey].replace('font-', '').replace(/ /g, '');
-                        const response = await fetch(`/fonts/${fontName}.ttf`);
-                        if (!response.ok) throw new Error('Font not found');
-                        fontBytes = await response.arrayBuffer();
-                        fontBytes = await pdfDoc.embedFont(fontBytes);
-                    }
-                } catch (e) {
-                    console.warn(`Could not load font ${fontKey}, falling back to Helvetica.`);
-                    toast({ title: "Custom Font Failed", description: "Could not load custom font, falling back to default.", variant: 'destructive'});
-                    fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
-                }
-                fontCache[fontKey] = fontBytes;
-                return fontBytes;
+                const fontToEmbed = await pdfDoc.embedFont(fontMap[fontKey]);
+                fontCache[fontKey] = fontToEmbed;
+                return fontToEmbed;
             };
             
             const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
@@ -650,7 +642,7 @@ export default function PdfSignaturePage() {
                 const objColor = colorOptions[obj.color || 'black'].rgb;
 
                 if (obj.type === 'text' && obj.fontSize) {
-                    const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
+                    const fontToEmbed = await loadFont(obj.font || 'font-sans');
                     page.drawText(obj.content, {
                         x: finalXPt,
                         y: finalYPt,
@@ -812,7 +804,7 @@ export default function PdfSignaturePage() {
                                     <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
                                         <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'font-dancing-script'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
+                                    <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'font-sans'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
                                     <div className="space-y-2"><Label>Color</Label><RadioGroup name="color" defaultValue={editingObject?.color || 'black'} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`text-${key}`}/><Label htmlFor={`text-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div>
                                     <DialogClose asChild><Button type="button" onClick={handleAddOrUpdateText} className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
                                 </form>

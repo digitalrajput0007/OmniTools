@@ -37,8 +37,6 @@ const signatureFonts = {
     'font-sans': 'Sans Serif',
     'font-serif': 'Serif',
     'font-mono': 'Monospaced',
-    'font-dancing-script': 'Dancing Script',
-    'font-great-vibes': 'Great Vibes',
 }
 
 type SignatureFont = keyof typeof signatureFonts;
@@ -202,27 +200,13 @@ export default function WatermarkPdfPage() {
             watermarkImageDims = watermarkImage.scale(1);
         }
         
-        const fontMap = {
+        const fontMap: Record<SignatureFont, StandardFonts> = {
             'font-sans': StandardFonts.Helvetica,
             'font-serif': StandardFonts.TimesRoman,
             'font-mono': StandardFonts.Courier,
         };
+        const font = await pdfDoc.embedFont(fontMap[fontStyle]);
         
-        let font;
-        try {
-            if (fontStyle === 'font-dancing-script' || fontStyle === 'font-great-vibes') {
-                 const fontName = fontStyle === 'font-dancing-script' ? 'DancingScript' : 'GreatVibes';
-                 const fontBytes = await fetch(`/fonts/${fontName}-Regular.ttf`).then(res => res.arrayBuffer()).catch(() => { throw new Error('Font file not found'); });
-                 font = await pdfDoc.embedFont(fontBytes);
-            } else {
-                font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
-            }
-        } catch(e) {
-            console.warn(`Could not load custom font, falling back to default.`);
-            toast({ title: "Custom Font Failed", description: "Could not load custom font, falling back to default.", variant: 'destructive'});
-            font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        }
-
         const colorRgb = hexToRgb(fontColor);
         if (!colorRgb) {
             processError = new Error('Invalid color format.');
