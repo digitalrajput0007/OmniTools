@@ -118,6 +118,11 @@ export default function WatermarkPdfPage() {
     resetState();
     setFile(selectedFile);
     setIsProcessing(true);
+    setProgress(0);
+
+    const progressInterval = setInterval(() => {
+        setProgress(p => Math.min(p + 5, 95));
+    }, 100);
 
     try {
       const arrayBuffer = await selectedFile.arrayBuffer();
@@ -132,10 +137,12 @@ export default function WatermarkPdfPage() {
         await page.render({ canvasContext: context, viewport }).promise;
         setPreviewUrl(canvas.toDataURL());
       }
+      setProgress(100);
     } catch (e) {
       toast({ title: 'Error reading PDF', description: 'Could not render a preview for this PDF.', variant: 'destructive' });
       resetState();
     } finally {
+      clearInterval(progressInterval);
       setIsProcessing(false);
     }
   };
@@ -156,7 +163,7 @@ export default function WatermarkPdfPage() {
   };
 
   const handleApplyWatermark = async () => {
-    if (!file || (mode === 'text' && !text) || (mode === 'image' && !imageFile) || !previewDimensions) {
+    if (!file || (mode === 'text' && !text) || (mode === 'image' && !imageFile)) {
       toast({ title: 'Missing Information', description: 'Please provide a PDF and configure the watermark.', variant: 'destructive' });
       return;
     }
@@ -201,14 +208,15 @@ export default function WatermarkPdfPage() {
             font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         }
 
-        const color = hexToRgb(fontColor);
-        if (!color) {
+        const colorRgb = hexToRgb(fontColor);
+        if (!colorRgb) {
             throw new Error('Invalid color format.');
         }
 
         const pages = pdfDoc.getPages();
         for (const page of pages) {
             const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
+            const pageCenter = { x: pageWidthPt / 2, y: pageHeightPt / 2 };
 
             if (mode === 'text') {
                 const textWidthPt = font.widthOfTextAtSize(text, fontSize);
@@ -216,11 +224,11 @@ export default function WatermarkPdfPage() {
                 
                 if (position === 'center') {
                     page.drawText(text, {
-                        x: pageWidthPt / 2 - textWidthPt / 2,
-                        y: pageHeightPt / 2 - textHeightPt / 4,
+                        x: pageCenter.x - textWidthPt / 2,
+                        y: pageCenter.y - textHeightPt / 2,
                         font,
                         size: fontSize,
-                        color,
+                        color: colorRgb,
                         opacity: opacity[0],
                         rotate: degrees(rotation[0]),
                     });
@@ -232,7 +240,7 @@ export default function WatermarkPdfPage() {
                                 x: x - pageHeightPt,
                                 y: y - pageHeightPt,
                                 font, size: fontSize,
-                                color,
+                                color: colorRgb,
                                 opacity: opacity[0],
                                 rotate: degrees(rotation[0]),
                             });
@@ -246,8 +254,8 @@ export default function WatermarkPdfPage() {
 
                 if(position === 'center') {
                     page.drawImage(watermarkImage, {
-                        x: pageWidthPt / 2 - imgWidthPt / 2,
-                        y: pageHeightPt / 2 - imgHeightPt / 2,
+                        x: pageCenter.x - imgWidthPt / 2,
+                        y: pageCenter.y - imgHeightPt / 2,
                         width: imgWidthPt,
                         height: imgHeightPt,
                         opacity: opacity[0],
