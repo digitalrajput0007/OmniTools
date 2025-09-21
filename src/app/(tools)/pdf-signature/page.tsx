@@ -628,65 +628,75 @@ export default function PdfSignaturePage() {
     const minDuration = 3000;
 
     const savePromise = (async () => {
-      try {
-        const pdfDoc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
-        const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
-        
-        const embeddedFontCache: Partial<Record<SignatureFontKey | StandardFonts, PDFFont>> = {};
-        
-        for (const obj of objectsToPlace) {
-            const page = pdfDoc.getPage(obj.pageIndex);
-            const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
-            const { previewWidthPx, previewHeightPx } = obj;
+        try {
+            const pdfDoc = await PDFDocument.load(await file.arrayBuffer(), {
+                ignoreEncryption: true,
+            });
+            const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
+            const embeddedFontCache: Partial<Record<string, PDFFont>> = {};
 
-            if (!previewWidthPx || !previewHeightPx) continue;
-            
-            const scaleX = pageWidthPt / previewWidthPx;
-            const scaleY = pageHeightPt / previewHeightPx;
+            for (const obj of objectsToPlace) {
+                const page = pdfDoc.getPage(obj.pageIndex);
+                const {
+                    width: pageWidthPt,
+                    height: pageHeightPt
+                } = page.getSize();
+                const {
+                    previewWidthPx,
+                    previewHeightPx
+                } = obj;
 
-            const finalWidthPt = obj.width * scaleX;
-            const finalHeightPt = obj.height * scaleY;
+                if (!previewWidthPx || !previewHeightPx) continue;
 
-            const finalYPt = pageHeightPt - (obj.y * scaleY) - finalHeightPt;
-            const finalXPt = obj.x * scaleX;
+                const scaleX = pageWidthPt / previewWidthPx;
+                const scaleY = pageHeightPt / previewHeightPx;
 
-            if (obj.type === 'text' && obj.fontSize && obj.font) {
-                let fontToEmbed = embeddedFontCache[obj.font];
-                if (!fontToEmbed) {
-                    if (loadedFonts[obj.font]) {
-                        fontToEmbed = await pdfDoc.embedFont(loadedFonts[obj.font]);
-                    } else {
-                        fontToEmbed = await pdfDoc.embedFont(obj.font as StandardFonts);
+                const finalWidthPt = obj.width * scaleX;
+                const finalHeightPt = obj.height * scaleY;
+                const finalYPt = pageHeightPt - obj.y * scaleY - finalHeightPt;
+                const finalXPt = obj.x * scaleX;
+
+                if (obj.type === 'text' && obj.fontSize && obj.font) {
+                    let fontToEmbed = embeddedFontCache[obj.font];
+                    if (!fontToEmbed) {
+                        if (loadedFonts[obj.font]) {
+                            fontToEmbed = await pdfDoc.embedFont(loadedFonts[obj.font], { subset: true });
+                        } else {
+                            fontToEmbed = await pdfDoc.embedFont(obj.font as StandardFonts);
+                        }
+                        embeddedFontCache[obj.font] = fontToEmbed;
                     }
-                    embeddedFontCache[obj.font] = fontToEmbed;
+
+                    const objColor = colorOptions[obj.color || 'black'].rgb;
+                    page.drawText(obj.content, {
+                        x: finalXPt,
+                        y: finalYPt,
+                        font: fontToEmbed,
+                        size: obj.fontSize * scaleY,
+                        color: rgb(objColor.r, objColor.g, objColor.b),
+                        opacity: 1,
+                    });
+                } else if (obj.type === 'image') {
+                    const pngImage = await pdfDoc.embedPng(obj.content);
+                    page.drawImage(pngImage, {
+                        x: finalXPt,
+                        y: finalYPt,
+                        width: finalWidthPt,
+                        height: finalHeightPt,
+                    });
                 }
-                
-                const objColor = colorOptions[obj.color || 'black'].rgb;
-                page.drawText(obj.content, {
-                    x: finalXPt,
-                    y: finalYPt,
-                    font: fontToEmbed,
-                    size: obj.fontSize * scaleY,
-                    color: rgb(objColor.r, objColor.g, objColor.b),
-                    opacity: 1,
-                });
-            } else if (obj.type === 'image') {
-                const pngImage = await pdfDoc.embedPng(obj.content);
-                page.drawImage(pngImage, {
-                    x: finalXPt,
-                    y: finalYPt,
-                    width: finalWidthPt,
-                    height: finalHeightPt,
-                });
             }
+
+            const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
+            setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
+        } catch (error) {
+            toast({
+                title: 'Error Saving PDF',
+                description: 'There was an issue embedding fonts or images.',
+                variant: 'destructive',
+            });
+            console.error(error);
         }
-        
-        const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
-        setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
-      } catch (error) {
-        toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
-        console.error(error);
-      }
     })();
 
     const progressInterval = setInterval(() => {
