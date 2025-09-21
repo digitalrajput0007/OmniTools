@@ -175,8 +175,8 @@ const DraggableItem = ({
       ref={itemRef}
       onMouseDown={handleMouseDown}
       className={cn(
-        "group/item absolute cursor-move border border-dashed z-20",
-        isSelected ? 'border-primary' : 'border-transparent hover:border-primary/50',
+        "group/item absolute cursor-move border border-dashed",
+        isSelected ? 'border-primary z-20' : 'border-transparent hover:border-primary/50 z-10',
         isDragging || isResizing ? 'z-30' : ''
       )}
       style={{
@@ -701,7 +701,7 @@ export default function PdfSignaturePage() {
             </div>
             <div className="md:col-span-3 space-y-4">
                 {previews.map((src, index) => (
-                    <div key={index} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white">
+                    <div key={index} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white z-10">
                         <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto" />
                          {objects.filter(o => o.pageIndex === index).map(obj => (
                             <DraggableItem
