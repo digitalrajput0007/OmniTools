@@ -278,6 +278,15 @@ export default function PdfSplitterPage() {
     }
   };
   
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes >= 1024 * 1024) {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    } else {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    }
+  };
+  
   const isCurrentPageSelected = selectedPages.has(currentPreviewIndex + 1);
 
   return (
@@ -409,6 +418,13 @@ export default function PdfSplitterPage() {
                         </div>
                         ) : (
                         <>
+                           <div>
+                              <h3 className="mb-2 font-semibold">File Information</h3>
+                              <div className="space-y-1 text-sm text-muted-foreground">
+                                <p>Name: {file?.name}</p>
+                                <p>Size: {formatFileSize(file?.size)}</p>
+                              </div>
+                            </div>
                            <div className="space-y-2">
                               <Label htmlFor="ranges">Pages to Extract</Label>
                               <Input
