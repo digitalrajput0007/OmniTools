@@ -604,6 +604,7 @@ export default function PdfSignaturePage() {
                     }
                 } catch (e) {
                     console.warn(`Could not load font ${fontKey}, falling back to Helvetica.`);
+                    toast({ title: "Custom Font Failed", description: "Could not load custom font, falling back to default.", variant: 'destructive'});
                     fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
                 }
                 fontCache[fontKey] = fontBytes;
@@ -653,7 +654,6 @@ export default function PdfSignaturePage() {
             
             const pdfBytes = await pdfDoc.save();
             setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
-            setDone(true);
         } catch (error) {
             toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
             console.error(error);
@@ -669,6 +669,7 @@ export default function PdfSignaturePage() {
     await Promise.all([savePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
     clearInterval(progressInterval);
     setIsProcessing(false);
+    setDone(true);
   };
 
   const handleDownload = () => {
@@ -870,5 +871,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
