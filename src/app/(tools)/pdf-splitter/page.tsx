@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import Image from 'next/image';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 let pdfjs: any;
 
@@ -41,9 +43,12 @@ const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [totalPages, setTotalPages] = useState(0);
   const [ranges, setRanges] = useState('');
   const [isSplitting, setIsSplitting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [split, setSplit] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -61,46 +66,128 @@ export default function PdfSplitterPage() {
 
   const resetState = () => {
     setFile(null);
+    setPreviews([]);
+    setSelectedPages(new Set());
     setTotalPages(0);
     setSplit(false);
     setProgress(0);
     setRanges('');
     setIsSplitting(false);
+    setIsProcessing(false);
   };
-
+  
   const handleFileSelect = async (selectedFile: File) => {
-    if (selectedFile.type === 'application/pdf') {
-       if (!pdfjs) {
+    if (selectedFile.type !== 'application/pdf') {
+      toast({ title: 'Invalid File Type', variant: 'destructive' });
+      return;
+    }
+     if (!pdfjs) {
         toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
         return;
+    }
+    resetState();
+    setFile(selectedFile);
+    setIsProcessing(true);
+    
+    try {
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      const numPages = pdf.numPages;
+      setTotalPages(numPages);
+      
+      const pagePreviews: string[] = [];
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const context = canvas.getContext('2d');
+        if (context) {
+          await page.render({ canvasContext: context, viewport }).promise;
+          pagePreviews.push(canvas.toDataURL());
+        }
+        setProgress(Math.round((i / numPages) * 100));
       }
+      setPreviews(pagePreviews);
+    } catch (error) {
+      toast({ title: 'Error Reading PDF', variant: 'destructive' });
       resetState();
-      setFile(selectedFile);
-      try {
-        const arrayBuffer = await selectedFile.arrayBuffer();
-        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-        setTotalPages(pdf.numPages);
-      } catch (error) {
-        toast({
-          title: 'Error Reading PDF',
-          description: 'Could not read the selected PDF file.',
-          variant: 'destructive',
-        });
-        resetState();
-      }
-    } else {
-      toast({
-        title: 'Invalid File Type',
-        description: 'Please select a PDF file.',
-        variant: 'destructive',
-      });
+    } finally {
+      setIsProcessing(false);
     }
   };
+
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       handleFileSelect(e.target.files[0]);
     }
+  };
+  
+  const handleTogglePage = (pageNumber: number) => {
+    const newSelectedPages = new Set(selectedPages);
+    if (newSelectedPages.has(pageNumber)) {
+      newSelectedPages.delete(pageNumber);
+    } else {
+      newSelectedPages.add(pageNumber);
+    }
+    setSelectedPages(newSelectedPages);
+    updateRangesFromSet(newSelectedPages);
+  };
+
+  const updateRangesFromSet = (pages: Set<number>) => {
+    if (pages.size === 0) {
+      setRanges('');
+      return;
+    }
+    const sortedPages = Array.from(pages).sort((a, b) => a - b);
+    const rangesArray: (string | number)[] = [];
+    let startOfRange = sortedPages[0];
+
+    for (let i = 0; i < sortedPages.length; i++) {
+      const currentPage = sortedPages[i];
+      const nextRage = i + 1 < sortedPages.length ? sortedPages[i + 1] : null;
+
+      if (nextRage === null || nextRage > currentPage + 1) {
+        if (currentPage === startOfRange) {
+          rangesArray.push(currentPage);
+        } else {
+          rangesArray.push(`${startOfRange}-${currentPage}`);
+        }
+        if(nextRage !== null) {
+            startOfRange = nextRage;
+        }
+      }
+    }
+    setRanges(rangesArray.join(','));
+  };
+
+  const handleRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newRanges = e.target.value;
+    setRanges(newRanges);
+    updateSetFromRanges(newRanges);
+  };
+  
+  const updateSetFromRanges = (rangesStr: string) => {
+    const newSelectedPages = new Set<number>();
+    if (!rangesStr) {
+      setSelectedPages(newSelectedPages);
+      return;
+    }
+    const parts = rangesStr.split(',');
+    for (const part of parts) {
+      if (part.includes('-')) {
+        const [start, end] = part.split('-').map(Number);
+        if (!isNaN(start) && !isNaN(end) && start <= end && start > 0 && end <= totalPages) {
+          for (let i = start; i <= end; i++) newSelectedPages.add(i);
+        }
+      } else {
+        const page = Number(part);
+        if (!isNaN(page) && page > 0 && page <= totalPages) newSelectedPages.add(page);
+      }
+    }
+    setSelectedPages(newSelectedPages);
   };
 
   const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -151,47 +238,21 @@ export default function PdfSplitterPage() {
   };
 
   const downloadSplitPdf = async () => {
-    if (!file || !ranges) return;
-
-    try {
-      const pageNumbers = new Set<number>();
-      const parts = ranges.split(',');
-      for (const part of parts) {
-        if (part.includes('-')) {
-          const [start, end] = part.split('-').map(Number);
-          if (
-            !isNaN(start) &&
-            !isNaN(end) &&
-            start <= end &&
-            start > 0 &&
-            end <= totalPages
-          ) {
-            for (let i = start; i <= end; i++) {
-              pageNumbers.add(i);
-            }
-          }
-        } else {
-          const page = Number(part);
-          if (!isNaN(page) && page > 0 && page <= totalPages) {
-            pageNumbers.add(page);
-          }
-        }
-      }
-
-      if (pageNumbers.size === 0) {
-        toast({
-          title: 'Invalid Range',
-          description: 'Please enter a valid page range to split.',
+    if (!file || selectedPages.size === 0) {
+       toast({
+          title: 'No Pages Selected',
+          description: 'Please select at least one page to split.',
           variant: 'destructive',
         });
-        return;
-      }
+      return;
+    }
 
+    try {
       const arrayBuffer = await file.arrayBuffer();
       const originalPdf = await PDFDocument.load(arrayBuffer);
       const newPdf = await PDFDocument.create();
 
-      const sortedPages = Array.from(pageNumbers).sort((a, b) => a - b);
+      const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
       const copiedPages = await newPdf.copyPages(
         originalPdf,
         sortedPages.map((p) => p - 1)
@@ -258,98 +319,104 @@ export default function PdfSplitterPage() {
                 <span>Browse File</span>
               </Button>
             </label>
+          ) : isProcessing ? (
+             <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+                <CircularProgress progress={progress} />
+                <p className="text-center text-sm text-muted-foreground">Loading PDF previews...</p>
+            </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-4">
-                <PdfIcon className="h-16 w-16" />
-                <p className="truncate text-sm font-medium">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Total pages: {totalPages}
-                </p>
-                {!isSplitting && !split && (
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onClick={handleRemoveFile}
-                    disabled={isSplitting}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <div className="flex flex-col space-y-6">
-                {!isSplitting && !split && (
-                  <>
-                    <div>
-                      <Label htmlFor="ranges">Pages to Extract</Label>
-                      <Input
-                        id="ranges"
-                        type="text"
-                        value={ranges}
-                        onChange={(e) => setRanges(e.target.value)}
-                        placeholder="e.g., 1, 3-5, 8"
-                        disabled={isSplitting || split}
-                      />
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Enter page numbers or ranges separated by commas.
-                      </p>
-                    </div>
+            <div className="space-y-6">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                    {previews.map((preview, index) => (
+                        <div
+                        key={index}
+                        onClick={() => handleTogglePage(index + 1)}
+                        className={cn(
+                            'relative cursor-pointer rounded-lg border-2 p-1 transition-all',
+                            selectedPages.has(index + 1)
+                            ? 'border-primary shadow-lg'
+                            : 'border-transparent hover:border-primary/50'
+                        )}
+                        >
+                        <Image
+                            src={preview}
+                            alt={`Page ${index + 1}`}
+                            width={150}
+                            height={212}
+                            className="w-full h-auto rounded-md shadow-md"
+                        />
+                        <div
+                            className={cn(
+                            'absolute inset-0 flex items-center justify-center rounded-md bg-black/50 opacity-0 transition-opacity',
+                            selectedPages.has(index + 1) && 'opacity-100'
+                            )}
+                        >
+                            <CheckCircle2 className="h-8 w-8 text-white" />
+                        </div>
+                        <p className="text-center text-xs font-medium mt-1">{index + 1}</p>
+                        </div>
+                    ))}
+                </div>
 
-                    <div className="space-y-4">
-                      <Button
-                        onClick={handleSplit}
-                        className="w-full"
-                        disabled={!ranges}
-                      >
-                        Split PDF
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-                {isSplitting && (
-                  <div className="flex h-full flex-col items-center justify-center space-y-4">
-                    <CircularProgress progress={progress} />
-                    <p className="text-center text-sm text-muted-foreground">
-                      Splitting...
-                    </p>
-                  </div>
-                )}
-                {split && (
-                  <div className="flex h-full flex-col items-start justify-center space-y-4">
-                    <div className="w-full text-center space-y-2">
-                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-                        <h3 className="text-2xl font-bold">Splitting Complete</h3>
-                        <p className="text-muted-foreground">
-                        Your PDF has been split based on your selection.
+                <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="ranges">Pages to Extract</Label>
+                        <Input
+                            id="ranges"
+                            type="text"
+                            value={ranges}
+                            onChange={handleRangeChange}
+                            placeholder="e.g., 1, 3-5, 8"
+                            disabled={isSplitting}
+                        />
+                        <p className="mt-2 text-xs text-muted-foreground">
+                            Click pages above or enter page numbers/ranges separated by commas.
                         </p>
                     </div>
-                    <div className="w-full text-sm rounded-lg border p-4">
-                      <p>
-                        Selected Pages:{' '}
-                        <span className="font-medium text-foreground">
-                          {ranges}
-                        </span>
-                      </p>
+
+                    <div className="flex flex-col justify-end">
+                    {split ? (
+                        <div className="flex h-full flex-col items-start justify-center space-y-4">
+                            <div className="w-full text-center space-y-2">
+                                <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                                <h3 className="text-2xl font-bold">Splitting Complete</h3>
+                                <p className="text-muted-foreground">
+                                Your PDF has been split based on your selection.
+                                </p>
+                            </div>
+                            <div className="flex w-full flex-col gap-2 pt-4">
+                            <Button className="w-full" onClick={downloadSplitPdf}>
+                                <FileDown className="mr-2 h-4 w-4" />
+                                Download Split PDF
+                            </Button>
+                            <Button
+                                className="w-full"
+                                variant="secondary"
+                                onClick={resetState}
+                            >
+                                <RefreshCcw className="mr-2 h-4 w-4" />
+                                Split another
+                            </Button>
+                            </div>
+                            <SharePrompt toolName="PDF Splitter" />
+                        </div>
+                    ) : isSplitting ? (
+                        <div className="flex h-full flex-col items-center justify-center space-y-4">
+                            <CircularProgress progress={progress} />
+                            <p className="text-center text-sm text-muted-foreground">
+                            Splitting...
+                            </p>
+                        </div>
+                        ) : (
+                        <Button
+                            onClick={handleSplit}
+                            className="w-full"
+                            disabled={!ranges}
+                        >
+                            Split PDF
+                        </Button>
+                    )}
                     </div>
-                    <div className="flex w-full flex-col gap-2 pt-4">
-                      <Button className="w-full" onClick={downloadSplitPdf}>
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Download Split PDF
-                      </Button>
-                      <Button
-                        className="w-full"
-                        variant="secondary"
-                        onClick={resetState}
-                      >
-                        <RefreshCcw className="mr-2 h-4 w-4" />
-                        Split another
-                      </Button>
-                    </div>
-                    <SharePrompt toolName="PDF Splitter" />
-                  </div>
-                )}
               </div>
             </div>
           )}
