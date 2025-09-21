@@ -70,6 +70,7 @@ type DraggableObject = {
   content: string; // data URL for image, text content for text
   width: number; // width in pixels
   height: number; // height in pixels
+  aspectRatio: number;
   fontSize?: number;
   color?: ColorName;
   font?: SignatureFont;
@@ -102,8 +103,11 @@ const DraggableItem = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement) return;
+    if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || e.target.classList.contains('resize-handle')) return;
     onSelect(e, obj.id);
     setIsDragging(true);
     
@@ -119,19 +123,37 @@ const DraggableItem = ({
     }
     e.stopPropagation();
   };
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    resizeStartPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      width: obj.width,
+      height: obj.height,
+    };
+  };
   
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
       e.preventDefault();
-      
       const parent = itemRef.current?.parentElement;
       if (!parent) return;
       const pageRect = parent.getBoundingClientRect();
-      
-      let newX = ((e.clientX - pageRect.left - dragStartPos.current.x) / pageRect.width) * 100;
-      let newY = ((e.clientY - pageRect.top - dragStartPos.current.y) / pageRect.height) * 100;
-      onUpdate({ ...obj, x: newX, y: newY });
+
+      if (isDragging) {
+        let newX = ((e.clientX - pageRect.left - dragStartPos.current.x) / pageRect.width) * 100;
+        let newY = ((e.clientY - pageRect.top - dragStartPos.current.y) / pageRect.height) * 100;
+        onUpdate({ ...obj, x: newX, y: newY });
+      } else if (isResizing) {
+          const dx = e.clientX - resizeStartPos.current.x;
+          let newWidth = resizeStartPos.current.width + dx;
+          newWidth = Math.max(20, newWidth); // min width
+          const newHeight = newWidth / obj.aspectRatio;
+          onUpdate({ ...obj, width: newWidth, height: newHeight });
+      }
     };
     
     const handleMouseUp = (e: MouseEvent) => {
@@ -139,6 +161,7 @@ const DraggableItem = ({
         e.stopPropagation();
       }
       setIsDragging(false);
+      setIsResizing(false);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -147,7 +170,7 @@ const DraggableItem = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, obj, onUpdate]);
+  }, [isDragging, isResizing, obj, onUpdate]);
 
   return (
     <div
@@ -179,6 +202,14 @@ const DraggableItem = ({
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
         </div>
+      )}
+       {isSelected && obj.type === 'image' && (
+        <>
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -left-1 h-3 w-3 cursor-nw-resize rounded-full border border-primary bg-background" />
+        </>
       )}
     </div>
   );
@@ -357,12 +388,12 @@ export default function PdfSignaturePage() {
     if (!text) return;
 
     if (editingObject) {
-      setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: text, fontSize, width: text.length * (fontSize * 0.6), height: fontSize * 1.2, color, font } : o));
+      setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: text, fontSize, width: text.length * (fontSize * 0.6), height: fontSize * 1.2, aspectRatio: (text.length * (fontSize * 0.6)) / (fontSize * 1.2), color, font } : o));
       setEditingObject(null);
     } else {
       const newObject: DraggableObject = {
         id: Date.now(), type: 'text', pageIndex: -1, x: 50, y: 50, content: text,
-        width: text.length * (fontSize * 0.6), height: fontSize * 1.2, fontSize, color, font
+        width: text.length * (fontSize * 0.6), height: fontSize * 1.2, aspectRatio: (text.length * (fontSize * 0.6)) / (fontSize * 1.2), fontSize, color, font
       };
       setObjects(prev => [...prev, newObject]);
     }
@@ -382,7 +413,7 @@ export default function PdfSignaturePage() {
     } else {
       const newObject: DraggableObject = {
         id: Date.now(), type: 'image', pageIndex: -1, x: 50, y: 50, content: dataUrl,
-        width: 150, height: 75, color: signatureColor
+        width: 150, height: 75, aspectRatio: 2, color: signatureColor
       };
       setObjects(prev => [...prev, newObject]);
     }
@@ -465,7 +496,8 @@ export default function PdfSignaturePage() {
         const finalImage = canvas.toDataURL('image/png');
         const newObject: DraggableObject = {
             id: Date.now(), type: 'image', pageIndex: -1, x: 50, y: 50, content: finalImage,
-            width: image.width > 200 ? 200 : image.width, height: (image.width > 200 ? 200 : image.width) * (image.height / image.width)
+            width: image.width > 200 ? 200 : image.width, height: (image.width > 200 ? 200 : image.width) * (image.height / image.width),
+            aspectRatio: image.width / image.height,
         };
         setObjects(prev => [...prev, newObject]);
         setUploadedImage(null);
@@ -528,9 +560,10 @@ export default function PdfSignaturePage() {
                 if (fontKey === 'font-sans') {
                     fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
                 } else {
-                    const fontName = signatureFonts[fontKey].replace(/\s/g, '');
-                    const fontUrl = `https://fonts.gstatic.com/s/${fontName.toLowerCase()}/v25/${fontName}-Regular.ttf`;
-                    fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+                    const fontName = signatureFonts[fontKey].replace('font-', '');
+                    const response = await fetch(`/fonts/${fontName}.ttf`);
+                    if (!response.ok) throw new Error('Font not found');
+                    fontBytes = await response.arrayBuffer();
                     fontBytes = await pdfDoc.embedFont(fontBytes);
                 }
             } catch (e) {
@@ -556,7 +589,7 @@ export default function PdfSignaturePage() {
             const objColor = colorOptions[obj.color || 'black'].rgb;
 
             if (obj.type === 'text') {
-                 const fontToEmbed = await loadFont(obj.font || 'font-sans');
+                 const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
                  page.drawText(obj.content, {
                     x, y: y, font: fontToEmbed, size: obj.fontSize, color: objColor,
                 });
@@ -735,5 +768,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
