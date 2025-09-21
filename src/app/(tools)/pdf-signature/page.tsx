@@ -44,17 +44,6 @@ import { Slider } from '@/components/ui/slider';
 
 let pdfjs: any;
 
-const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FADBD8" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M14 2V8H20" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M8 12H9C10.1046 12 11 12.8954 11 14V18" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14 18V12H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14 15H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-);
-
-
 const signatureFonts = {
     'font-great-vibes': 'Great Vibes',
     'font-sacramento': 'Sacramento',
@@ -338,36 +327,52 @@ export default function PdfSignaturePage() {
     resetState();
     setFile(selectedFile);
     setIsProcessing(true);
+    setProgress(0);
+    
+    const startTime = Date.now();
+    const minDuration = 3000;
 
-    try {
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-      const numPages = pdf.numPages;
-      const pagePreviews: string[] = [];
-      const pageDims: {width: number, height: number}[] = [];
+    const renderPromise = (async () => {
+        try {
+          const arrayBuffer = await selectedFile.arrayBuffer();
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+          const numPages = pdf.numPages;
+          const pagePreviews: string[] = [];
+          const pageDims: {width: number, height: number}[] = [];
 
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const context = canvas.getContext('2d');
-        
-        if (context) {
-          await page.render({ canvasContext: context, viewport }).promise;
-          pagePreviews.push(canvas.toDataURL());
-          pageDims.push({ width: viewport.width, height: viewport.height });
+          for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const context = canvas.getContext('2d');
+            
+            if (context) {
+              await page.render({ canvasContext: context, viewport }).promise;
+              pagePreviews.push(canvas.toDataURL());
+              pageDims.push({ width: viewport.width, height: viewport.height });
+            }
+          }
+          setPreviews(pagePreviews);
+          setPageDimensions(pageDims);
+        } catch (error) {
+          toast({ title: 'Error Loading PDF', variant: 'destructive' });
+          resetState();
         }
-        setProgress(Math.round((i / numPages) * 100));
-      }
-      setPreviews(pagePreviews);
-      setPageDimensions(pageDims);
-    } catch (error) {
-      toast({ title: 'Error Loading PDF', variant: 'destructive' });
-    } finally {
-      setIsProcessing(false);
-    }
+    })();
+
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const p = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(p);
+    }, 50);
+
+    await Promise.all([renderPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    
+    clearInterval(progressInterval);
+    setProgress(100);
+    setIsProcessing(false);
   };
 
   const handleDragEvents = (e: React.DragEvent<HTMLElement>) => { e.preventDefault(); e.stopPropagation(); };
@@ -576,81 +581,94 @@ export default function PdfSignaturePage() {
     setDone(false);
     setProgress(0);
     
-    try {
-        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-        const fontCache: Partial<Record<SignatureFont, PDFFont>> = {};
+    const startTime = Date.now();
+    const minDuration = 3000;
+    
+    const savePromise = (async () => {
+        try {
+            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+            const fontCache: Partial<Record<SignatureFont, PDFFont>> = {};
 
-        const loadFont = async (fontKey: SignatureFont) => {
-            if (fontCache[fontKey]) return fontCache[fontKey]!;
-            let fontBytes;
-            try {
-                if (fontKey === 'font-sans') {
+            const loadFont = async (fontKey: SignatureFont) => {
+                if (fontCache[fontKey]) return fontCache[fontKey]!;
+                let fontBytes;
+                try {
+                    if (fontKey === 'font-sans') {
+                        fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                    } else {
+                        const fontName = signatureFonts[fontKey].replace('font-', '').replace(/ /g, '');
+                        const response = await fetch(`/fonts/${fontName}.ttf`);
+                        if (!response.ok) throw new Error('Font not found');
+                        fontBytes = await response.arrayBuffer();
+                        fontBytes = await pdfDoc.embedFont(fontBytes);
+                    }
+                } catch (e) {
+                    console.warn(`Could not load font ${fontKey}, falling back to Helvetica.`);
                     fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
-                } else {
-                    const fontName = signatureFonts[fontKey].replace('font-', '').replace(/ /g, '');
-                    const response = await fetch(`/fonts/${fontName}.ttf`);
-                    if (!response.ok) throw new Error('Font not found');
-                    fontBytes = await response.arrayBuffer();
-                    fontBytes = await pdfDoc.embedFont(fontBytes);
                 }
-            } catch (e) {
-                console.warn(`Could not load font ${fontKey}, falling back to Helvetica.`);
-                fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            }
-            fontCache[fontKey] = fontBytes;
-            return fontBytes;
-        };
-        
-        const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
-
-        for (const obj of objectsToPlace) {
-            const page = pdfDoc.getPage(obj.pageIndex);
-            const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
-            const { previewWidthPx, previewHeightPx } = obj;
-
-            if (!previewWidthPx || !previewHeightPx) continue;
+                fontCache[fontKey] = fontBytes;
+                return fontBytes;
+            };
             
-            const scaleX = pageWidthPt / previewWidthPx;
-            const scaleY = pageHeightPt / previewHeightPx;
+            const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
 
-            const finalWidthPt = obj.width * scaleX;
-            const finalHeightPt = obj.height * scaleY;
+            for (const obj of objectsToPlace) {
+                const page = pdfDoc.getPage(obj.pageIndex);
+                const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
+                const { previewWidthPx, previewHeightPx } = obj;
 
-            // Adjust Y for pdf-lib's bottom-left origin
-            const finalYPt = pageHeightPt - (obj.y * scaleY) - finalHeightPt;
-            const finalXPt = obj.x * scaleX;
+                if (!previewWidthPx || !previewHeightPx) continue;
+                
+                const scaleX = pageWidthPt / previewWidthPx;
+                const scaleY = pageHeightPt / previewHeightPx;
 
-            const objColor = colorOptions[obj.color || 'black'].rgb;
+                const finalWidthPt = obj.width * scaleX;
+                const finalHeightPt = obj.height * scaleY;
 
-            if (obj.type === 'text' && obj.fontSize) {
-                const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
-                page.drawText(obj.content, {
-                    x: finalXPt,
-                    y: finalYPt,
-                    font: fontToEmbed,
-                    size: obj.fontSize * scaleY, // Scale font size based on height
-                    color: objColor,
-                });
-            } else if (obj.type === 'image') {
-                const pngImage = await pdfDoc.embedPng(obj.content);
-                page.drawImage(pngImage, {
-                    x: finalXPt,
-                    y: finalYPt,
-                    width: finalWidthPt,
-                    height: finalHeightPt,
-                });
+                // Adjust Y for pdf-lib's bottom-left origin
+                const finalYPt = pageHeightPt - (obj.y * scaleY) - finalHeightPt;
+                const finalXPt = obj.x * scaleX;
+
+                const objColor = colorOptions[obj.color || 'black'].rgb;
+
+                if (obj.type === 'text' && obj.fontSize) {
+                    const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
+                    page.drawText(obj.content, {
+                        x: finalXPt,
+                        y: finalYPt,
+                        font: fontToEmbed,
+                        size: obj.fontSize * scaleY, // Scale font size based on height
+                        color: objColor,
+                    });
+                } else if (obj.type === 'image') {
+                    const pngImage = await pdfDoc.embedPng(obj.content);
+                    page.drawImage(pngImage, {
+                        x: finalXPt,
+                        y: finalYPt,
+                        width: finalWidthPt,
+                        height: finalHeightPt,
+                    });
+                }
             }
+            
+            const pdfBytes = await pdfDoc.save();
+            setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
+            setDone(true);
+        } catch (error) {
+            toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
+            console.error(error);
         }
-        
-        const pdfBytes = await pdfDoc.save();
-        setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
-        setDone(true);
-    } catch (error) {
-        toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
-        console.error(error);
-    } finally {
-        setIsProcessing(false);
-    }
+    });
+
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const p = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(p);
+    }, 50);
+
+    await Promise.all([savePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    clearInterval(progressInterval);
+    setIsProcessing(false);
   };
 
   const handleDownload = () => {
@@ -676,83 +694,15 @@ export default function PdfSignaturePage() {
   };
 
   const renderContent = () => {
-    if (isProcessing) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Processing PDF...</p></div>;
+    if (isProcessing && previews.length === 0) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Loading PDF...</p></div>;
+    if (isProcessing && previews.length > 0) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Saving PDF...</p></div>;
     if (done) return <div className="text-center space-y-4"><CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" /><h3 className="text-2xl font-bold">PDF Saved!</h3><p className="text-muted-foreground">Your changes have been applied.</p><div className="flex flex-col sm:flex-row gap-2 justify-center"><Button onClick={handleDownload}><FileDown className="mr-2"/>Download PDF</Button><Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2"/>Start Over</Button></div><SharePrompt toolName="PDF Signature Tool" /></div>;
 
     if (previews.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6" onClick={(e) => { e.stopPropagation(); setSelectedObjectId(null); }}>
-            <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4">
-                 <Card>
-                    <CardHeader><CardTitle>Objects</CardTitle><CardDescription>Add items, then drag them onto a page.</CardDescription></CardHeader>
-                    <CardContent className="space-y-2">
-                         <Dialog open={isAddTextOpen} onOpenChange={(open) => { if (!open) setEditingObject(null); setIsAddTextOpen(open); }}>
-                            <DialogTrigger asChild><Button variant="outline" className="w-full"><Type className="mr-2"/>Add Text</Button></DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader>
-                                <form ref={formRef} className="space-y-4" onChange={handleTextDialogChange} onSubmit={(e) => e.preventDefault()}>
-                                    <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content || ''}/></div>
-                                    <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
-                                        <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'font-dancing-script'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
-                                    <div className="space-y-2"><Label>Color</Label><RadioGroup name="color" defaultValue={editingObject?.color || 'black'} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`text-${key}`}/><Label htmlFor={`text-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div>
-                                    <DialogClose asChild><Button type="button" onClick={handleAddOrUpdateText} className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
-                         <Dialog open={isAddSigOpen} onOpenChange={(open) => { if (!open) setEditingObject(null); setIsAddSigOpen(open); }}>
-                            <DialogTrigger asChild><Button variant="outline" className="w-full"><PenLine className="mr-2"/>Add Signature</Button></DialogTrigger>
-                            <DialogContent><DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Draw'} Signature</DialogTitle></DialogHeader><div className="space-y-4"><canvas ref={canvasRef} className="border rounded-md w-full h-48 bg-gray-50" /> <div className="space-y-2"><Label>Color</Label><RadioGroup value={signatureColor} onValueChange={(v) => setSignatureColor(v as ColorName)} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`sig-${key}`}/><Label htmlFor={`sig-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div><div className="flex gap-2"><Button onClick={handleAddOrUpdateSignature} className="w-full">{editingObject ? 'Update' : 'Add'}</Button><Button variant="secondary" onClick={() => signaturePadRef.current?.clear()}>Clear</Button></div></div></DialogContent>
-                        </Dialog>
-                         <Dialog open={isUploadImageOpen} onOpenChange={setIsUploadImageOpen}>
-                           <DialogTrigger asChild><Button variant="outline" className="w-full"><Upload className="mr-2"/>Upload Image</Button></DialogTrigger>
-                           <DialogContent className="max-w-2xl">
-                               <DialogHeader><DialogTitle>Upload & Prepare Image</DialogTitle></DialogHeader>
-                               {!uploadedImage ? (
-                                   <label htmlFor="image-upload" className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors"><UploadCloud className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Click to browse or drag & drop</p><Input id="image-upload" type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" /></label>
-                               ) : (
-                                   <div className="space-y-4">
-                                       <div className="mx-auto flex h-64 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border">
-                                          <Image src={uploadedImage} alt="Uploaded signature" width={300} height={200} className="h-auto max-h-full w-auto max-w-full cursor-crosshair object-contain" onClick={handlePickBgColor} />
-                                       </div>
-                                       <Card>
-                                           <CardContent className="space-y-4 p-4">
-                                               <p className="text-sm text-muted-foreground text-center">Optional: Click the image background to select a color to make transparent.</p>
-                                               {bgColorToRemove && <div className="flex items-center gap-4 rounded-lg border p-2"><div className="flex flex-1 items-center gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border" style={{ backgroundColor: `rgb(${bgColorToRemove.r}, ${bgColorToRemove.g}, ${bgColorToRemove.b})` }}><Palette className="h-5 w-5 mix-blend-difference" style={{ color: 'white'}} /></div><div className="text-sm"><div className="font-medium text-muted-foreground">{`rgb(${bgColorToRemove.r}, ${bgColorToRemove.g}, ${bgColorToRemove.b})`}</div></div></div><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBgColorToRemove(null)}><X className="h-4 w-4" /></Button></div>}
-                                               <div className="space-y-2"><Label htmlFor="tolerance">Tolerance: {tolerance[0]}%</Label><Slider id="tolerance" min={0} max={100} step={1} value={tolerance} onValueChange={setTolerance} disabled={!bgColorToRemove}/></div>
-                                                <canvas ref={imageBgCanvasRef} className="hidden" />
-                                           </CardContent>
-                                       </Card>
-                                       <Button onClick={addUploadedImage} className="w-full">Add Image to Objects</Button>
-                                   </div>
-                               )}
-                           </DialogContent>
-                         </Dialog>
-
-                        <div className="space-y-2 pt-4">
-                             {objects.filter(o => o.pageIndex === -1).map(obj => (
-                                <div key={obj.id} draggable onDragStart={(e) => { e.dataTransfer.setData('text/plain', obj.id.toString()); setSelectedObjectId(obj.id); }} className="border p-2 rounded-md cursor-grab flex items-center gap-2 bg-secondary/50">
-                                    {obj.type === 'text' ? <Type className="h-5 w-5 shrink-0"/> : <PenLine className="h-5 w-5 shrink-0"/>}
-                                    <p className="truncate text-sm flex-1">{obj.type === 'text' ? obj.content : "Signature"}</p>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteObject(obj.id)}><Trash2 className="h-4 w-4"/></Button>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                 </Card>
-
-                 <div className="flex flex-col gap-2">
-                    {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && (
-                        <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>
-                    )}
-                    <Button variant="outline" onClick={resetState} className="w-full">
-                        <RefreshCcw className="mr-2 h-4 w-4" /> Start Over
-                    </Button>
-                 </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6" onClick={(e) => { e.stopPropagation(); setSelectedObjectId(null); }}>
             <div
-              className="md:col-span-3 space-y-4 relative"
+              className="md:col-span-2 space-y-4 relative"
             >
               <div
                 ref={pageContainerRef}
@@ -796,6 +746,87 @@ export default function PdfSignaturePage() {
                   </div>
               )}
             </div>
+            <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4">
+                 <Card>
+                    <CardHeader><CardTitle>Tools</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-2">
+                         <Dialog open={isAddTextOpen} onOpenChange={(open) => { if (!open) setEditingObject(null); setIsAddTextOpen(open); }}>
+                            <DialogTrigger asChild><Button variant="outline" className="w-full"><Type className="mr-2"/>Text</Button></DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader>
+                                <form ref={formRef} className="space-y-4" onChange={handleTextDialogChange} onSubmit={(e) => e.preventDefault()}>
+                                    <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content || ''}/></div>
+                                    <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
+                                        <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'font-dancing-script'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
+                                    <div className="space-y-2"><Label>Color</Label><RadioGroup name="color" defaultValue={editingObject?.color || 'black'} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`text-${key}`}/><Label htmlFor={`text-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div>
+                                    <DialogClose asChild><Button type="button" onClick={handleAddOrUpdateText} className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                         <Dialog open={isAddSigOpen} onOpenChange={(open) => { if (!open) setEditingObject(null); setIsAddSigOpen(open); }}>
+                            <DialogTrigger asChild><Button variant="outline" className="w-full"><PenLine className="mr-2"/>Signature</Button></DialogTrigger>
+                            <DialogContent><DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Draw'} Signature</DialogTitle></DialogHeader><div className="space-y-4"><canvas ref={canvasRef} className="border rounded-md w-full h-48 bg-gray-50" /> <div className="space-y-2"><Label>Color</Label><RadioGroup value={signatureColor} onValueChange={(v) => setSignatureColor(v as ColorName)} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`sig-${key}`}/><Label htmlFor={`sig-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div><div className="flex gap-2"><Button onClick={handleAddOrUpdateSignature} className="w-full">{editingObject ? 'Update' : 'Add'}</Button><Button variant="secondary" onClick={() => signaturePadRef.current?.clear()}>Clear</Button></div></div></DialogContent>
+                        </Dialog>
+                         <Dialog open={isUploadImageOpen} onOpenChange={setIsUploadImageOpen}>
+                           <DialogTrigger asChild><Button variant="outline" className="w-full col-span-2"><Upload className="mr-2"/>Image</Button></DialogTrigger>
+                           <DialogContent className="max-w-2xl">
+                               <DialogHeader><DialogTitle>Upload & Prepare Image</DialogTitle></DialogHeader>
+                               {!uploadedImage ? (
+                                   <label htmlFor="image-upload" className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors"><UploadCloud className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Click to browse or drag & drop</p><Input id="image-upload" type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" /></label>
+                               ) : (
+                                   <div className="space-y-4">
+                                       <div className="mx-auto flex h-64 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border">
+                                          <Image src={uploadedImage} alt="Uploaded signature" width={300} height={200} className="h-auto max-h-full w-auto max-w-full cursor-crosshair object-contain" onClick={handlePickBgColor} />
+                                       </div>
+                                       <Card>
+                                           <CardContent className="space-y-4 p-4">
+                                               <p className="text-sm text-muted-foreground text-center">Optional: Click the image background to select a color to make transparent.</p>
+                                               {bgColorToRemove && <div className="flex items-center gap-4 rounded-lg border p-2"><div className="flex flex-1 items-center gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border" style={{ backgroundColor: `rgb(${bgColorToRemove.r}, ${bgColorToRemove.g}, ${bgColorToRemove.b})` }}><Palette className="h-5 w-5 mix-blend-difference" style={{ color: 'white'}} /></div><div className="text-sm"><div className="font-medium text-muted-foreground">{`rgb(${bgColorToRemove.r}, ${bgColorToRemove.g}, ${bgColorToRemove.b})`}</div></div></div><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBgColorToRemove(null)}><X className="h-4 w-4" /></Button></div>}
+                                               <div className="space-y-2"><Label htmlFor="tolerance">Tolerance: {tolerance[0]}%</Label><Slider id="tolerance" min={0} max={100} step={1} value={tolerance} onValueChange={setTolerance} disabled={!bgColorToRemove}/></div>
+                                                <canvas ref={imageBgCanvasRef} className="hidden" />
+                                           </CardContent>
+                                       </Card>
+                                       <Button onClick={addUploadedImage} className="w-full">Add Image to Objects</Button>
+                                   </div>
+                               )}
+                           </DialogContent>
+                         </Dialog>
+                    </CardContent>
+                 </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Object Library</CardTitle>
+                        <CardDescription>Drag items onto the document.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                         {objects.filter(o => o.pageIndex === -1).map(obj => (
+                            <div key={obj.id} draggable onDragStart={(e) => { e.dataTransfer.setData('text/plain', obj.id.toString()); setSelectedObjectId(obj.id); }} className="border p-2 rounded-md cursor-grab flex items-center gap-2 bg-secondary/50">
+                                {obj.type === 'text' ? (
+                                    <div className="h-8 w-12 flex items-center justify-center bg-background rounded-sm"><Type className="h-5 w-5 shrink-0"/></div>
+                                ) : (
+                                    <div className="h-8 w-12 relative bg-background rounded-sm"><Image src={obj.content} alt="sig preview" layout="fill" objectFit="contain" /></div>
+                                )}
+                                <p className="truncate text-sm flex-1">{obj.type === 'text' ? obj.content : "Signature"}</p>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteObject(obj.id)}><Trash2 className="h-4 w-4"/></Button>
+                            </div>
+                        ))}
+                        {objects.filter(o => o.pageIndex === -1).length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-4">Your created objects will appear here.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                 <div className="flex flex-col gap-2 pt-4">
+                    {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && (
+                        <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>
+                    )}
+                    <Button variant="outline" onClick={resetState} className="w-full">
+                        <RefreshCcw className="mr-2 h-4 w-4" /> Start Over
+                    </Button>
+                 </div>
+            </div>
         </div>
       )
     }
@@ -829,8 +860,8 @@ export default function PdfSignaturePage() {
         <CardContent className="space-y-4 text-muted-foreground">
           <ol className="list-decimal list-inside space-y-2">
             <li><strong>Upload PDF:</strong> Drag and drop your PDF file or click to browse.</li>
-            <li><strong>Add Objects:</strong> Use the "Add Text", "Add Signature", or "Upload Image" buttons to create items. They will appear in the left panel.</li>
-            <li><strong>Position Objects:</strong> Drag your created text or signature from the panel and drop it onto the desired location on any page.</li>
+            <li><strong>Add Objects:</strong> Use the "Text", "Signature", or "Image" buttons to create items. They will appear in the Object Library.</li>
+            <li><strong>Position Objects:</strong> Drag your created text or signature from the library and drop it onto the desired location on any page.</li>
             <li><strong>Manipulate Objects:</strong> Hover over an object on the page to see controls to Duplicate, Edit, or Delete it. Click an object to select it, then click and drag to move it. Image objects will show resize handles when selected.</li>
             <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes" to generate and download your new PDF.</li>
           </ol>
@@ -839,3 +870,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
