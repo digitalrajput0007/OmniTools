@@ -211,27 +211,6 @@ export default function PdfMergerPage() {
           </label>
       );
     }
-
-    if (merged) {
-      return (
-        <div className="flex flex-col items-center justify-center space-y-6">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
-            <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold">Merging Complete</h3>
-                <p className="text-muted-foreground">Your PDFs have been successfully merged.</p>
-            </div>
-            <div className="w-full max-w-sm text-sm rounded-lg border p-4">
-              <p>Files merged: <span className="font-medium text-foreground">{files.length}</span></p>
-              <p>New Size: <span className="font-medium text-foreground">{formatFileSize(mergedFile?.size)}</span></p>
-            </div>
-            <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
-              <Button className="w-full" onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" />Download Merged PDF</Button>
-              <Button className="w-full" variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" />Merge another</Button>
-            </div>
-            <SharePrompt toolName="PDF Merger" />
-        </div>
-      );
-    }
     
     return (
        <div className="grid gap-6 md:grid-cols-2">
@@ -267,12 +246,29 @@ export default function PdfMergerPage() {
                 </div>
               </div>
           </div>
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col justify-center space-y-6">
             {isMerging ? (
                  <div className="flex h-full flex-col items-center justify-center space-y-4">
                     <CircularProgress progress={progress} />
                     <p className="text-center text-sm text-muted-foreground">Merging PDFs... This may take a moment.</p>
                  </div>
+              ) : merged ? (
+                 <div className="space-y-6">
+                    <div className="text-center space-y-2">
+                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                        <h3 className="text-2xl font-bold">Merging Complete</h3>
+                        <p className="text-muted-foreground">Your PDFs have been successfully merged.</p>
+                    </div>
+                    <div className="w-full text-sm rounded-lg border p-4">
+                        <p>Files merged: <span className="font-medium text-foreground">{files.length}</span></p>
+                        <p>New Size: <span className="font-medium text-foreground">{formatFileSize(mergedFile?.size)}</span></p>
+                    </div>
+                    <div className="flex w-full flex-col gap-2 pt-4">
+                        <Button className="w-full" onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" />Download Merged PDF</Button>
+                        <Button className="w-full" variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" />Merge another</Button>
+                    </div>
+                    <SharePrompt toolName="PDF Merger" />
+                </div>
               ) : (
                 <Button onClick={handleMerge} size="lg" className="w-full" disabled={files.length < 2}>Merge PDFs</Button>
               )}
