@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { FileDown, UploadCloud, X, File as FileIcon, CheckCircle2, RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -202,7 +202,10 @@ export default function WatermarkPdfPage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl text-center">Watermark PDF</CardTitle>
+          <div className="text-center">
+             <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Watermark PDF</CardTitle>
+             <CardDescription className="text-base mt-2">Add a text or image watermark to your PDF.</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>
       </Card>

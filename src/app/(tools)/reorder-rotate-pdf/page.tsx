@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Button } from '@/components/ui/button';
@@ -46,8 +46,8 @@ export default function ReorderRotatePdfPage() {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
   
-  const dragItem = React.useRef<number | null>(null);
-  const dragOverItem = React.useRef<number | null>(null);
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
 
   const resetState = () => {
     setFile(null);
@@ -154,7 +154,9 @@ export default function ReorderRotatePdfPage() {
 
           previews.forEach((p, i) => {
               const newPage = newPdfDoc.addPage(copiedPages[i]);
-              newPage.setRotation(p.rotation);
+              const originalPage = pdfDoc.getPage(pageIndices[i]);
+              const newRotation = (originalPage.getRotation().angle + p.rotation) % 360;
+              newPage.setRotation(newRotation);
           });
           
           const pdfBytes = await newPdfDoc.save();
