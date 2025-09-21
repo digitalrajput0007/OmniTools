@@ -193,19 +193,19 @@ const DraggableItem = ({
         <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center', obj.font)}>{obj.content}</div>
       )}
       
-      <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 group-hover/item:opacity-100 transition-opacity">
+      <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", isSelected ? "opacity-100" : "group-hover/item:opacity-100")}>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
       </div>
       
-       {isSelected && obj.type === 'image' && (
-        <>
+       {obj.type === 'image' && (
+        <div className={cn("opacity-0", isSelected ? "opacity-100" : "group-hover/item:opacity-100")}>
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background z-40" />
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background z-40" />
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background z-40" />
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -left-1 h-3 w-3 cursor-nw-resize rounded-full border border-primary bg-background z-40" />
-        </>
+        </div>
       )}
     </div>
   );
@@ -371,13 +371,9 @@ export default function PdfSignaturePage() {
     }));
   };
 
-  const handleAddOrUpdateText = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const text = formData.get('text-input') as string;
-    const fontSize = parseInt(formData.get('font-size') as string, 10);
-    const color = formData.get('color') as ColorName;
-    const font = formData.get('font') as SignatureFont;
+  const handleAddOrUpdateText = () => {
+    const text = textPreview.text;
+    const { fontSize, color, font } = textPreview;
     if (!text) return;
 
     const tempSpan = document.createElement('span');
@@ -626,16 +622,12 @@ export default function PdfSignaturePage() {
   };
   
   const handleTextDialogChange = (e: React.FormEvent<HTMLFormElement>) => {
-    const form = e.currentTarget;
-    const text = (form.elements.namedItem('text-input') as HTMLInputElement).value;
-    const font = (form.elements.namedItem('font') as HTMLSelectElement).value as SignatureFont;
-    const color = (form.elements.namedItem('color') as HTMLInputElement).value as ColorName;
-    const fontSize = parseInt((form.elements.namedItem('font-size') as HTMLInputElement).value, 10);
-    
-    // Defer state update to allow DOM to catch up, if needed, though direct is often fine
-    requestAnimationFrame(() => {
-        setTextPreview({ text, font, color, fontSize });
-    });
+    const formData = new FormData(e.currentTarget);
+    const text = formData.get('text-input') as string;
+    const font = formData.get('font') as SignatureFont;
+    const color = formData.get('color') as ColorName;
+    const fontSize = parseInt(formData.get('font-size') as string, 10);
+    setTextPreview({ text, font, color, fontSize });
   };
 
   const renderContent = () => {
@@ -653,14 +645,14 @@ export default function PdfSignaturePage() {
                             <DialogTrigger asChild><Button variant="outline" className="w-full"><Type className="mr-2"/>Add Text</Button></DialogTrigger>
                             <DialogContent>
                                 <DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader>
-                                <form onSubmit={handleAddOrUpdateText} className="space-y-4" onChange={handleTextDialogChange}>
+                                <form className="space-y-4" onChange={handleTextDialogChange}>
                                     <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content}/></div>
                                     <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
                                         <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'font-dancing-script'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
                                     <div className="space-y-2"><Label>Color</Label><RadioGroup name="color" defaultValue={editingObject?.color || 'black'} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`text-${key}`}/><Label htmlFor={`text-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div>
-                                    <DialogClose asChild><Button type="submit" className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
+                                    <DialogClose asChild><Button type="button" onClick={handleAddOrUpdateText} className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
                                 </form>
                             </DialogContent>
                         </Dialog>
@@ -769,5 +761,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
