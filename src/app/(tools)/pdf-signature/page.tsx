@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PDFDocument, rgb, StandardFonts, PDFImage, PDFFont } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFImage, PDFFont, degrees } from 'pdf-lib';
 import SignaturePad from 'signature_pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -422,8 +422,17 @@ export default function PdfSignaturePage() {
     if (!text) return;
     
     // This is a simplified estimation. A canvas-based measurement would be more accurate.
-    const textWidth = text.length * (fontSize / 1.8);
-    const textHeight = fontSize * 1.2;
+    const tempSpan = document.createElement('span');
+    tempSpan.style.fontFamily = getComputedStyle(document.body).getPropertyValue(`--font-${font.split('-')[1]}`);
+    tempSpan.style.fontSize = `${fontSize}px`;
+    tempSpan.style.whiteSpace = 'nowrap';
+    tempSpan.style.visibility = 'hidden';
+    tempSpan.innerText = text;
+    document.body.appendChild(tempSpan);
+    const textWidth = tempSpan.offsetWidth;
+    const textHeight = tempSpan.offsetHeight;
+    document.body.removeChild(tempSpan);
+
 
     if (editingObject) {
       setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: text, fontSize, width: textWidth, height: textHeight, aspectRatio: textWidth / textHeight, color, font } : o));
@@ -654,7 +663,7 @@ export default function PdfSignaturePage() {
                 }
             }
             
-            const pdfBytes = await pdfDoc.save();
+            const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
             setProcessedFile(new Blob([pdfBytes], { type: 'application/pdf' }));
         } catch (error) {
             toast({ title: 'Error saving PDF', description: "There was an issue embedding fonts or images.", variant: 'destructive'});
