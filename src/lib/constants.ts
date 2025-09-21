@@ -125,11 +125,11 @@ export const tools: Tool[] = [
 
 export const AppLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    {...props}
     className={cn(
       'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground',
       className
     )}
+    {...props}
   >
     <span className="text-sm font-bold">OJP</span>
   </div>
