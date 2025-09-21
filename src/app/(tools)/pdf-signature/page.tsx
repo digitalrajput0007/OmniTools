@@ -10,7 +10,7 @@ export default function PdfSignaturePage() {
         <CardHeader>
           <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add Signature / Fill Form</CardTitle>
           <CardDescription className="text-base mt-2">
-            This tool is under construction. Check back soon!
+            This tool is under construction. We are working hard to bring you a full-featured PDF signing and form-filling experience.
           </CardDescription>
         </CardHeader>
         <CardContent>
