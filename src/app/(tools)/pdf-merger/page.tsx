@@ -216,12 +216,12 @@ export default function PdfMergerPage() {
     
     return (
        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-4">
+          <div className="flex flex-col space-y-4">
             <h3 className="font-semibold">Selected Files ({files.length}):</h3>
-            <ScrollArea className="h-80 w-full">
-              <div className="space-y-2 pr-4">
+            <ScrollArea className="flex-grow rounded-md border" style={{ maxHeight: 'calc(100vh - 300px)'}}>
+              <div className="space-y-2 p-2">
                 {files.map((file, index) => (
-                  <div key={index} className="relative flex items-center gap-4 rounded-md border p-2">
+                  <div key={index} className="relative flex items-center gap-4 rounded-md border bg-background p-2">
                     <PdfIcon className="h-6 w-6 shrink-0" />
                     <div className="flex-1 overflow-hidden">
                       <p className="truncate text-sm font-medium">{file.name}</p>
