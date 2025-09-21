@@ -123,39 +123,36 @@ export default function PdfMergerPage() {
 
     const minDuration = 3000;
     const startTime = Date.now();
-    let mergeError: Error | null = null;
     let createdBlob: Blob | null = null;
 
     const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 99);
         setProgress(currentProgress);
     }, 50);
 
     try {
         createdBlob = await createMergedPdf();
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime < minDuration) {
+            await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
+        }
     } catch (error) {
-        mergeError = error instanceof Error ? error : new Error('An unknown error occurred during merge.');
-    }
-
-    const elapsedTime = Date.now() - startTime;
-    if (elapsedTime < minDuration) {
-        await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
+        clearInterval(progressInterval);
+        setIsMerging(false);
+        toast({
+            title: 'Error Merging PDFs',
+            description: error instanceof Error ? error.message : 'An unknown error occurred.',
+            variant: 'destructive',
+        });
+        return;
     }
     
     clearInterval(progressInterval);
+    setProgress(100);
+    setMergedFile(createdBlob);
+    setMerged(true);
     setIsMerging(false);
-
-    if (mergeError) {
-        toast({
-            title: 'Error Merging PDFs',
-            description: mergeError.message,
-            variant: 'destructive',
-        });
-    } else if (createdBlob) {
-        setMergedFile(createdBlob);
-        setMerged(true);
-    }
   };
   
   const handleDownload = () => {
@@ -200,6 +197,36 @@ export default function PdfMergerPage() {
       );
     }
 
+    if (isMerging) {
+      return (
+        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+          <CircularProgress progress={progress} />
+          <p className="text-center text-sm text-muted-foreground">Merging...</p>
+        </div>
+      );
+    }
+    
+    if (merged) {
+      return (
+        <div className="flex flex-col items-center justify-center space-y-6">
+            <CheckCircle2 className="h-16 w-16 text-green-500" />
+            <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold">Merging Complete</h3>
+                <p className="text-muted-foreground">Your PDFs have been successfully merged.</p>
+            </div>
+            <div className="w-full max-w-sm text-sm rounded-lg border p-4">
+              <p>Files merged: <span className="font-medium text-foreground">{files.length}</span></p>
+              <p>New Size: <span className="font-medium text-foreground">{formatFileSize(mergedFile?.size)}</span></p>
+            </div>
+            <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
+              <Button className="w-full" onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" />Download Merged PDF</Button>
+              <Button className="w-full" variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" />Merge another</Button>
+            </div>
+            <SharePrompt toolName="PDF Merger" />
+        </div>
+      );
+    }
+
     return (
        <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4">
@@ -235,31 +262,7 @@ export default function PdfMergerPage() {
               </div>
           </div>
           <div className="flex flex-col justify-center">
-            {isMerging ? (
-                 <div className="flex h-full min-h-[150px] flex-col items-center justify-center space-y-4">
-                  <CircularProgress progress={progress} />
-                  <p className="text-center text-sm text-muted-foreground">Merging...</p>
-                </div>
-            ) : merged ? (
-              <div className="flex h-full flex-col items-start justify-center space-y-4">
-                <div className="w-full text-center space-y-2">
-                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-                    <h3 className="text-2xl font-bold">Merging Complete</h3>
-                    <p className="text-muted-foreground">Your PDFs have been successfully merged.</p>
-                </div>
-                <div className="w-full text-sm rounded-lg border p-4">
-                  <p>Files merged: <span className="font-medium text-foreground">{files.length}</span></p>
-                  <p>New Size: <span className="font-medium text-foreground">{formatFileSize(mergedFile?.size)}</span></p>
-                </div>
-                <div className="flex w-full flex-col gap-2 pt-4">
-                  <Button className="w-full" onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" />Download Merged PDF</Button>
-                  <Button className="w-full" variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" />Merge another</Button>
-                </div>
-                <SharePrompt toolName="PDF Merger" />
-              </div>
-            ) : (
-                 <Button onClick={handleMerge} size="lg" className="w-full" disabled={files.length < 2}>Merge PDFs</Button>
-            )}
+             <Button onClick={handleMerge} size="lg" className="w-full" disabled={files.length < 2}>Merge PDFs</Button>
           </div>
        </div>
     );

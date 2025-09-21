@@ -98,7 +98,7 @@ const DraggableItem = ({
   onDuplicate: (id: number) => void;
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0, objX: 0, objY: 0 });
 
   const [isResizing, setIsResizing] = useState(false);
@@ -109,7 +109,7 @@ const DraggableItem = ({
         return;
     }
     onSelect(e, obj.id);
-    setIsDragging(true);
+    isDraggingRef.current = true;
     
     dragStartPos.current = {
       x: e.clientX,
@@ -139,7 +139,7 @@ const DraggableItem = ({
       const containerRect = containerRef.current?.getBoundingClientRect();
       if (!containerRect) return;
 
-      if (isDragging) {
+      if (isDraggingRef.current) {
         const dx = e.clientX - dragStartPos.current.x;
         const dy = e.clientY - dragStartPos.current.y;
         
@@ -147,14 +147,12 @@ const DraggableItem = ({
         let newY = dragStartPos.current.objY + dy;
 
         let newPageIndex = 0;
-        const absoluteY = newY + containerRect.top;
+        const absoluteY = newY + containerRect.top + (containerRef.current?.scrollTop || 0);
 
         for (let i = 0; i < pageOffsets.length; i++) {
           const pageTop = pageOffsets[i];
-          const pageBottom = pageOffsets[i+1] || Infinity;
-          if (absoluteY >= pageTop && absoluteY < pageBottom) {
+          if (absoluteY >= pageTop) {
               newPageIndex = i;
-              break;
           }
         }
         
@@ -170,7 +168,7 @@ const DraggableItem = ({
     };
     
     const handleMouseUp = (e: MouseEvent) => {
-      setIsDragging(false);
+      isDraggingRef.current = false;
       setIsResizing(false);
     };
 
@@ -180,7 +178,7 @@ const DraggableItem = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, obj, onUpdate, containerRef, pageOffsets]);
+  }, [obj, onUpdate, containerRef, pageOffsets, isResizing]);
 
   const topOffset = pageOffsets[obj.pageIndex] - (containerRef.current?.getBoundingClientRect().top || 0);
 
@@ -191,7 +189,7 @@ const DraggableItem = ({
       className={cn(
         "group/item absolute cursor-move border border-dashed",
         isSelected ? 'border-primary' : 'border-transparent hover:border-primary/50',
-        isDragging || isResizing ? 'z-30' : (isSelected ? 'z-20' : 'z-10')
+        isDraggingRef.current || isResizing ? 'z-30' : (isSelected ? 'z-20' : 'z-10')
       )}
       style={{
         left: obj.x,
@@ -256,6 +254,7 @@ export default function PdfSignaturePage() {
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageBgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const { toast } = useToast();
 
@@ -305,18 +304,19 @@ export default function PdfSignaturePage() {
 
   const updatePageOffsets = () => {
     if (!pageContainerRef.current) return;
-    const pageElements = pageContainerRef.current.querySelectorAll('[data-page-index]');
-    const newOffsets = Array.from(pageElements).map(el => el.getBoundingClientRect().top);
+    const pageElements = pageContainerRef.current.querySelectorAll<HTMLElement>('[data-page-index]');
+    const newOffsets = Array.from(pageElements).map(el => el.offsetTop);
     setPageOffsets(newOffsets);
   }
 
   useEffect(() => {
-    updatePageOffsets();
-    window.addEventListener('resize', updatePageOffsets);
-    window.addEventListener('scroll', updatePageOffsets);
-    return () => {
-        window.removeEventListener('resize', updatePageOffsets);
-        window.removeEventListener('scroll', updatePageOffsets);
+    if (previews.length > 0) {
+      const timeoutId = setTimeout(updatePageOffsets, 100);
+      window.addEventListener('resize', updatePageOffsets);
+      return () => {
+          clearTimeout(timeoutId);
+          window.removeEventListener('resize', updatePageOffsets);
+      }
     }
   }, [previews]);
 
@@ -395,9 +395,9 @@ export default function PdfSignaturePage() {
     if (!containerRect) return;
 
     let newPageIndex = 0;
-    const dropY = e.clientY;
+    const dropYInContainer = e.clientY - containerRect.top + (pageContainerRef.current?.scrollTop || 0);
     for(let i = 0; i < pageOffsets.length; i++) {
-      if (dropY > pageOffsets[i]) {
+      if (dropYInContainer > pageOffsets[i]) {
         newPageIndex = i;
       }
     }
@@ -405,7 +405,7 @@ export default function PdfSignaturePage() {
     setObjects(prev => prev.map(obj => {
       if (obj.id === objectId) {
         const x = e.clientX - containerRect.left - (obj.width / 2);
-        const y = e.clientY - containerRect.top - (obj.height / 2);
+        const y = dropYInContainer - (obj.height / 2);
         return { ...obj, pageIndex: newPageIndex, x, y };
       }
       return obj;
@@ -623,7 +623,7 @@ export default function PdfSignaturePage() {
             const objFinalWidth = obj.width * scale;
             const objFinalHeight = obj.height * scale;
             
-            const pageTopInContainer = pageOffsets[obj.pageIndex] - (pageContainerRef.current?.getBoundingClientRect().top || 0);
+            const pageTopInContainer = pageOffsets[obj.pageIndex];
             const x = obj.x * scale;
             const y = pageHeight - ((obj.y - pageTopInContainer) * scale + objFinalHeight);
             
@@ -665,8 +665,9 @@ export default function PdfSignaturePage() {
     document.body.removeChild(a);
   };
   
-  const handleTextDialogChange = (e: React.FormEvent<HTMLFormElement>) => {
-    const formData = new FormData(e.currentTarget);
+  const handleTextDialogChange = () => {
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
     const text = formData.get('text-input') as string;
     const font = formData.get('font') as SignatureFont;
     const color = formData.get('color') as ColorName;
@@ -689,7 +690,7 @@ export default function PdfSignaturePage() {
                             <DialogTrigger asChild><Button variant="outline" className="w-full"><Type className="mr-2"/>Add Text</Button></DialogTrigger>
                             <DialogContent>
                                 <DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader>
-                                <form className="space-y-4" onChange={handleTextDialogChange} onSubmit={(e) => e.preventDefault()}>
+                                <form ref={formRef} className="space-y-4" onChange={handleTextDialogChange} onSubmit={(e) => e.preventDefault()}>
                                     <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content || ''}/></div>
                                     <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
                                         <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
@@ -750,7 +751,7 @@ export default function PdfSignaturePage() {
             >
               <div
                 ref={pageContainerRef}
-                className="relative z-10"
+                className="relative z-0"
               >
                 {previews.map((src, index) => (
                     <div key={index} data-page-index={index} className="relative border rounded-lg overflow-hidden shadow-md bg-white mb-4">
@@ -759,7 +760,7 @@ export default function PdfSignaturePage() {
                 ))}
               </div>
               
-              <div className="absolute top-0 left-0 w-full h-full z-20 pointer-events-none">
+              <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
                  {objects.filter(o => o.pageIndex !== -1).map(obj => (
                     <div key={obj.id} className="pointer-events-auto">
                         <DraggableItem
