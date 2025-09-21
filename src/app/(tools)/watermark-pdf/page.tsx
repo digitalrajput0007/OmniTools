@@ -180,10 +180,18 @@ export default function WatermarkPdfPage() {
             'font-sans': StandardFonts.Helvetica,
             'font-serif': StandardFonts.TimesRoman,
             'font-mono': StandardFonts.Courier,
-            'font-dancing-script': StandardFonts.Helvetica, // Fallback
-            'font-great-vibes': StandardFonts.Helvetica, // Fallback
         };
-        const font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
+        
+        let font;
+        if (fontStyle === 'font-dancing-script') {
+            const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
+            font = await pdfDoc.embedFont(fontBytes);
+        } else if (fontStyle === 'font-great-vibes') {
+            const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
+            font = await pdfDoc.embedFont(fontBytes);
+        } else {
+            font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
+        }
 
         for (const page of pdfDoc.getPages()) {
           const { width, height } = page.getSize();
@@ -465,3 +473,5 @@ export default function WatermarkPdfPage() {
     </div>
   );
 }
+
+    
