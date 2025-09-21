@@ -46,10 +46,22 @@ import { Slider } from '@/components/ui/slider';
 let pdfjs: any;
 
 const signatureFonts = {
-    'Helvetica': { name: 'Helvetica', className: 'font-sans' },
-    'Times-Roman': { name: 'Times Roman', className: 'font-serif' },
-    'Courier': { name: 'Courier', className: 'font-mono' },
+  'Helvetica': { name: 'Helvetica', className: 'font-sans' },
+  'Helvetica-Bold': { name: 'Helvetica Bold', className: 'font-sans font-bold' },
+  'Helvetica-Oblique': { name: 'Helvetica Italic', className: 'font-sans italic' },
+  'Helvetica-BoldOblique': { name: 'Helvetica Bold Italic', className: 'font-sans font-bold italic' },
+  'Times-Roman': { name: 'Times Roman', className: 'font-serif' },
+  'Times-Bold': { name: 'Times Roman Bold', className: 'font-serif font-bold' },
+  'Times-Italic': { name: 'Times Roman Italic', className: 'font-serif italic' },
+  'Times-BoldItalic': { name: 'Times Roman Bold Italic', className: 'font-serif font-bold italic' },
+  'Courier': { name: 'Courier', className: 'font-mono' },
+  'Courier-Bold': { name: 'Courier Bold', className: 'font-mono font-bold' },
+  'Courier-Oblique': { name: 'Courier Italic', className: 'font-mono italic' },
+  'Courier-BoldOblique': { name: 'Courier Bold Italic', className: 'font-mono font-bold italic' },
+  'Symbol': { name: 'Symbol', className: '' },
+  'ZapfDingbats': { name: 'Zapf Dingbats', className: '' },
 } as const;
+
 
 type SignatureFontKey = keyof typeof signatureFonts;
 
