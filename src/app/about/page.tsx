@@ -21,7 +21,7 @@ export default function AboutPage() {
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">Our Story</h2>
             <p>
-              [**Your Story Here** - Explain why you started this website. Were you a developer who couldn't find all the right tools in one place? A student who wanted to create a helpful resource? Be authentic. For example: "{AppName} was born out of a simple frustration: constantly having to jump between different websites for basic tasks like compressing an image, converting a file, or generating a QR code. We envisioned a single, reliable hub where all these tools could live together, beautifully designed and completely free to use." ]
+              {AppName} was born out of a simple frustration every student knows: constantly hitting paywalls and sign-up forms just to use a basic online tool. Whether it was compressing an image for a project, converting a file for a class assignment, or merging PDFs for research, I found myself jumping between different websites, each with its own limitations. I envisioned a single, reliable hub where all these essential utilities could live together—beautifully designed, completely free, and with no strings attached.
             </p>
           </div>
           <div className="space-y-4">
@@ -36,9 +36,9 @@ export default function AboutPage() {
             </ul>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-foreground">Meet the Team (Optional)</h2>
+            <h2 className="text-2xl font-semibold text-foreground">Meet the Team</h2>
             <p>
-              [**Your Team Info Here** - If you're a solo creator or a small team, introduce yourself! This adds a human touch. For example: "{AppName} is currently developed and maintained by [Your Name], a passionate software developer dedicated to creating useful and accessible web applications." ]
+              {AppName} is a passion project built and maintained by a single student developer dedicated to creating useful and accessible web applications for everyone.
             </p>
           </div>
         </CardContent>
