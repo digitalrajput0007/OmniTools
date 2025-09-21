@@ -108,22 +108,31 @@ export default function PdfPasswordPage() {
 
             if (mode === 'encrypt') {
                 pdfDoc = await PDFDocument.load(existingPdfBytes);
-                // The key is to set both passwords. Many viewers ignore the userPassword if an ownerPassword isn't set.
+                if (pdfDoc.isEncrypted) {
+                    throw new Error('PDF is already encrypted. Please decrypt it first.');
+                }
                 newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
                 try {
-                     pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password });
-                } catch(e) {
-                     // pdf-lib has a bug where it requires ownerPassword for decryption. Try that as a fallback.
-                     pdfDoc = await PDFDocument.load(existingPdfBytes, { userPassword: password });
+                    pdfDoc = await PDFDocument.load(existingPdfBytes, { 
+                      ownerPassword: password,
+                      // important to allow saving
+                      updateMetadata: false 
+                    });
+                } catch (e) {
+                    try {
+                        pdfDoc = await PDFDocument.load(existingPdfBytes, { 
+                          userPassword: password, 
+                          updateMetadata: false 
+                        });
+                    } catch (finalError) {
+                        throw new Error('Invalid password or the PDF is not encrypted.');
+                    }
                 }
                 newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
             processError = error instanceof Error ? error : new Error('An unknown error occurred.');
-            if (error.message.includes('password') || error.message.toLowerCase().includes('encrypted')) {
-                 processError = new Error('Invalid password or already encrypted. Please check and try again.');
-            }
         }
     })();
 
@@ -139,7 +148,6 @@ export default function PdfPasswordPage() {
 
     if (processError) {
         toast({ title: 'Processing Error', description: processError.message, variant: 'destructive' });
-        // Don't reset state, allow user to correct password
         setDone(false);
     } else if (newPdfBytes) {
         setDone(true);
