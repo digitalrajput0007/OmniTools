@@ -170,9 +170,6 @@ const DraggableItem = ({
     };
     
     const handleMouseUp = (e: MouseEvent) => {
-      if (isDragging || isResizing) {
-        e.stopPropagation();
-      }
       setIsDragging(false);
       setIsResizing(false);
     };
@@ -823,5 +820,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    

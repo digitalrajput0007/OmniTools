@@ -123,6 +123,8 @@ export default function PdfMergerPage() {
 
     const minDuration = 3000;
     const startTime = Date.now();
+    let mergeError: Error | null = null;
+    let createdBlob: Blob | null = null;
 
     const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
@@ -131,24 +133,28 @@ export default function PdfMergerPage() {
     }, 50);
 
     try {
-        const mergePromise = createMergedPdf();
-        const timeoutPromise = new Promise(resolve => setTimeout(resolve, minDuration));
-        
-        const [mergedBlob] = await Promise.all([mergePromise, timeoutPromise]);
-
-        setMergedFile(mergedBlob);
-        setMerged(true);
-
+        createdBlob = await createMergedPdf();
     } catch (error) {
-        const mergeError = error instanceof Error ? error : new Error('An unknown error occurred during merge.');
-         toast({
+        mergeError = error instanceof Error ? error : new Error('An unknown error occurred during merge.');
+    }
+
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
+    }
+    
+    clearInterval(progressInterval);
+    setIsMerging(false);
+
+    if (mergeError) {
+        toast({
             title: 'Error Merging PDFs',
             description: mergeError.message,
             variant: 'destructive',
         });
-    } finally {
-        clearInterval(progressInterval);
-        setIsMerging(false);
+    } else if (createdBlob) {
+        setMergedFile(createdBlob);
+        setMerged(true);
     }
   };
   
