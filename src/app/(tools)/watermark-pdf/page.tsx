@@ -212,30 +212,22 @@ export default function WatermarkPdfPage() {
             const scaleY = pageHeightPt / previewDimensions.height;
 
             if (mode === 'text') {
-                const scaledFontSize = fontSize * scaleY;
-                const textWidthPt = font.widthOfTextAtSize(text, scaledFontSize);
-                const textHeightPt = font.heightAtSize(scaledFontSize);
+                 const scaledFontSize = fontSize * scaleY;
+                 const textWidthPt = font.widthOfTextAtSize(text, scaledFontSize);
+                 const textHeightPt = font.heightAtSize(scaledFontSize);
 
                 if (position === 'center') {
-                    const textWidthPx = font.widthOfTextAtSize(text, fontSize);
-                    const textHeightPx = font.heightAtSize(fontSize);
-                    
-                    const xPt = (previewDimensions.width / 2 - textWidthPx / 2) * scaleX;
-                    const yPt = pageHeightPt - ((previewDimensions.height / 2 + textHeightPx / 2) * scaleY);
-                    
-                    const centerX = xPt + textWidthPt / 2;
-                    const centerY = yPt + textHeightPt / 2;
+                    const xPt = (pageWidthPt - textWidthPt) / 2;
+                    const yPt = (pageHeightPt - textHeightPt) / 2;
                     
                     page.drawText(text, {
                         x: xPt,
                         y: yPt,
                         font,
                         size: scaledFontSize,
-                        color: rgb(color.r, color.g, color.b),
+                        color,
                         opacity: opacity[0],
                         rotate: degrees(rotation[0]),
-                        xSkew: degrees(0),
-                        ySkew: degrees(0),
                     });
                 } else { // Tiled
                     const tileGap = 150;
@@ -243,7 +235,7 @@ export default function WatermarkPdfPage() {
                         for (let y = -pageWidthPt; y < pageHeightPt + pageWidthPt; y += (textHeightPt + tileGap)) {
                              page.drawText(text, {
                                 x, y, font, size: scaledFontSize,
-                                color: rgb(color.r, color.g, color.b),
+                                color,
                                 opacity: opacity[0],
                                 rotate: degrees(rotation[0]),
                             });
@@ -260,8 +252,8 @@ export default function WatermarkPdfPage() {
                 const imgHeightPt = imgHeightPx * scaleY;
 
                 if(position === 'center') {
-                    const xPt = (pageWidthPt / 2) - (imgWidthPt / 2);
-                    const yPt = (pageHeightPt / 2) - (imgHeightPt / 2);
+                    const xPt = (pageWidthPt - imgWidthPt) / 2;
+                    const yPt = (pageHeightPt - imgHeightPt) / 2;
                     
                     page.drawImage(watermarkImage, {
                         x: xPt,
