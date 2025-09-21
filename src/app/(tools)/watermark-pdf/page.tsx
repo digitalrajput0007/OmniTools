@@ -184,10 +184,10 @@ export default function WatermarkPdfPage() {
         
         let font;
         if (fontStyle === 'font-dancing-script') {
-            const fontBytes = await fetch('/fonts/DancingScript.ttf').then(res => res.arrayBuffer());
+            const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
             font = await pdfDoc.embedFont(fontBytes);
         } else if (fontStyle === 'font-great-vibes') {
-            const fontBytes = await fetch('/fonts/GreatVibes.ttf').then(res => res.arrayBuffer());
+            const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
             font = await pdfDoc.embedFont(fontBytes);
         } else {
             font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
@@ -197,13 +197,16 @@ export default function WatermarkPdfPage() {
 
         for (const page of pdfDoc.getPages()) {
           const { width, height } = page.getSize();
+          const centerX = width / 2;
+          const centerY = height / 2;
 
           if (mode === 'text') {
+              const textWidth = font.widthOfTextAtSize(text, fontSize);
+              const textHeight = font.heightAtSize(fontSize);
               if (position === 'center') {
-                 const textWidth = font.widthOfTextAtSize(text, fontSize);
                  page.drawText(text, {
-                    x: width / 2 - textWidth / 2,
-                    y: height / 2 - fontSize / 2,
+                    x: centerX - textWidth / 2,
+                    y: centerY - textHeight / 2,
                     font,
                     size: fontSize,
                     color: rgb(color.r, color.g, color.b),
@@ -211,14 +214,16 @@ export default function WatermarkPdfPage() {
                     rotate: degrees(rotation[0]),
                 });
               } else { // Tiled
-                  const textWidth = font.widthOfTextAtSize(text, fontSize);
-                  for (let x = 0; x < width; x += textWidth + 100) {
-                      for (let y = 0; y < height; y += 150) {
+                  const tileGap = 150;
+                  for (let x = -width; x < width * 2; x += textWidth + tileGap) {
+                      for (let y = -height; y < height * 2; y += tileGap) {
                            page.drawText(text, {
                             x, y, font, size: fontSize,
                             color: rgb(color.r, color.g, color.b),
                             opacity: opacity[0],
                             rotate: degrees(rotation[0]),
+                            xSkew: degrees(15),
+                            ySkew: degrees(15),
                         });
                       }
                   }
@@ -228,16 +233,17 @@ export default function WatermarkPdfPage() {
             const imgHeight = watermarkImage.height;
              if(position === 'center') {
                 page.drawImage(watermarkImage, {
-                    x: width / 2 - imgWidth / 2,
-                    y: height / 2 - imgHeight / 2,
+                    x: centerX - imgWidth / 2,
+                    y: centerY - imgHeight / 2,
                     width: imgWidth,
                     height: imgHeight,
                     opacity: opacity[0],
                     rotate: degrees(rotation[0])
                 });
              } else {
-                 for (let x = 0; x < width; x += imgWidth + 50) {
-                     for (let y = 0; y < height; y += imgHeight + 50) {
+                 const tileGap = 50;
+                 for (let x = 0; x < width; x += imgWidth + tileGap) {
+                     for (let y = 0; y < height; y += imgHeight + tileGap) {
                          page.drawImage(watermarkImage, { x, y, width: imgWidth, height: imgHeight, opacity: opacity[0], rotate: degrees(rotation[0]) });
                      }
                  }
@@ -474,3 +480,5 @@ export default function WatermarkPdfPage() {
     </div>
   );
 }
+
+    
