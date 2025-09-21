@@ -61,6 +61,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable} ${greatVibes.variable} ${dancingScript.variable}`}>
       <head>
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="manifest" href="/site.webmanifest" />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-EVQ8C8X2H3"></script>
         <script
           dangerouslySetInnerHTML={{
