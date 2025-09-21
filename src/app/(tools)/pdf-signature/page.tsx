@@ -93,6 +93,8 @@ type DraggableObject = {
 const DraggableItem = ({
   obj,
   isSelected,
+  pageContainerRef,
+  pageOffsets,
   onSelect,
   onUpdate,
   onDelete,
@@ -101,6 +103,8 @@ const DraggableItem = ({
 }: {
   obj: DraggableObject;
   isSelected: boolean;
+  pageContainerRef: React.RefObject<HTMLDivElement>;
+  pageOffsets: { top: number, height: number }[];
   onSelect: (e: React.MouseEvent, id: number) => void;
   onUpdate: (updatedObj: DraggableObject) => void;
   onDelete: (id: number) => void;
@@ -150,7 +154,23 @@ const DraggableItem = ({
       if (isDraggingRef.current) {
         const dx = e.clientX - dragStartPos.current.x;
         const dy = e.clientY - dragStartPos.current.y;
-        onUpdate({ ...obj, x: dragStartPos.current.objX + dx, y: dragStartPos.current.objY + dy });
+        
+        let newX = dragStartPos.current.objX + dx;
+        let newY = dragStartPos.current.objY + dy;
+        
+        // Constrain within parent page boundaries
+        if (pageContainerRef.current && obj.pageIndex >= 0 && pageOffsets[obj.pageIndex]) {
+            const pageInfo = pageOffsets[obj.pageIndex];
+            const parentWidth = pageContainerRef.current.clientWidth;
+            
+            newX = Math.max(0, Math.min(newX, parentWidth - obj.width));
+            
+            const relativeY = newY - pageInfo.top;
+            const constrainedRelativeY = Math.max(0, Math.min(relativeY, pageInfo.height - obj.height));
+            newY = constrainedRelativeY + pageInfo.top;
+        }
+
+        onUpdate({ ...obj, x: newX, y: newY });
       } else if (isResizing) {
           const dx = e.clientX - resizeStartPos.current.x;
           let newWidth = resizeStartPos.current.width + dx;
@@ -174,7 +194,7 @@ const DraggableItem = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [obj, onUpdate, isResizing, isDraggingRef]);
+  }, [obj, onUpdate, isResizing, isDraggingRef, pageContainerRef, pageOffsets]);
 
   return (
     <div
@@ -628,8 +648,10 @@ export default function PdfSignaturePage() {
             const finalWidthPt = obj.width * scaleX;
             const finalHeightPt = obj.height * scaleY;
 
+            // Adjust Y for pdf-lib's bottom-left origin
+            const objYInPagePx = obj.y - pageOffsets[obj.pageIndex].top;
+            const finalYPt = pageHeightPt - (objYInPagePx * scaleY) - finalHeightPt;
             const finalXPt = obj.x * scaleX;
-            const finalYPt = pageHeightPt - ((obj.y - pageOffsets[obj.pageIndex].top) * scaleY + finalHeightPt);
 
             const objColor = colorOptions[obj.color || 'black'].rgb;
 
@@ -767,24 +789,29 @@ export default function PdfSignaturePage() {
                 {previews.map((src, index) => (
                     <div key={index} data-page-index={index} className="relative border rounded-lg overflow-hidden shadow-md bg-white mb-4">
                         <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto pointer-events-none" />
+                        
+                         {/* This inner div is crucial for positioning objects relative to the page */}
+                        <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
+                            {objects.filter(o => o.pageIndex === index).map(obj => (
+                                <DraggableItem
+                                  key={obj.id}
+                                  obj={{...obj, y: obj.y - pageOffsets[index].top}} // Adjust y to be relative to this container
+                                  isSelected={selectedObjectId === obj.id}
+                                  pageContainerRef={pageContainerRef}
+                                  pageOffsets={pageOffsets}
+                                  onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
+                                  onUpdate={(updatedObj) => {
+                                      // Re-adjust y to be absolute before updating state
+                                      handleUpdateObject({...updatedObj, y: updatedObj.y + pageOffsets[index].top});
+                                  }}
+                                  onDelete={handleDeleteObject}
+                                  onEdit={handleEditObject}
+                                  onDuplicate={handleDuplicateObject}
+                                />
+                            ))}
+                        </div>
                     </div>
                 ))}
-
-                 <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
-                    {objects.filter(o => o.pageIndex !== -1).map(obj => (
-                        <div key={obj.id} className="pointer-events-auto" style={{ position: 'absolute', top: pageOffsets[obj.pageIndex]?.top, left: 0 }}>
-                            <DraggableItem
-                              obj={obj}
-                              isSelected={selectedObjectId === obj.id}
-                              onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
-                              onUpdate={handleUpdateObject}
-                              onDelete={handleDeleteObject}
-                              onEdit={handleEditObject}
-                              onDuplicate={handleDuplicateObject}
-                            />
-                        </div>
-                    ))}
-                 </div>
               </div>
             </div>
         </div>
