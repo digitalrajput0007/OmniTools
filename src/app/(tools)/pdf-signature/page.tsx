@@ -742,7 +742,14 @@ export default function PdfSignaturePage() {
                     </CardContent>
                  </Card>
 
-                  {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>}
+                 <div className="flex flex-col gap-2">
+                    {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && (
+                        <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>
+                    )}
+                    <Button variant="outline" onClick={resetState} className="w-full">
+                        <RefreshCcw className="mr-2 h-4 w-4" /> Start Over
+                    </Button>
+                 </div>
             </div>
             <div
               className="md:col-span-3 space-y-4 relative"
