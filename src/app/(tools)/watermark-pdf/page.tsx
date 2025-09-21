@@ -184,10 +184,10 @@ export default function WatermarkPdfPage() {
         
         let font;
         if (fontStyle === 'font-dancing-script') {
-            const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
+            const fontBytes = await fetch('/fonts/DancingScript.ttf').then(res => res.arrayBuffer());
             font = await pdfDoc.embedFont(fontBytes);
         } else if (fontStyle === 'font-great-vibes') {
-            const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
+            const fontBytes = await fetch('/fonts/GreatVibes.ttf').then(res => res.arrayBuffer());
             font = await pdfDoc.embedFont(fontBytes);
         } else {
             font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
@@ -473,5 +473,3 @@ export default function WatermarkPdfPage() {
     </div>
   );
 }
-
-    
