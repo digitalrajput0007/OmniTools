@@ -15,10 +15,10 @@ export default {
         headline: ['var(--font-headline)', 'sans-serif'],
         code: ['monospace'],
         'great-vibes': ['var(--font-great-vibes)', 'cursive'],
-        'sacramento': ['var(--font-sacramento)', 'cursive'],
-        'allura': ['var(--font-allura)', 'cursive'],
         'dancing-script': ['var(--font-dancing-script)', 'cursive'],
         'sans': ['sans-serif'],
+        'serif': ['serif'],
+        'mono': ['monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -103,5 +103,3 @@ export default {
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
-
-    

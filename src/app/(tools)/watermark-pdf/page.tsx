@@ -216,16 +216,15 @@ export default function WatermarkPdfPage() {
         const pages = pdfDoc.getPages();
         for (const page of pages) {
             const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
-            const pageCenter = { x: pageWidthPt / 2, y: pageHeightPt / 2 };
-
+            
             if (mode === 'text') {
                 const textWidthPt = font.widthOfTextAtSize(text, fontSize);
                 const textHeightPt = font.heightAtSize(fontSize);
                 
                 if (position === 'center') {
                     page.drawText(text, {
-                        x: pageCenter.x - textWidthPt / 2,
-                        y: pageCenter.y - textHeightPt / 2,
+                        x: pageWidthPt / 2 - textWidthPt / 2,
+                        y: pageHeightPt / 2 - textHeightPt / 4, // Adjust for better vertical centering
                         font,
                         size: fontSize,
                         color: colorRgb,
@@ -254,8 +253,8 @@ export default function WatermarkPdfPage() {
 
                 if(position === 'center') {
                     page.drawImage(watermarkImage, {
-                        x: pageCenter.x - imgWidthPt / 2,
-                        y: pageCenter.y - imgHeightPt / 2,
+                        x: pageWidthPt / 2 - imgWidthPt / 2,
+                        y: pageHeightPt / 2 - imgHeightPt / 2,
                         width: imgWidthPt,
                         height: imgHeightPt,
                         opacity: opacity[0],
