@@ -392,8 +392,8 @@ export default function PdfSignaturePage() {
         return { 
           ...obj, 
           pageIndex: currentPage, 
-          x, 
-          y,
+          x: Math.max(0, Math.min(x, containerRect.width - obj.width)),
+          y: Math.max(0, Math.min(y, containerRect.height - obj.height)),
           previewWidthPx: containerRect.width,
           previewHeightPx: containerRect.height,
         };
