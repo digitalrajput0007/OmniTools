@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,6 +19,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+
+let pdfjs: any;
+
 const signatureFonts = {
     'font-sans': 'Sans Serif',
     'font-serif': 'Serif',
@@ -29,26 +32,29 @@ const signatureFonts = {
 
 type SignatureFont = keyof typeof signatureFonts;
 
-const colorOptions = {
-    black: { name: 'Black', rgb: { r: 0, g: 0, b: 0 } },
-    blue: { name: 'Blue', rgb: { r: 0, g: 0, b: 1 } },
-    red: { name: 'Red', rgb: { r: 1, g: 0, b: 0 } },
-    grey: { name: 'Grey', rgb: { r: 0.5, g: 0.5, b: 0.5 } },
-} as const;
-
-type ColorName = keyof typeof colorOptions;
 type Position = 'center' | 'tiled';
 type WatermarkMode = 'text' | 'image';
 
+const hexToRgb = (hex: string): {r: number, g: number, b: number} => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return { r: 0, g: 0, b: 0 };
+    return {
+      r: parseInt(result[1], 16) / 255,
+      g: parseInt(result[2], 16) / 255,
+      b: parseInt(result[3], 16) / 255,
+    };
+};
+
 export default function WatermarkPdfPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [mode, setMode] = useState<WatermarkMode>('text');
   
   // Text options
   const [text, setText] = useState('CONFIDENTIAL');
   const [fontStyle, setFontStyle] = useState<SignatureFont>('font-sans');
   const [fontSize, setFontSize] = useState(50);
-  const [fontColor, setFontColor] = useState<ColorName>('grey');
+  const [fontColor, setFontColor] = useState('#808080'); // Grey
   const [rotation, setRotation] = useState([-45]);
   const [position, setPosition] = useState<Position>('center');
 
@@ -67,14 +73,25 @@ export default function WatermarkPdfPage() {
   const [processedFile, setProcessedFile] = useState<Blob | null>(null);
   
   const { toast } = useToast();
+  
+  useEffect(() => {
+    import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
+      pdfjs = pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
 
   const resetState = () => {
     setFile(null);
+    setPreviewUrl(null);
     setMode('text');
     setText('CONFIDENTIAL');
     setFontStyle('font-sans');
     setFontSize(50);
-    setFontColor('grey');
+    setFontColor('#808080');
     setRotation([-45]);
     setPosition('center');
     setImageFile(null);
@@ -86,10 +103,38 @@ export default function WatermarkPdfPage() {
     setProcessedFile(null);
   };
   
-  const handleFileSelect = (selectedFile: File) => {
-    if (selectedFile.type !== 'application/pdf') { toast({ title: 'Invalid PDF File', variant: 'destructive' }); return; }
+ const handleFileSelect = async (selectedFile: File) => {
+    if (selectedFile.type !== 'application/pdf') {
+      toast({ title: 'Invalid PDF File', variant: 'destructive' });
+      return;
+    }
+    if (!pdfjs) {
+      toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+      return;
+    }
     resetState();
     setFile(selectedFile);
+    setIsProcessing(true);
+
+    try {
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const context = canvas.getContext('2d');
+      if (context) {
+        await page.render({ canvasContext: context, viewport }).promise;
+        setPreviewUrl(canvas.toDataURL());
+      }
+    } catch (e) {
+      toast({ title: 'Error reading PDF', description: 'Could not render a preview for this PDF.', variant: 'destructive' });
+      resetState();
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   const handleImageFileSelect = (selectedFile: File) => {
@@ -135,29 +180,34 @@ export default function WatermarkPdfPage() {
             'font-sans': StandardFonts.Helvetica,
             'font-serif': StandardFonts.TimesRoman,
             'font-mono': StandardFonts.Courier,
+            'font-dancing-script': StandardFonts.Helvetica, // Fallback
+            'font-great-vibes': StandardFonts.Helvetica, // Fallback
         };
         const font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
 
         for (const page of pdfDoc.getPages()) {
           const { width, height } = page.getSize();
-          
+          const color = hexToRgb(fontColor);
+
           if (mode === 'text') {
               if (position === 'center') {
+                 const textWidth = font.widthOfTextAtSize(text, fontSize);
                  page.drawText(text, {
-                    x: width / 2 - (text.length * fontSize / 4),
+                    x: width / 2 - textWidth / 2,
                     y: height / 2 - fontSize / 2,
                     font,
                     size: fontSize,
-                    color: colorOptions[fontColor].rgb,
+                    color: color,
                     opacity: opacity[0],
                     rotate: degrees(rotation[0]),
                 });
               } else { // Tiled
-                  for (let x = -width; x < width * 2; x += text.length * fontSize/2.5) {
-                      for (let y = -height; y < height * 2; y += fontSize * 2) {
+                  const textWidth = font.widthOfTextAtSize(text, fontSize);
+                  for (let x = 0; x < width; x += textWidth + 100) {
+                      for (let y = 0; y < height; y += 150) {
                            page.drawText(text, {
                             x, y, font, size: fontSize,
-                            color: colorOptions[fontColor].rgb,
+                            color: color,
                             opacity: opacity[0],
                             rotate: degrees(rotation[0]),
                         });
@@ -174,11 +224,12 @@ export default function WatermarkPdfPage() {
                     width: imgWidth,
                     height: imgHeight,
                     opacity: opacity[0],
+                    rotate: degrees(rotation[0])
                 });
              } else {
                  for (let x = 0; x < width; x += imgWidth + 50) {
                      for (let y = 0; y < height; y += imgHeight + 50) {
-                         page.drawImage(watermarkImage, { x, y, width: imgWidth, height: imgHeight, opacity: opacity[0] });
+                         page.drawImage(watermarkImage, { x, y, width: imgWidth, height: imgHeight, opacity: opacity[0], rotate: degrees(rotation[0]) });
                      }
                  }
              }
@@ -204,7 +255,7 @@ export default function WatermarkPdfPage() {
     
     if (processError) {
       toast({ title: 'Error Applying Watermark', description: processError.message, variant: 'destructive'});
-      resetState();
+      // Don't reset state to allow user to fix settings
     } else if (newPdfBytes) {
       setDone(true);
       setProcessedFile(new Blob([newPdfBytes], { type: 'application/pdf' }));
@@ -236,12 +287,10 @@ export default function WatermarkPdfPage() {
         return (
             <div className="grid gap-6 md:grid-cols-2">
                 <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
-                    <FileIcon className="h-24 w-24 text-primary" />
-                    <p className="truncate text-lg font-medium">{file.name}</p>
+                    <CheckCircle2 className="h-24 w-24 text-green-500" />
+                    <h3 className="text-2xl font-bold">Watermark Applied!</h3>
                 </div>
                 <div className="flex flex-col items-center justify-center space-y-6 text-center">
-                    <CheckCircle2 className="h-16 w-16 text-green-500" />
-                    <h3 className="text-2xl font-bold">Watermark Applied!</h3>
                     <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
                         <Button onClick={handleDownload}><FileDown className="mr-2"/>Download PDF</Button>
                         <Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2"/>Start Over</Button>
@@ -251,15 +300,63 @@ export default function WatermarkPdfPage() {
             </div>
         );
     }
+    
+    if (isProcessing && !previewUrl) {
+      return (
+        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+          <CircularProgress progress={progress} />
+          <p className="text-center text-sm text-muted-foreground">Loading PDF preview...</p>
+        </div>
+      );
+    }
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
-            <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
-                <FileIcon className="h-24 w-24 text-muted-foreground" />
-                <p className="truncate text-lg font-medium">{file.name}</p>
-                <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}><X className="h-4 w-4" /></Button>
+            <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-4 bg-muted/20">
+                {previewUrl ? (
+                    <div className="relative w-full h-full min-h-[400px] overflow-hidden">
+                        <Image src={previewUrl} alt="PDF Preview" layout="fill" objectFit="contain" />
+                        
+                        {/* Watermark Preview Overlay */}
+                        <div className="absolute inset-0 pointer-events-none" style={{ opacity: opacity[0] }}>
+                            {position === 'center' ? (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    {mode === 'text' ? (
+                                        <p style={{ transform: `rotate(${rotation[0]}deg)`, fontSize: `${fontSize * 0.75}px`, color: fontColor }} className={cn('font-bold', fontStyle)}>
+                                            {text}
+                                        </p>
+                                    ) : imagePreview && (
+                                         <div className="relative h-32 w-32" style={{ transform: `rotate(${rotation[0]}deg)`}}>
+                                            <Image src={imagePreview} alt="watermark" layout="fill" objectFit="contain" />
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                // Tiled Preview (simplified)
+                                <div className="absolute inset-0 grid grid-cols-3 grid-rows-4 gap-8">
+                                    {[...Array(12)].map((_, i) => (
+                                        <div key={i} className="flex items-center justify-center opacity-70">
+                                            {mode === 'text' ? (
+                                                <p style={{ transform: `rotate(${rotation[0]}deg)`, fontSize: `${fontSize * 0.5}px`, color: fontColor, whiteSpace: 'nowrap' }} className={cn('font-bold', fontStyle)}>
+                                                    {text}
+                                                </p>
+                                            ) : imagePreview && (
+                                                <div className="relative h-12 w-12" style={{ transform: `rotate(${rotation[0]}deg)`}}>
+                                                    <Image src={imagePreview} alt="watermark" layout="fill" objectFit="contain" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <FileIcon className="h-24 w-24 text-muted-foreground" />
+                )}
+                 <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}><X className="h-4 w-4" /></Button>
             </div>
-             <div className="flex flex-col space-y-6 justify-center">
+             <div className="flex flex-col space-y-4 justify-center">
                 {isProcessing ? (
                      <div className="flex h-full flex-col items-center justify-center space-y-4">
                         <CircularProgress progress={progress} />
@@ -273,10 +370,10 @@ export default function WatermarkPdfPage() {
                       <Label htmlFor="watermark-text">Watermark Text</Label>
                       <Input id="watermark-text" value={text} onChange={(e) => setText(e.target.value)} />
                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label>Font Style</Label><Select value={fontStyle} onValueChange={(v) => setFontStyle(v as SignatureFont)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Font Style</Label><Select value={fontStyle} onValueChange={(v) => setFontStyle(v as SignatureFont)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([id, name]) => <SelectItem key={id} value={id} className={id}>{name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Font Size</Label><Input type="number" value={fontSize} onChange={(e) => setFontSize(parseInt(e.target.value, 10))}/></div>
                        </div>
-                       <div className="space-y-2"><Label>Color</Label><RadioGroup value={fontColor} onValueChange={(v) => setFontColor(v as ColorName)} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name}]) => <RadioGroupItem key={key} value={key} id={`c-${key}`}/>)}</RadioGroup></div>
+                       <div className="space-y-2"><Label>Color</Label><Input type="color" className="p-1 h-10 w-full" value={fontColor} onChange={(e) => setFontColor(e.target.value)} /></div>
                     </TabsContent>
                     <TabsContent value="image" className="pt-4 space-y-4">
                       <Label>Watermark Image</Label>
