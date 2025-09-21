@@ -31,6 +31,7 @@ import {
   ChevronRight,
   Loader2,
   RotateCw,
+  MoveVertical,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -120,8 +121,9 @@ const DraggableItem = ({
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  const [isRotating, setIsRotating] = useState(false);
   
-  const isInteracting = isDraggingRef.current || isResizing;
+  const isInteracting = isDraggingRef.current || isResizing || isRotating;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || (e.target as HTMLElement).classList.contains('resize-handle')) {
@@ -151,10 +153,11 @@ const DraggableItem = ({
     };
   };
 
-  const handleRotate = (e: React.MouseEvent) => {
+  const handleRotateStart = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    const newRotation = (obj.rotation + 90) % 360;
-    onUpdate({ ...obj, rotation: newRotation });
+    onSelect(e, obj.id);
+    setIsRotating(true);
   };
   
   useEffect(() => {
@@ -179,15 +182,23 @@ const DraggableItem = ({
           newWidth = Math.max(20, newWidth); // min width
           const newHeight = newWidth / obj.aspectRatio;
           onUpdate({ ...obj, width: newWidth, height: newHeight });
+      } else if (isRotating && itemRef.current) {
+          const itemRect = itemRef.current.getBoundingClientRect();
+          const centerX = itemRect.left + itemRect.width / 2;
+          const centerY = itemRect.top + itemRect.height / 2;
+          const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+          const degrees = (angle * 180) / Math.PI + 90; // +90 to offset initial handle position
+          onUpdate({ ...obj, rotation: degrees });
       }
     };
     
     const handleMouseUp = (e: MouseEvent) => {
       isDraggingRef.current = false;
       setIsResizing(false);
+      setIsRotating(false);
     };
 
-    if (isDraggingRef.current || isResizing) {
+    if (isDraggingRef.current || isResizing || isRotating) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -196,7 +207,7 @@ const DraggableItem = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [obj, onUpdate, isResizing, isDraggingRef, pageContainerRef]);
+  }, [obj, onUpdate, isResizing, isRotating, isDraggingRef, pageContainerRef]);
 
   return (
     <div
@@ -223,7 +234,7 @@ const DraggableItem = ({
       
       <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", (isSelected || isInteracting) ? "opacity-100" : "group-hover/item:opacity-100")}>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleRotate(e);}}><RotateCw className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 cursor-grab active:cursor-grabbing" onMouseDown={handleRotateStart}><RotateCw className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
       </div>
@@ -628,9 +639,7 @@ export default function PdfSignaturePage() {
 
     const savePromise = (async () => {
         try {
-            const pdfDoc = await PDFDocument.load(await file.arrayBuffer(), {
-                ignoreEncryption: true,
-            });
+            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
             const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
             const embeddedFontCache: Partial<Record<string, PDFFont>> = {};
 
