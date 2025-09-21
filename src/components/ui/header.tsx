@@ -9,7 +9,7 @@ import {
 } from '@/lib/constants';
 import {
   ImageIcon,
-  PdfIcon,
+  FileText,
   Globe,
   ChevronDown,
   ALargeSmall,
@@ -87,7 +87,7 @@ export default function Header() {
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost">
-                  <PdfIcon className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
+                  <FileText className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
