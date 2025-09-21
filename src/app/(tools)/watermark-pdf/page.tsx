@@ -192,10 +192,11 @@ export default function WatermarkPdfPage() {
         } else {
             font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
         }
+        
+        const color = hexToRgb(fontColor);
 
         for (const page of pdfDoc.getPages()) {
           const { width, height } = page.getSize();
-          const color = hexToRgb(fontColor);
 
           if (mode === 'text') {
               if (position === 'center') {
@@ -205,7 +206,7 @@ export default function WatermarkPdfPage() {
                     y: height / 2 - fontSize / 2,
                     font,
                     size: fontSize,
-                    color: color,
+                    color: rgb(color.r, color.g, color.b),
                     opacity: opacity[0],
                     rotate: degrees(rotation[0]),
                 });
@@ -215,7 +216,7 @@ export default function WatermarkPdfPage() {
                       for (let y = 0; y < height; y += 150) {
                            page.drawText(text, {
                             x, y, font, size: fontSize,
-                            color: color,
+                            color: rgb(color.r, color.g, color.b),
                             opacity: opacity[0],
                             rotate: degrees(rotation[0]),
                         });
