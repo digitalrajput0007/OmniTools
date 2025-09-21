@@ -184,7 +184,7 @@ export default function WatermarkPdfPage() {
         
         let font;
         if (fontStyle === 'font-dancing-script') {
-            const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
+            const fontBytes = await fetch('/fonts/DancingScript.ttf').then(res => res.arrayBuffer());
             font = await pdfDoc.embedFont(fontBytes);
         } else if (fontStyle === 'font-great-vibes') {
             const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
@@ -197,16 +197,14 @@ export default function WatermarkPdfPage() {
 
         for (const page of pdfDoc.getPages()) {
           const { width, height } = page.getSize();
-          const centerX = width / 2;
-          const centerY = height / 2;
-
+          
           if (mode === 'text') {
               const textWidth = font.widthOfTextAtSize(text, fontSize);
               const textHeight = font.heightAtSize(fontSize);
               if (position === 'center') {
                  page.drawText(text, {
-                    x: centerX - textWidth / 2,
-                    y: centerY - textHeight / 2,
+                    x: width / 2 - textWidth / 2,
+                    y: height / 2 - textHeight / 2,
                     font,
                     size: fontSize,
                     color: rgb(color.r, color.g, color.b),
@@ -233,8 +231,8 @@ export default function WatermarkPdfPage() {
             const imgHeight = watermarkImage.height;
              if(position === 'center') {
                 page.drawImage(watermarkImage, {
-                    x: centerX - imgWidth / 2,
-                    y: centerY - imgHeight / 2,
+                    x: width / 2 - imgWidth / 2,
+                    y: height / 2 - imgHeight / 2,
                     width: imgWidth,
                     height: imgHeight,
                     opacity: opacity[0],
@@ -450,7 +448,7 @@ export default function WatermarkPdfPage() {
                     <AccordionTrigger>How to Use the Watermark Tool</AccordionTrigger>
                     <AccordionContent className="space-y-2 text-muted-foreground">
                         <ol className="list-decimal list-inside space-y-2">
-                            <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file or click to browse and select it.</li>
+                            <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file or click to browse and select it. A preview of the first page will be shown.</li>
                             <li><strong>Choose Watermark Type:</strong> Select either "Text" or "Image" mode.</li>
                             <li><strong>Configure Your Watermark:</strong>
                                 <ul className="list-disc list-inside pl-4 mt-1">
@@ -458,6 +456,7 @@ export default function WatermarkPdfPage() {
                                     <li>For an image, upload your logo or image file.</li>
                                 </ul>
                             </li>
+                            <li><strong>Live Preview:</strong> See how your watermark will look directly on the PDF preview as you make changes.</li>
                             <li><strong>Adjust Opacity:</strong> Use the slider to control how transparent the watermark is.</li>
                             <li><strong>Apply & Download:</strong> Click "Apply Watermark". After processing, your new, watermarked PDF will be ready for download.</li>
                         </ol>
@@ -480,5 +479,3 @@ export default function WatermarkPdfPage() {
     </div>
   );
 }
-
-    
