@@ -32,6 +32,7 @@ export default function PdfMergerPage() {
   const [progress, setProgress] = useState(0);
   const [merged, setMerged] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [mergedFile, setMergedFile] = useState<Blob | null>(null);
   const { toast } = useToast();
 
   const resetState = () => {
@@ -39,6 +40,7 @@ export default function PdfMergerPage() {
     setIsMerging(false);
     setProgress(0);
     setMerged(false);
+    setMergedFile(null);
   };
 
   const handleFileAdd = (newFiles: File[]) => {
@@ -88,6 +90,22 @@ export default function PdfMergerPage() {
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
+  
+  const createMergedPdf = async (): Promise<Blob | null> => {
+      const mergedPdf = await PDFDocument.create();
+      for (const file of files) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await PDFDocument.load(arrayBuffer);
+        const copiedPages = await mergedPdf.copyPages(
+          pdf,
+          pdf.getPageIndices()
+        );
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+      }
+      const mergedPdfBytes = await mergedPdf.save();
+      return new Blob([mergedPdfBytes], { type: 'application/pdf' });
+  };
+
 
   const handleMerge = async () => {
     if (files.length < 2) {
@@ -103,6 +121,7 @@ export default function PdfMergerPage() {
     setProgress(0);
     
     let mergeError: Error | null = null;
+    let mergedBlob: Blob | null = null;
     
     const minDuration = 3000;
     const startTime = Date.now();
@@ -114,8 +133,8 @@ export default function PdfMergerPage() {
     }, 50);
 
     try {
-        await downloadMergedPdf(false); // Process but don't trigger download
-        await new Promise(resolve => setTimeout(resolve, minDuration - (Date.now() - startTime)));
+        mergedBlob = await createMergedPdf();
+        await new Promise(resolve => setTimeout(resolve, Math.max(0, minDuration - (Date.now() - startTime))));
     } catch (error) {
         mergeError = error as Error;
     } finally {
@@ -130,41 +149,23 @@ export default function PdfMergerPage() {
             });
         } else {
             setMerged(true);
+            setMergedFile(mergedBlob);
         }
     }
   };
-
-  const downloadMergedPdf = async (triggerDownload = true) => {
-    try {
-      const mergedPdf = await PDFDocument.create();
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
-        const copiedPages = await mergedPdf.copyPages(
-          pdf,
-          pdf.getPageIndices()
-        );
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
-      }
-      const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
-      
-      if (triggerDownload) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = 'merged.pdf';
-          document.body.appendChild(a);
-          a.click();
-          URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-      }
-    } catch (error) {
-       console.error(error);
-       // Re-throw the error to be caught by the calling function
-       throw new Error('Something went wrong while merging the PDFs. Please try again.');
-    }
+  
+  const handleDownload = () => {
+    if (!mergedFile) return;
+    
+    const url = URL.createObjectURL(mergedFile);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'merged.pdf';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
   
   const formatFileSize = (bytes: number | null | undefined): string => {
@@ -174,6 +175,90 @@ export default function PdfMergerPage() {
     } else {
       return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
+  };
+
+  const renderContent = () => {
+    if (files.length === 0) {
+      return (
+         <label
+            htmlFor="pdf-upload"
+            className={cn(
+              'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+              { 'border-primary bg-accent/50': isDragging }
+            )}
+            onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
+          >
+            <UploadCloud className="h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">Drag & drop your PDFs here, or click to browse</p>
+            <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" multiple />
+            <Button asChild variant="outline" className="mt-4"><span>Browse Files</span></Button>
+          </label>
+      );
+    }
+
+    return (
+       <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+              <label
+                htmlFor="pdf-upload-additional"
+                className={cn(
+                  'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
+                  { 'border-primary bg-accent/50': isDragging }
+                )}
+                onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
+              >
+                <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">Drag & drop more files, or click to browse</p>
+                <Input id="pdf-upload-additional" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" multiple />
+              </label>
+
+              <div className="space-y-2">
+                <h3 className="font-semibold">Selected Files ({files.length}):</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {files.map((file, index) => (
+                    <div key={index} className="relative flex items-center gap-4 rounded-md border p-2">
+                      <FileIcon className="h-6 w-6 text-muted-foreground" />
+                      <div className="flex-1 overflow-hidden">
+                        <p className="truncate text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFile(index)} disabled={isMerging}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+          </div>
+          <div className="flex flex-col justify-center">
+            {isMerging ? (
+                 <div className="flex h-full min-h-[150px] flex-col items-center justify-center space-y-4">
+                  <CircularProgress progress={progress} />
+                  <p className="text-center text-sm text-muted-foreground">Merging...</p>
+                </div>
+            ) : merged ? (
+              <div className="flex h-full flex-col items-start justify-center space-y-4">
+                <div className="w-full text-center space-y-2">
+                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                    <h3 className="text-2xl font-bold">Merging Complete</h3>
+                    <p className="text-muted-foreground">Your PDFs have been successfully merged.</p>
+                </div>
+                <div className="w-full text-sm rounded-lg border p-4">
+                  <p>Files merged: <span className="font-medium text-foreground">{files.length}</span></p>
+                  <p>New Size: <span className="font-medium text-foreground">{formatFileSize(mergedFile?.size)}</span></p>
+                </div>
+                <div className="flex w-full flex-col gap-2 pt-4">
+                  <Button className="w-full" onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" />Download Merged PDF</Button>
+                  <Button className="w-full" variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" />Merge another</Button>
+                </div>
+                <SharePrompt toolName="PDF Merger" />
+              </div>
+            ) : (
+                 <Button onClick={handleMerge} size="lg" className="w-full" disabled={files.length < 2}>Merge PDFs</Button>
+            )}
+          </div>
+       </div>
+    );
   };
 
   return (
@@ -188,177 +273,7 @@ export default function PdfMergerPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {merged ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <h3 className="font-semibold">Files Merged:</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {files.map((file, index) => (
-                    <div
-                      key={index}
-                      className="relative flex items-center gap-4 rounded-md border p-2"
-                    >
-                      <FileIcon className="h-6 w-6 text-muted-foreground" />
-                      <div className="flex-1 overflow-hidden">
-                        <p className="truncate text-sm font-medium">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatFileSize(file.size)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex h-full flex-col items-start justify-center space-y-4">
-                <div className="w-full text-center space-y-2">
-                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-                    <h3 className="text-2xl font-bold">Merging Complete</h3>
-                    <p className="text-muted-foreground">
-                    Your PDFs have been successfully merged.
-                    </p>
-                </div>
-                <div className="w-full text-sm rounded-lg border p-4">
-                  <p>
-                    Files merged:{' '}
-                    <span className="font-medium text-foreground">
-                      {files.length}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex w-full flex-col gap-2 pt-4">
-                  <Button className="w-full" onClick={() => downloadMergedPdf(true)}>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Download Merged PDF
-                  </Button>
-                  <Button
-                    className="w-full"
-                    variant="secondary"
-                    onClick={resetState}
-                  >
-                    <RefreshCcw className="mr-2 h-4 w-4" />
-                    Merge another
-                  </Button>
-                </div>
-                <SharePrompt toolName="PDF Merger" />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {files.length === 0 ? (
-                <label
-                  htmlFor="pdf-upload"
-                  className={cn(
-                    'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
-                    {
-                      'border-primary bg-accent/50': isDragging,
-                    }
-                  )}
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragEvents}
-                  onDrop={handleDrop}
-                >
-                  <UploadCloud className="h-12 w-12 text-muted-foreground" />
-                  <p className="mt-4 text-muted-foreground">
-                    Drag & drop your PDFs here, or click to browse
-                  </p>
-                  <Input
-                    id="pdf-upload"
-                    type="file"
-                    className="sr-only"
-                    onChange={handleFileChange}
-                    accept="application/pdf"
-                    multiple
-                  />
-                  <Button asChild variant="outline" className="mt-4">
-                    <span>Browse Files</span>
-                  </Button>
-                </label>
-              ) : (
-                <>
-                  <label
-                    htmlFor="pdf-upload-additional"
-                    className={cn(
-                      'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
-                      {
-                        'border-primary bg-accent/50': isDragging,
-                      }
-                    )}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragEvents}
-                    onDrop={handleDrop}
-                  >
-                    <UploadCloud className="h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-muted-foreground">
-                      Drag & drop more files, or click to browse
-                    </p>
-                    <Input
-                      id="pdf-upload-additional"
-                      type="file"
-                      className="sr-only"
-                      onChange={handleFileChange}
-                      accept="application/pdf"
-                      multiple
-                    />
-                  </label>
-
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Selected Files:</h3>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {files.map((file, index) => (
-                        <div
-                          key={index}
-                          className="relative flex items-center gap-4 rounded-md border p-2"
-                        >
-                          <FileIcon className="h-6 w-6 text-muted-foreground" />
-                          <div className="flex-1 overflow-hidden">
-                            <p className="truncate text-sm font-medium">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatFileSize(file.size)}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleRemoveFile(index)}
-                            disabled={isMerging}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {isMerging ? (
-                <div className="flex h-full min-h-[150px] flex-col items-center justify-center space-y-4">
-                  <CircularProgress progress={progress} />
-                  <p className="text-center text-sm text-muted-foreground">
-                    Merging...
-                  </p>
-                </div>
-              ) : (
-                files.length > 0 && (
-                  <Button
-                    onClick={handleMerge}
-                    className="w-full"
-                    size="lg"
-                    disabled={files.length < 2}
-                  >
-                    Merge PDFs
-                  </Button>
-                )
-              )}
-            </div>
-          )}
+          {renderContent()}
         </CardContent>
       </Card>
       <Card>
@@ -407,3 +322,5 @@ export default function PdfMergerPage() {
     </div>
   );
 }
+
+    
