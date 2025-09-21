@@ -19,6 +19,8 @@ import {
   RefreshCcw,
   X,
   FileText,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -29,6 +31,41 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Label } from '@/components/ui/label';
 
 let pdfjs: any;
+
+const JpgIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#D6EAF8" stroke="#3498DB" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#3498DB" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M10 12H8V18H10V15H11C11.5523 15 12 14.5523 12 14V13C12 12.4477 11.5523 12 11 12H10Z" stroke="#2980B9" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M15 12H14V18H15C16.1046 18 17 17.1046 17 16V13C17 12.4477 16.5523 12 16 12H15Z" stroke="#2980B9" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+);
+
+const PngIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#D5F5E3" stroke="#2ECC71" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#2ECC71" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M8 12H9C10.1046 12 11 12.8954 11 14V18" stroke="#28B463" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M13 18V12L15 18V12" stroke="#28B463" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const WebpIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FDEBD0" stroke="#F39C12" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M14 2V8H20" stroke="#F39C12" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M8 18L10 12L12 18L14 12L16 18" stroke="#D35400" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const GenericImageIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#EAECEE" stroke="#7F8C8D" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#7F8C8D" strokeWidth="1.5" strokeLinejoin="round"/>
+        <circle cx="9.5" cy="14.5" r="1.5" stroke="#95A5A6" strokeWidth="1.5"/>
+        <path d="M12 18L14 16L17 18" stroke="#95A5A6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
 
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -41,6 +78,7 @@ const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
+
 export default function PdfToImagesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -48,6 +86,7 @@ export default function PdfToImagesPage() {
   const [done, setDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,6 +105,7 @@ export default function PdfToImagesPage() {
     setProgress(0);
     setDone(false);
     setPreviews([]);
+    setCurrentPreviewIndex(0);
   };
   
   const handleFileSelect = (selectedFile: File) => {
@@ -123,6 +163,7 @@ export default function PdfToImagesPage() {
     setDone(false);
     setProgress(0);
     setPreviews([]);
+    setCurrentPreviewIndex(0);
     
     let conversionError: Error | null = null;
     let imageUrls: string[] = [];
@@ -198,6 +239,19 @@ export default function PdfToImagesPage() {
     });
   };
 
+  const handleDownloadSingle = () => {
+    if (!previews[currentPreviewIndex] || !file) return;
+
+    const dataUrl = previews[currentPreviewIndex];
+    const baseName = file.name.replace('.pdf', '');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${baseName}-page-${currentPreviewIndex + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   function dataURLtoBlob(dataurl: string) {
     const arr = dataurl.split(',');
     if (arr.length < 2) return new Blob();
@@ -238,57 +292,71 @@ export default function PdfToImagesPage() {
       );
     }
 
+    if (done) {
+      return (
+        <div className="grid gap-6 md:grid-cols-2">
+            <div className="relative flex flex-col items-center justify-center rounded-lg border bg-muted/20 p-4">
+                <div className="relative w-full h-[400px]">
+                    <Image src={previews[currentPreviewIndex]} alt={`Page ${currentPreviewIndex + 1} preview`} layout="fill" objectFit="contain" className="shadow-md" />
+                </div>
+                {previews.length > 1 && (
+                    <div className="mt-4 flex items-center justify-center gap-4">
+                        <Button variant="outline" size="icon" onClick={() => setCurrentPreviewIndex(p => Math.max(0, p - 1))} disabled={currentPreviewIndex === 0}>
+                            <ChevronLeft />
+                        </Button>
+                        <p className="text-sm font-medium text-muted-foreground">
+                            Page {currentPreviewIndex + 1} of {previews.length}
+                        </p>
+                        <Button variant="outline" size="icon" onClick={() => setCurrentPreviewIndex(p => Math.min(previews.length - 1, p + 1))} disabled={currentPreviewIndex === previews.length - 1}>
+                            <ChevronRight />
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+            <div className="flex h-full flex-col items-start justify-center space-y-4">
+              <div className="w-full text-center space-y-2">
+                  <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                  <h3 className="text-2xl font-bold">Conversion Complete</h3>
+                  <p className="text-muted-foreground">{previews.length} pages converted to JPG images.</p>
+              </div>
+              <div className="w-full text-sm rounded-lg border p-4">
+                <p>File: <span className="font-medium text-foreground">{file.name}</span></p>
+                <p>Pages converted: <span className="font-medium text-foreground">{previews.length}</span></p>
+              </div>
+              <div className="flex w-full flex-col gap-2 pt-4">
+                <Button className="w-full" onClick={handleDownloadSingle}>
+                  <FileDown className="mr-2 h-4 w-4" /> Download Current Image
+                </Button>
+                <Button className="w-full" variant="secondary" onClick={handleDownloadAll}>
+                  <FileDown className="mr-2 h-4 w-4" /> Download All as ZIP
+                </Button>
+                <Button className="w-full" variant="outline" onClick={resetState}>
+                  <RefreshCcw className="mr-2 h-4 w-4" /> Convert Another
+                </Button>
+              </div>
+              <SharePrompt toolName="PDF to Images" />
+            </div>
+        </div>
+      );
+    }
+
     return (
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="relative">
-          <div className="flex items-center justify-center rounded-lg border bg-muted/20 p-4 min-h-[300px] max-h-[400px]">
-            {done && previews.length > 0 ? (
-                <Image src={previews[0]} alt="First page preview" width={200} height={280} className="w-auto h-auto max-h-full object-contain shadow-md" />
-            ) : (
-                <PdfIcon className="h-24 w-24" />
-            )}
-          </div>
-          {!done && (
-            <Button
-              variant="destructive" size="icon" className="absolute right-2 top-2"
-              onClick={resetState}
-              disabled={isProcessing}
-            >
-              <X className="h-4 w-4" />
+         <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
+            <FileText className="h-24 w-24 text-primary" />
+            <p className="truncate text-lg font-medium">{file.name}</p>
+            <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
+                <X className="h-4 w-4" />
             </Button>
-          )}
         </div>
+
         <div className="flex flex-col space-y-6 justify-center">
             {isProcessing ? (
                 <div className="flex h-full flex-col items-center justify-center space-y-4">
                     <CircularProgress progress={progress} />
                     <p className="text-center text-sm text-muted-foreground">Converting PDF to images...</p>
                 </div>
-            ) : done ? (
-                 <div className="flex h-full flex-col items-start justify-center space-y-4">
-                    <div className="w-full text-center space-y-2">
-                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-                        <h3 className="text-2xl font-bold">Conversion Complete</h3>
-                        <p className="text-muted-foreground">{previews.length} pages converted to JPG images.</p>
-                    </div>
-                    <div className="w-full text-sm rounded-lg border p-4">
-                      <p>File: <span className="font-medium text-foreground">{file.name}</span></p>
-                      <p>Pages converted: <span className="font-medium text-foreground">{previews.length}</span></p>
-                    </div>
-                    <div className="flex w-full flex-col gap-2 pt-4">
-                      <Button className="w-full" onClick={handleDownloadAll}>
-                        <FileDown className="mr-2 h-4 w-4" /> Download All as ZIP
-                      </Button>
-                      <Button
-                        className="w-full"
-                        variant="secondary"
-                        onClick={resetState}
-                      >
-                        <RefreshCcw className="mr-2 h-4 w-4" /> Convert Another
-                      </Button>
-                    </div>
-                    <SharePrompt toolName="PDF to Images" />
-                  </div>
             ) : (
               <>
                 <div>
@@ -346,7 +414,7 @@ export default function PdfToImagesPage() {
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file into the upload area, or click to browse and select it from your device.</li>
                   <li><strong>Start Conversion:</strong> Click the "Convert to Images" button. The tool will begin processing each page of the document.</li>
-                  <li><strong>Preview and Download:</strong> Once complete, you will see a preview of all the generated images. You can click "Download All as ZIP" to get a single file containing all the images, conveniently named by page number.</li>
+                  <li><strong>Preview and Download:</strong> Once complete, you can navigate through the generated images. You can download the current image or click "Download All as ZIP" to get a single file containing all the images, conveniently named by page number.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
