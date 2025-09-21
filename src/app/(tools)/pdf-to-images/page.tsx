@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import * as pdfjs from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +29,10 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 
 // Required for pdfjs-dist
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
 export default function PdfToImagesPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -309,5 +312,3 @@ export default function PdfToImagesPage() {
     </div>
   );
 }
-
-    

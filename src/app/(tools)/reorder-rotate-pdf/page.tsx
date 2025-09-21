@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjs from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +28,10 @@ import Image from 'next/image';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
 interface PagePreview {
   id: number;
@@ -150,12 +153,13 @@ export default function ReorderRotatePdfPage() {
           const newPdfDoc = await PDFDocument.create();
 
           const pageIndices = previews.map(p => p.id - 1);
+          
           const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndices);
 
           copiedPages.forEach((page, index) => {
+            const previewForThisCopiedPage = previews[index];
             const newPage = newPdfDoc.addPage(page);
-            const preview = previews[index];
-            newPage.setRotation(preview.rotation);
+            newPage.setRotation(previewForThisCopiedPage.rotation);
           });
           
           const pdfBytes = await newPdfDoc.save();

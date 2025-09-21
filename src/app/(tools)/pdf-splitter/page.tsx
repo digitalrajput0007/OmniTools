@@ -26,6 +26,12 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -52,8 +58,8 @@ export default function PdfSplitterPage() {
       setFile(selectedFile);
       try {
         const arrayBuffer = await selectedFile.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
-        setTotalPages(pdf.getPageCount());
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        setTotalPages(pdf.numPages);
       } catch (error) {
         toast({
           title: 'Error Reading PDF',

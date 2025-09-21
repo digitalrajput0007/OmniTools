@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import * as pdfjs from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,7 +27,10 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
 export default function ExtractTextPdfPage() {
   const [file, setFile] = useState<File | null>(null);
