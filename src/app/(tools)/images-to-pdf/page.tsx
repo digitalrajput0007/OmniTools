@@ -81,6 +81,7 @@ export default function ImagesToPdfPage() {
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [convertedPdfBlob, setConvertedPdfBlob] = useState<Blob | null>(null);
   const { toast } = useToast();
 
   const resetState = () => {
@@ -88,6 +89,7 @@ export default function ImagesToPdfPage() {
     setIsProcessing(false);
     setProgress(0);
     setDone(false);
+    setConvertedPdfBlob(null);
   };
 
   const handleFileAdd = (newFiles: File[]) => {
@@ -194,16 +196,21 @@ export default function ImagesToPdfPage() {
     } else if (mergedPdfBytes) {
         setDone(true);
         const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'converted-images.pdf';
-        document.body.appendChild(a);
-        a.click();
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        setConvertedPdfBlob(blob);
     }
   };
+  
+  const handleDownload = () => {
+    if (!convertedPdfBlob) return;
+    const url = URL.createObjectURL(convertedPdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'converted-images.pdf';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
   
   const renderContent = () => {
     if (done) {
@@ -211,10 +218,10 @@ export default function ImagesToPdfPage() {
              <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
                  <CheckCircle2 className="h-16 w-16 text-green-500" />
                 <h3 className="text-2xl font-bold">Conversion Complete!</h3>
-                <p className="text-muted-foreground">Your PDF has been downloaded.</p>
+                <p className="text-muted-foreground">Your PDF has been created.</p>
                 <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
-                    <Button onClick={handleConvertToPdf}>
-                        <FileDown className="mr-2 h-4 w-4" /> Download Again
+                    <Button onClick={handleDownload}>
+                        <FileDown className="mr-2 h-4 w-4" /> Download PDF
                     </Button>
                     <Button variant="secondary" onClick={resetState}>
                         <RefreshCcw className="mr-2 h-4 w-4" /> Convert More Images
