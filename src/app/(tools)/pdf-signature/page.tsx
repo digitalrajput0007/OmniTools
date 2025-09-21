@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { PDFDocument, rgb, StandardFonts, PDFImage, PDFFont, degrees } from 'pdf-lib';
+import fontkit from 'fontkit';
 import SignaturePad from 'signature_pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -632,6 +633,10 @@ export default function PdfSignaturePage() {
             const pdfDoc = await PDFDocument.load(await file.arrayBuffer(), {
                 ignoreEncryption: true,
             });
+            
+            // Register fontkit
+            pdfDoc.registerFontkit(fontkit);
+
             const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
             const embeddedFontCache: Partial<Record<string, PDFFont>> = {};
 
@@ -946,5 +951,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
