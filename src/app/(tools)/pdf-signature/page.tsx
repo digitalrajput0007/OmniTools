@@ -98,9 +98,12 @@ const DraggableItem = ({
     setIsDragging(true);
     const pageRect = e.currentTarget.parentElement?.getBoundingClientRect();
     if (pageRect) {
+      const currentX = (obj.x / 100) * pageRect.width;
+      const currentY = (obj.y / 100) * pageRect.height;
+      
       dragStartPos.current = {
-        x: e.clientX - pageRect.left - (obj.x / 100) * pageRect.width,
-        y: e.clientY - pageRect.top - (obj.y / 100) * pageRect.height,
+        x: e.clientX - pageRect.left - currentX,
+        y: e.clientY - pageRect.top - currentY,
       };
     }
     e.stopPropagation();
@@ -154,12 +157,12 @@ const DraggableItem = ({
       ref={itemRef}
       onMouseDown={handleMouseDown}
       className={cn(
-        "absolute cursor-move border border-dashed",
+        "absolute cursor-move border border-dashed group",
         isSelected ? 'border-primary z-20' : 'border-transparent'
       )}
       style={{
-        left: `calc(${obj.x}%)`,
-        top: `calc(${obj.y}%)`,
+        left: `${obj.x}%`,
+        top: `${obj.y}%`,
         width: obj.width,
         height: obj.height,
         transform: 'translate(-50%, -50%)',
@@ -170,17 +173,16 @@ const DraggableItem = ({
       ) : (
         <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center', obj.font)}>{obj.content}</div>
       )}
+      
+      <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
+      </div>
       {isSelected && (
-        <>
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
-            </div>
           <div
             className="absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full bg-primary border-2 border-background"
             onMouseDown={handleResizeMouseDown}
           />
-        </>
       )}
     </div>
   );
@@ -251,6 +253,7 @@ export default function PdfSignaturePage() {
         signaturePadRef.current = null;
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAddSigOpen, editingObject, signatureColor]);
 
   const resetState = () => {
@@ -478,7 +481,7 @@ export default function PdfSignaturePage() {
     if (previews.length > 0) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6" onClick={() => setSelectedObjectId(null)}>
-            <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4 z-30">
+            <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4">
                  <Card>
                     <CardHeader><CardTitle>Objects</CardTitle><CardDescription>Add items, then drag them onto a page.</CardDescription></CardHeader>
                     <CardContent className="space-y-2">
@@ -558,7 +561,7 @@ export default function PdfSignaturePage() {
             <li><strong>Upload PDF:</strong> Drag and drop your PDF file or click to browse.</li>
             <li><strong>Add Objects:</strong> Use the "Add Text" or "Add Signature" buttons to create items with your desired colors and fonts. They will appear in the left panel.</li>
             <li><strong>Position Objects:</strong> Drag your created text or signature from the panel and drop it onto the desired location on any page.</li>
-            <li><strong>Select & Manipulate:</strong> Click on an object on the page to select it. A toolbar will appear above it allowing you to edit or delete it. You can also drag the object to a new position or use the corner handle to resize it.</li>
+            <li><strong>Select & Manipulate:</strong> Click on an object on the page to select it. You can drag the object to a new position or use the corner handle to resize it. Hover over the object to see Edit and Delete controls.</li>
             <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes" to generate and download your new PDF.</li>
           </ol>
         </CardContent>
