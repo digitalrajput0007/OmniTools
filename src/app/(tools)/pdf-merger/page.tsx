@@ -101,22 +101,40 @@ export default function PdfMergerPage() {
     setIsMerging(true);
     setMerged(false);
     setProgress(0);
-    const startTime = Date.now();
+    
+    let mergeError: Error | null = null;
+    
     const minDuration = 3000;
+    const startTime = Date.now();
 
-    const interval = setInterval(() => {
-      const elapsedTime = Date.now() - startTime;
-      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
-      setProgress(currentProgress);
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setIsMerging(false);
-        setMerged(true);
-      }
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const p = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(p);
     }, 50);
+
+    try {
+        await downloadMergedPdf(false); // Process but don't trigger download
+        await new Promise(resolve => setTimeout(resolve, minDuration - (Date.now() - startTime)));
+    } catch (error) {
+        mergeError = error as Error;
+    } finally {
+        clearInterval(progressInterval);
+        setIsMerging(false);
+
+        if (mergeError) {
+             toast({
+                title: 'Error Merging PDFs',
+                description: mergeError.message,
+                variant: 'destructive',
+            });
+        } else {
+            setMerged(true);
+        }
+    }
   };
 
-  const downloadMergedPdf = async () => {
+  const downloadMergedPdf = async (triggerDownload = true) => {
     try {
       const mergedPdf = await PDFDocument.create();
       for (const file of files) {
@@ -130,22 +148,22 @@ export default function PdfMergerPage() {
       }
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = 'merged.pdf';
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      if (triggerDownload) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = 'merged.pdf';
+          document.body.appendChild(a);
+          a.click();
+          URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+      }
     } catch (error) {
-      toast({
-        title: 'Error Merging PDFs',
-        description:
-          'Something went wrong while merging the PDFs. Please try again.',
-        variant: 'destructive',
-      });
+       console.error(error);
+       // Re-throw the error to be caught by the calling function
+       throw new Error('Something went wrong while merging the PDFs. Please try again.');
     }
   };
   
@@ -210,7 +228,7 @@ export default function PdfMergerPage() {
                   </p>
                 </div>
                 <div className="flex w-full flex-col gap-2 pt-4">
-                  <Button className="w-full" onClick={downloadMergedPdf}>
+                  <Button className="w-full" onClick={() => downloadMergedPdf(true)}>
                     <FileDown className="mr-2 h-4 w-4" />
                     Download Merged PDF
                   </Button>
@@ -321,7 +339,7 @@ export default function PdfMergerPage() {
               )}
 
               {isMerging ? (
-                <div className="flex h-full flex-col items-center justify-center space-y-4">
+                <div className="flex h-full min-h-[150px] flex-col items-center justify-center space-y-4">
                   <CircularProgress progress={progress} />
                   <p className="text-center text-sm text-muted-foreground">
                     Merging...
@@ -332,6 +350,7 @@ export default function PdfMergerPage() {
                   <Button
                     onClick={handleMerge}
                     className="w-full"
+                    size="lg"
                     disabled={files.length < 2}
                   >
                     Merge PDFs
@@ -388,5 +407,3 @@ export default function PdfMergerPage() {
     </div>
   );
 }
-
-    
