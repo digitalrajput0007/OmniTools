@@ -30,6 +30,16 @@ import { Label } from '@/components/ui/label';
 
 let pdfjs: any;
 
+const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FADBD8" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M8 12H9C10.1046 12 11 12.8954 11 14V18" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14 18V12H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14 15H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
 
 export default function PdfToImagesPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -213,49 +223,72 @@ export default function PdfToImagesPage() {
   };
   
   const renderContent = () => {
-    if (done) {
-        return (
-            <div className="space-y-6">
-                <div className="text-center space-y-2">
-                    <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-                    <h3 className="text-2xl font-bold">Conversion Successful!</h3>
-                    <p className="text-muted-foreground">{previews.length} pages have been converted to images.</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <Button onClick={handleDownloadAll}><FileDown className="mr-2" /> Download All as ZIP</Button>
-                    <Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2" /> Convert Another PDF</Button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {previews.map((src, index) => (
-                    <div key={index} className="relative group border rounded-lg overflow-hidden">
-                        <Image src={src} alt={`Page ${index + 1}`} width={200} height={280} className="w-full h-auto object-contain" />
-                        <p className="text-center text-xs p-1 bg-secondary/50">{`Page ${index + 1}`}</p>
-                    </div>
-                    ))}
-                </div>
-                <div className="flex justify-center">
-                    <SharePrompt toolName="PDF to Images" />
-                </div>
-            </div>
-        );
-    }
-    
-    if (file) {
+    if (!file) {
       return (
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8 bg-muted/20">
-            <FileText className="h-24 w-24 text-primary" />
-            <p className="truncate text-lg font-medium">{file?.name}</p>
-            <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
+        <label
+          htmlFor="pdf-upload"
+          className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })}
+          onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
+        >
+          <UploadCloud className="h-12 w-12 text-muted-foreground" />
+          <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
+          <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
+          <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
+        </label>
+      );
+    }
+
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="relative">
+          <div className="flex items-center justify-center rounded-lg border bg-muted/20 p-4 min-h-[300px] max-h-[400px]">
+            {done && previews.length > 0 ? (
+                <Image src={previews[0]} alt="First page preview" width={200} height={280} className="w-auto h-auto max-h-full object-contain shadow-md" />
+            ) : (
+                <PdfIcon className="h-24 w-24" />
+            )}
+          </div>
+          {!done && (
+            <Button
+              variant="destructive" size="icon" className="absolute right-2 top-2"
+              onClick={resetState}
+              disabled={isProcessing}
+            >
               <X className="h-4 w-4" />
             </Button>
-          </div>
-          <div className="flex flex-col space-y-6 justify-center">
+          )}
+        </div>
+        <div className="flex flex-col space-y-6 justify-center">
             {isProcessing ? (
-              <div className="flex h-full flex-col items-center justify-center space-y-4">
-                <CircularProgress progress={progress} />
-                <p className="text-center text-sm text-muted-foreground">Converting PDF to images...</p>
-              </div>
+                <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <CircularProgress progress={progress} />
+                    <p className="text-center text-sm text-muted-foreground">Converting PDF to images...</p>
+                </div>
+            ) : done ? (
+                 <div className="flex h-full flex-col items-start justify-center space-y-4">
+                    <div className="w-full text-center space-y-2">
+                        <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                        <h3 className="text-2xl font-bold">Conversion Complete</h3>
+                        <p className="text-muted-foreground">{previews.length} pages converted to JPG images.</p>
+                    </div>
+                    <div className="w-full text-sm rounded-lg border p-4">
+                      <p>File: <span className="font-medium text-foreground">{file.name}</span></p>
+                      <p>Pages converted: <span className="font-medium text-foreground">{previews.length}</span></p>
+                    </div>
+                    <div className="flex w-full flex-col gap-2 pt-4">
+                      <Button className="w-full" onClick={handleDownloadAll}>
+                        <FileDown className="mr-2 h-4 w-4" /> Download All as ZIP
+                      </Button>
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={resetState}
+                      >
+                        <RefreshCcw className="mr-2 h-4 w-4" /> Convert Another
+                      </Button>
+                    </div>
+                    <SharePrompt toolName="PDF to Images" />
+                  </div>
             ) : (
               <>
                 <div>
@@ -270,22 +303,8 @@ export default function PdfToImagesPage() {
                 </Button>
               </>
             )}
-          </div>
         </div>
-      );
-    }
-
-    return (
-       <label
-        htmlFor="pdf-upload"
-        className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })}
-        onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
-    >
-        <UploadCloud className="h-12 w-12 text-muted-foreground" />
-        <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
-        <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
-        <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
-    </label>
+      </div>
     );
   };
   
@@ -347,3 +366,5 @@ export default function PdfToImagesPage() {
     </div>
   );
 }
+
+    
