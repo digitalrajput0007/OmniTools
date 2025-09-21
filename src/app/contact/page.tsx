@@ -1,50 +1,72 @@
 
-import type { Metadata } from 'next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { AppName } from '@/lib/constants';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Contact Us',
-};
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Mail, Copy } from 'lucide-react';
+
+// Note: We are keeping the Metadata export for Next.js to use static analysis.
+// This page is a client component to support the interactive 'copy' button.
+// import type { Metadata } from 'next';
+// export const metadata: Metadata = {
+//   title: 'Contact Us',
+// };
 
 export default function ContactPage() {
+  const { toast } = useToast();
+  const email = 'admin@onlinejpgpdf.com';
+
+  const copyEmail = () => {
+    navigator.clipboard.writeText(email).then(() => {
+      toast({
+        title: 'Email Copied',
+        description: 'The email address has been copied to your clipboard.',
+      });
+    }).catch(err => {
+      console.error('Failed to copy email: ', err);
+      toast({
+        title: 'Error',
+        description: 'Could not copy the email address.',
+        variant: 'destructive',
+      });
+    });
+  };
+
   return (
     <div className="container mx-auto max-w-2xl py-12 px-4 md:px-6">
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-headline">Contact Us</CardTitle>
           <CardDescription>
-            We'd love to hear from you. Fill out the form below or email us at [your-email@example.com].
+            We'd love to hear from you.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-center text-muted-foreground">
-            For support, feature requests, or general inquiries, please get in touch. We typically respond within 2-3 business days.
+        <CardContent className="space-y-6 text-center">
+          <p className="text-muted-foreground">
+            For support, feature requests, partnership opportunities, or general inquiries, please don't hesitate to reach out. The best way to get in touch with us is by email.
           </p>
-          <div className="text-center text-sm text-red-500 font-bold">
-            [Note: This is a placeholder form and does not actually send messages. You will need to integrate an email sending service to make it functional.]
+          
+          <div className="flex flex-col items-center gap-4 rounded-lg border bg-secondary/30 p-6">
+            <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+              <Mail className="h-5 w-5" />
+              <span>{email}</span>
+            </div>
+            <div className='flex gap-4'>
+                <Button onClick={copyEmail}>
+                    <Copy className="mr-2 h-4 w-4" /> Copy Email
+                </Button>
+                 <Button variant="outline" asChild>
+                    <a href={`mailto:${email}`}>
+                        <Mail className="mr-2 h-4 w-4" /> Open in Mail App
+                    </a>
+                </Button>
+            </div>
           </div>
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Your Name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
-              <Textarea id="message" placeholder="Your message..." className="min-h-[150px]" />
-            </div>
-            <Button type="submit" className="w-full" disabled>
-              Send Message
-            </Button>
-          </form>
+          
+          <p className="text-sm text-muted-foreground">
+            We do our best to respond to all messages within 2-3 business days.
+          </p>
         </CardContent>
       </Card>
     </div>
