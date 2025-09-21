@@ -114,34 +114,55 @@ export default function PdfToImagesPage() {
     setProgress(0);
     setPreviews([]);
     
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-      const numPages = pdf.numPages;
-      const imagePromises: Promise<string>[] = [];
+    let conversionError: Error | null = null;
+    let imageUrls: string[] = [];
+    
+    const minDuration = 3000;
+    const startTime = Date.now();
 
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2 });
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+    const conversionPromise = (async () => {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+          const numPages = pdf.numPages;
+          const imagePromises: Promise<string>[] = [];
 
-        if (context) {
-          await page.render({ canvasContext: context, viewport: viewport }).promise;
-          imagePromises.push(Promise.resolve(canvas.toDataURL('image/jpeg')));
+          for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            if (context) {
+              await page.render({ canvasContext: context, viewport: viewport }).promise;
+              imagePromises.push(Promise.resolve(canvas.toDataURL('image/jpeg')));
+            }
+          }
+          
+          imageUrls = await Promise.all(imagePromises);
+
+        } catch (error) {
+           conversionError = error instanceof Error ? error : new Error('An unknown error occurred during conversion.');
         }
-        setProgress(Math.round((i / numPages) * 100));
-      }
-      
-      const imageUrls = await Promise.all(imagePromises);
+    })();
+
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const p = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(p);
+    }, 50);
+
+    await Promise.all([conversionPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    clearInterval(progressInterval);
+    setIsProcessing(false);
+    
+    if (conversionError) {
+       toast({ title: 'Conversion Error', description: conversionError.message, variant: 'destructive' });
+    } else {
       setPreviews(imageUrls);
       setDone(true);
-    } catch (error) {
-       toast({ title: 'Conversion Error', description: 'Failed to convert PDF pages to images.', variant: 'destructive' });
-    } finally {
-        setIsProcessing(false);
     }
   };
   
