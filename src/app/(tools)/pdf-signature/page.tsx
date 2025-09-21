@@ -46,23 +46,15 @@ import { Slider } from '@/components/ui/slider';
 let pdfjs: any;
 
 const signatureFonts = {
-    'Helvetica': 'Helvetica',
-    'Helvetica-Bold': 'Helvetica Bold',
-    'Helvetica-Oblique': 'Helvetica Italic',
-    'Helvetica-BoldOblique': 'Helvetica Bold Italic',
-    'Times-Roman': 'Times Roman',
-    'Times-Bold': 'Times Bold',
-    'Times-Italic': 'Times Italic',
-    'Times-BoldItalic': 'Times Bold Italic',
-    'Courier': 'Courier',
-    'Courier-Bold': 'Courier Bold',
-    'Courier-Oblique': 'Courier Italic',
-    'Courier-BoldOblique': 'Courier Bold Italic',
-    'Symbol': 'Symbol',
-    'ZapfDingbats': 'Zapf Dingbats',
-}
+    'GreatVibes-Regular': { name: 'Great Vibes', className: 'font-great-vibes' },
+    'DancingScript-Regular': { name: 'Dancing Script', className: 'font-dancing-script' },
+    'Helvetica': { name: 'Helvetica', className: 'font-sans' },
+    'Times-Roman': { name: 'Times Roman', className: 'font-serif' },
+    'Courier': { name: 'Courier', className: 'font-mono' },
+} as const;
 
-type SignatureFont = keyof typeof signatureFonts;
+type SignatureFontKey = keyof typeof signatureFonts;
+
 
 const colorOptions = {
     black: { name: 'Black', value: '#000000', rgb: { r: 0, g: 0, b: 0 } },
@@ -85,7 +77,7 @@ type DraggableObject = {
   // properties for text objects
   fontSize?: number;
   color?: ColorName;
-  font?: SignatureFont;
+  font?: SignatureFontKey;
   // properties for saving
   previewWidthPx?: number;
   previewHeightPx?: number;
@@ -207,7 +199,7 @@ const DraggableItem = ({
       {obj.type === 'image' ? (
         <Image src={obj.content} alt="signature" layout="fill" />
       ) : (
-        <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center')}>{obj.content}</div>
+        <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center', obj.font ? signatureFonts[obj.font].className : '')}>{obj.content}</div>
       )}
       
       <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", (isSelected || isInteracting) ? "opacity-100" : "group-hover/item:opacity-100")}>
@@ -250,7 +242,7 @@ export default function PdfSignaturePage() {
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
   const [signatureColor, setSignatureColor] = useState<ColorName>('black');
   
-  const [textPreview, setTextPreview] = useState({ text: '', font: 'Helvetica' as SignatureFont, color: 'black' as ColorName, fontSize: 24 });
+  const [textPreview, setTextPreview] = useState({ text: '', font: 'Helvetica' as SignatureFontKey, color: 'black' as ColorName, fontSize: 24 });
   
   const [uploadedImage, setUploadedImage] = useState<string|null>(null);
   const [bgColorToRemove, setBgColorToRemove] = useState<{r:number, g:number, b:number}|null>(null);
@@ -433,7 +425,8 @@ export default function PdfSignaturePage() {
     if (!text) return;
     
     const tempSpan = document.createElement('span');
-    tempSpan.style.font = `${fontSize}px ${font}`;
+    tempSpan.style.fontFamily = `'${signatureFonts[font].name}', ${signatureFonts[font].className.replace('font-', '')}`;
+    tempSpan.style.fontSize = `${fontSize}px`;
     tempSpan.style.whiteSpace = 'nowrap';
     tempSpan.style.visibility = 'hidden';
     tempSpan.innerText = text;
@@ -604,7 +597,7 @@ export default function PdfSignaturePage() {
       }
   }
   
-  const handleSave = async () => {
+    const handleSave = async () => {
     if (!file) return;
     setIsProcessing(true);
     setDone(false);
@@ -616,6 +609,12 @@ export default function PdfSignaturePage() {
     const savePromise = (async () => {
       try {
         const pdfDoc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+        
+        const greatVibesFontBytes = await fetch("/fonts/GreatVibes-Regular.ttf").then(res => res.arrayBuffer());
+        const dancingScriptFontBytes = await fetch("/fonts/DancingScript-Regular.ttf").then(res => res.arrayBuffer());
+
+        await pdfDoc.embedFont(greatVibesFontBytes);
+        await pdfDoc.embedFont(dancingScriptFontBytes);
         
         const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
 
@@ -637,8 +636,16 @@ export default function PdfSignaturePage() {
 
             const objColor = colorOptions[obj.color || 'black'].rgb;
 
-            if (obj.type === 'text' && obj.fontSize) {
-                const fontToEmbed = await pdfDoc.embedFont(obj.font as StandardFonts);
+            if (obj.type === 'text' && obj.fontSize && obj.font) {
+                let fontToEmbed;
+                if (obj.font === 'GreatVibes-Regular') {
+                    fontToEmbed = await pdfDoc.embedFont(greatVibesFontBytes);
+                } else if (obj.font === 'DancingScript-Regular') {
+                    fontToEmbed = await pdfDoc.embedFont(dancingScriptFontBytes);
+                } else {
+                    fontToEmbed = await pdfDoc.embedFont(obj.font as StandardFonts);
+                }
+                
                 page.drawText(obj.content, {
                     x: finalXPt,
                     y: finalYPt,
@@ -695,7 +702,7 @@ export default function PdfSignaturePage() {
     if (!formRef.current) return;
     const formData = new FormData(formRef.current);
     const text = formData.get('text-input') as string;
-    const font = formData.get('font') as SignatureFont;
+    const font = formData.get('font') as SignatureFontKey;
     const color = formData.get('color') as ColorName;
     const fontSize = parseInt(formData.get('font-size') as string, 10);
     setTextPreview({ text, font, color, fontSize });
@@ -800,9 +807,9 @@ export default function PdfSignaturePage() {
                                 <form ref={formRef} className="space-y-4" onChange={handleTextDialogChange} onSubmit={(e) => e.preventDefault()}>
                                     <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content || ''}/></div>
                                     <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
-                                        <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}}>{textPreview.text || "Preview"}</p>
+                                        <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(signatureFonts[textPreview.font].className)}>{textPreview.text || "Preview"}</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'Helvetica'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
+                                    <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'Helvetica'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([key, { name, className }]) => <SelectItem key={key} value={key} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
                                     <div className="space-y-2"><Label>Color</Label><RadioGroup name="color" defaultValue={editingObject?.color || 'black'} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`text-${key}`}/><Label htmlFor={`text-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div>
                                     <DialogClose asChild><Button type="button" onClick={handleAddOrUpdateText} className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
                                 </form>
