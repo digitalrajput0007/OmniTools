@@ -228,9 +228,9 @@ export default function WatermarkPdfPage() {
                 const textHeightPt = font.heightAtSize(fontSize);
                 
                 if (position === 'center') {
-                    page.drawText(text, {
-                        x: pageWidthPt / 2 - textWidthPt / 2,
-                        y: pageHeightPt / 2 - textHeightPt / 4,
+                     page.drawText(text, {
+                        x: pageWidthPt / 2 - textWidthPt / 2 + 10,
+                        y: pageHeightPt / 2 - textHeightPt / 2,
                         font,
                         size: fontSize,
                         color,
@@ -259,7 +259,7 @@ export default function WatermarkPdfPage() {
 
                 if(position === 'center') {
                     page.drawImage(watermarkImage, {
-                        x: pageWidthPt / 2 - imgWidthPt / 2,
+                        x: pageWidthPt / 2 - imgWidthPt / 2 + 10,
                         y: pageHeightPt / 2 - imgHeightPt / 2,
                         width: imgWidthPt,
                         height: imgHeightPt,
