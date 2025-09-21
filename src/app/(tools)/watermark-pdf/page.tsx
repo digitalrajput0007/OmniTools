@@ -35,9 +35,9 @@ type SignatureFont = keyof typeof signatureFonts;
 type Position = 'center' | 'tiled';
 type WatermarkMode = 'text' | 'image';
 
-const hexToRgb = (hex: string): {r: number, g: number, b: number} => {
+const hexToRgb = (hex: string): {r: number, g: number, b: number} | null => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return { r: 0, g: 0, b: 0 };
+    if (!result) return null;
     return {
       r: parseInt(result[1], 16) / 255,
       g: parseInt(result[2], 16) / 255,
@@ -156,7 +156,7 @@ export default function WatermarkPdfPage() {
   };
 
   const handleApplyWatermark = async () => {
-    if (!file || (mode === 'text' && !text) || (mode === 'image' && !imageFile)) {
+    if (!file || (mode === 'text' && !text) || (mode === 'image' && !imageFile) || !previewDimensions) {
       toast({ title: 'Missing Information', description: 'Please provide a PDF and watermark content.', variant: 'destructive' });
       return;
     }
@@ -172,11 +172,13 @@ export default function WatermarkPdfPage() {
         const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
         
         let watermarkImage;
+        let watermarkImageDims = { width: 0, height: 0 };
         if (mode === 'image' && imageFile) {
            const imageBytes = await imageFile.arrayBuffer();
            watermarkImage = imageFile.type === 'image/png' 
              ? await pdfDoc.embedPng(imageBytes) 
              : await pdfDoc.embedJpg(imageBytes);
+            watermarkImageDims = watermarkImage.scale(1);
         }
         
         const fontMap = {
@@ -186,71 +188,88 @@ export default function WatermarkPdfPage() {
         };
         
         let font;
-        if (fontStyle === 'font-dancing-script') {
-            const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
-            font = await pdfDoc.embedFont(fontBytes);
-        } else if (fontStyle === 'font-great-vibes') {
-            const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
-            font = await pdfDoc.embedFont(fontBytes);
-        } else {
-            font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
+        let customFontUsed = false;
+        try {
+            if (fontStyle === 'font-dancing-script') {
+                const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
+                font = await pdfDoc.embedFont(fontBytes);
+                customFontUsed = true;
+            } else if (fontStyle === 'font-great-vibes') {
+                const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
+                font = await pdfDoc.embedFont(fontBytes);
+                customFontUsed = true;
+            } else {
+                font = await pdfDoc.embedFont(fontMap[fontStyle as keyof typeof fontMap] || StandardFonts.Helvetica);
+            }
+        } catch(e) {
+            toast({ title: "Custom Font Failed", description: "Could not load custom font, falling back to default.", variant: 'destructive'});
+            font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         }
-        
+
         const color = hexToRgb(fontColor);
+        if (!color) {
+            throw new Error('Invalid color format.');
+        }
 
         for (const page of pdfDoc.getPages()) {
           const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
-          
+          const scaleX = pageWidthPt / previewDimensions.width;
+          const scaleY = pageHeightPt / previewDimensions.height;
+
+          const commonOptions = {
+              opacity: opacity[0],
+              rotate: degrees(rotation[0]),
+          };
+
           if (mode === 'text') {
               const textWidth = font.widthOfTextAtSize(text, fontSize);
-              
+              const scaledFontSize = fontSize * scaleY;
+
               if (position === 'center') {
                  page.drawText(text, {
-                    x: pageWidthPt / 2 - textWidth / 2,
+                    ...commonOptions,
+                    x: pageWidthPt / 2 - (textWidth * scaleX) / 2,
                     y: pageHeightPt / 2,
                     font,
-                    size: fontSize,
+                    size: scaledFontSize,
                     color: rgb(color.r, color.g, color.b),
-                    opacity: opacity[0],
-                    rotate: degrees(rotation[0]),
                 });
               } else { // Tiled
-                  const tileGap = 150;
-                  for (let x = 0; x < pageWidthPt; x += textWidth + tileGap) {
-                      for (let y = 0; y < pageHeightPt; y += tileGap) {
+                  const textWidthPt = font.widthOfTextAtSize(text, scaledFontSize);
+                  const tileGap = 150 * scaleX;
+                  for (let x = 0; x < pageWidthPt + pageHeightPt; x += textWidthPt + tileGap) {
+                      for (let y = 0; y < pageHeightPt + pageWidthPt; y += scaledFontSize + tileGap) {
                            page.drawText(text, {
-                            x, y, font, size: fontSize,
+                            ...commonOptions,
+                            x, y, font, size: scaledFontSize,
                             color: rgb(color.r, color.g, color.b),
-                            opacity: opacity[0],
-                            rotate: degrees(rotation[0]),
                         });
                       }
                   }
               }
           } else if (watermarkImage) {
-            let imgWidth = watermarkImage.width;
-            let imgHeight = watermarkImage.height;
-            const maxDim = 150;
-            if (imgWidth > maxDim || imgHeight > maxDim) {
-                const scale = Math.min(maxDim / imgWidth, maxDim / imgHeight);
-                imgWidth *= scale;
-                imgHeight *= scale;
+            let imgWidthPt = watermarkImageDims.width * scaleX;
+            let imgHeightPt = watermarkImageDims.height * scaleY;
+            const maxDimPt = 150 * scaleX;
+            if (imgWidthPt > maxDimPt || imgHeightPt > maxDimPt) {
+                const scale = Math.min(maxDimPt / imgWidthPt, maxDimPt / imgHeightPt);
+                imgWidthPt *= scale;
+                imgHeightPt *= scale;
             }
 
              if(position === 'center') {
                 page.drawImage(watermarkImage, {
-                    x: pageWidthPt / 2 - imgWidth / 2,
-                    y: pageHeightPt / 2 - imgHeight / 2,
-                    width: imgWidth,
-                    height: imgHeight,
-                    opacity: opacity[0],
-                    rotate: degrees(rotation[0])
+                    ...commonOptions,
+                    x: pageWidthPt / 2 - imgWidthPt / 2,
+                    y: pageHeightPt / 2 - imgHeightPt / 2,
+                    width: imgWidthPt,
+                    height: imgHeightPt,
                 });
              } else {
-                 const tileGap = 50;
-                 for (let x = 0; x < pageWidthPt; x += imgWidth + tileGap) {
-                     for (let y = 0; y < pageHeightPt; y += imgHeight + tileGap) {
-                         page.drawImage(watermarkImage, { x, y, width: imgWidth, height: imgHeight, opacity: opacity[0], rotate: degrees(rotation[0]) });
+                 const tileGap = 50 * scaleX;
+                 for (let x = 0; x < pageWidthPt; x += imgWidthPt + tileGap) {
+                     for (let y = 0; y < pageHeightPt; y += imgHeightPt + tileGap) {
+                         page.drawImage(watermarkImage, { ...commonOptions, x, y, width: imgWidthPt, height: imgHeightPt });
                      }
                  }
              }
@@ -294,11 +313,12 @@ export default function WatermarkPdfPage() {
     document.body.removeChild(a);
   };
 
-  const onImageLoad = () => {
+  const onImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
     if (previewImageRef.current) {
         setPreviewDimensions({
-            width: previewImageRef.current.offsetWidth,
-            height: previewImageRef.current.offsetHeight,
+            width: img.offsetWidth,
+            height: img.offsetHeight,
         });
     }
   };
