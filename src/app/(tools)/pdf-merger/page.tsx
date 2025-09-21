@@ -91,19 +91,29 @@ export default function PdfMergerPage() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
   
-  const createMergedPdf = async (): Promise<Blob> => {
-      const mergedPdf = await PDFDocument.create();
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
-        const copiedPages = await mergedPdf.copyPages(
-          pdf,
-          pdf.getPageIndices()
-        );
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
+  const createMergedPdf = async (): Promise<Blob | null> => {
+      try {
+        const mergedPdf = await PDFDocument.create();
+        for (const file of files) {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await PDFDocument.load(arrayBuffer);
+          const copiedPages = await mergedPdf.copyPages(
+            pdf,
+            pdf.getPageIndices()
+          );
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
+        }
+        const mergedPdfBytes = await mergedPdf.save();
+        return new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      } catch (error) {
+        console.error(error);
+        toast({
+            title: 'Error Merging PDFs',
+            description: error instanceof Error ? error.message : 'An unknown error occurred.',
+            variant: 'destructive',
+        });
+        return null;
       }
-      const mergedPdfBytes = await mergedPdf.save();
-      return new Blob([mergedPdfBytes], { type: 'application/pdf' });
   };
 
 
@@ -123,12 +133,8 @@ export default function PdfMergerPage() {
 
     const minDuration = 3000;
     const startTime = Date.now();
-    let mergeError: Error | null = null;
-    let createdBlob: Blob | null = null;
     
-    const mergePromise = createMergedPdf()
-        .then(blob => { createdBlob = blob; })
-        .catch(error => { mergeError = error; });
+    const mergePromise = createMergedPdf();
 
     const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
@@ -136,21 +142,21 @@ export default function PdfMergerPage() {
         setProgress(currentProgress);
     }, 50);
 
-    await Promise.all([mergePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    const [createdBlob] = await Promise.all([
+        mergePromise,
+        new Promise(resolve => setTimeout(resolve, minDuration))
+    ]);
     
     clearInterval(progressInterval);
     setIsMerging(false);
+    setProgress(100);
 
-    if (mergeError) {
-        toast({
-            title: 'Error Merging PDFs',
-            description: mergeError instanceof Error ? mergeError.message : 'An unknown error occurred.',
-            variant: 'destructive',
-        });
-        resetState();
-    } else if (createdBlob) {
+    if (createdBlob) {
         setMergedFile(createdBlob);
         setMerged(true);
+    } else {
+        // Error is handled in createMergedPdf, just reset state
+        resetState();
     }
   };
   
@@ -326,3 +332,5 @@ export default function PdfMergerPage() {
     </div>
   );
 }
+
+    
