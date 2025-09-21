@@ -234,12 +234,14 @@ export default function PdfMergerPage() {
                 ))}
               </div>
             </ScrollArea>
-             <label htmlFor="pdf-upload-additional" className="w-full">
-                <Button variant="outline" asChild className="w-full cursor-pointer">
-                    <span><PlusCircle className="mr-2 h-4 w-4" /> Add More Files</span>
-                </Button>
-                <Input id="pdf-upload-additional" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" multiple />
-             </label>
+             {!merged && !isMerging && (
+                <label htmlFor="pdf-upload-additional" className="w-full">
+                    <Button variant="outline" asChild className="w-full cursor-pointer">
+                        <span><PlusCircle className="mr-2 h-4 w-4" /> Add More Files</span>
+                    </Button>
+                    <Input id="pdf-upload-additional" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" multiple />
+                </label>
+             )}
           </div>
           <div className="flex flex-col justify-center space-y-6">
             {isMerging ? (
