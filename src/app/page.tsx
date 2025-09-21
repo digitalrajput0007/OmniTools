@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import {
-  AppLogo,
   AppName,
   tools
 } from '@/lib/constants';
@@ -17,7 +16,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Header from '@/components/ui/header';
+import Header, { AppLogo } from '@/components/ui/header';
 import Footer from '@/components/ui/footer';
 
 

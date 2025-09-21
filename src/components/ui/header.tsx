@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import {
-  AppLogo,
   AppName,
   tools
 } from '@/lib/constants';
@@ -25,12 +24,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import React from 'react';
 
 const imageTools = tools.filter(t => ['Image Compressor', 'Image to PDF', 'Image Format Converter', 'Image Resizer', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
+
+export const AppLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground',
+      className
+    )}
+    {...props}
+  >
+    <span className="text-sm font-bold">OJP</span>
+  </div>
+);
 
 
 export default function Header() {

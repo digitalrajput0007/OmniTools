@@ -21,7 +21,6 @@ import {
   Braces,
   Share2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export type Tool = {
   name: string;
@@ -122,18 +121,6 @@ export const tools: Tool[] = [
     icon: Ticket,
   },
 ];
-
-export const AppLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground',
-      className
-    )}
-    {...props}
-  >
-    <span className="text-sm font-bold">OJP</span>
-  </div>
-);
 
 
 export const AppName = 'Online JPG PDF';

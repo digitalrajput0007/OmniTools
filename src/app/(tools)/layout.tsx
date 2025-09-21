@@ -15,7 +15,8 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from '@/components/ui/sidebar';
-import { AppLogo, AppName, tools } from '@/lib/constants';
+import { AppName, tools } from '@/lib/constants';
+import { AppLogo } from '@/components/ui/header';
 
 // This is not how you generate dynamic metadata in the app router.
 // Each page should export its own metadata object.
