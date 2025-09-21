@@ -211,8 +211,8 @@ export default function WatermarkPdfPage() {
 
         const colorRgb = hexToRgb(fontColor);
         if (!colorRgb) {
-            toast({ title: 'Invalid Color', description: 'The selected color is invalid.', variant: 'destructive'});
-            throw new Error('Invalid color format.');
+            processError = new Error('Invalid color format.');
+            return;
         }
         const color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
 
@@ -227,7 +227,7 @@ export default function WatermarkPdfPage() {
                 if (position === 'center') {
                     page.drawText(text, {
                         x: pageWidthPt / 2 - textWidthPt / 2,
-                        y: pageHeightPt / 2 - textHeightPt / 2,
+                        y: pageHeightPt / 2 - textHeightPt / 4, // Adjusted for better vertical centering
                         font,
                         size: fontSize,
                         color,
@@ -316,7 +316,7 @@ export default function WatermarkPdfPage() {
     a.href = url;
     a.download = `watermarked-${file.name}`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
