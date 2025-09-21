@@ -51,9 +51,10 @@ export default function ReorderRotatePdfPage() {
   const [file, setFile] = useState<File | null>(null);
   const [previews, setPreviews] = useState<PagePreview[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
+  const [processedFileBlob, setProcessedFileBlob] = useState<Blob | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
   
@@ -76,7 +77,8 @@ export default function ReorderRotatePdfPage() {
     setIsProcessing(false);
     setProgress(0);
     setDone(false);
-    setIsDownloading(false);
+    setIsSaving(false);
+    setProcessedFileBlob(null);
   };
 
   const handleFileSelect = async (selectedFile: File) => {
@@ -167,46 +169,72 @@ export default function ReorderRotatePdfPage() {
   
   const handleSaveChanges = async () => {
       if (!file) return;
-      setIsDownloading(true);
+      setIsSaving(true);
+      setDone(false);
+      setProgress(0);
+
+      let newPdfBlob: Blob | null = null;
+      let saveError: Error | null = null;
+      const minDuration = 3000;
+      const startTime = Date.now();
+
+      const savePromise = (async () => {
+        try {
+            const existingPdfBytes = await file.arrayBuffer();
+            const pdfDoc = await PDFDocument.load(existingPdfBytes);
+            const newPdfDoc = await PDFDocument.create();
+            const pageIndices = previews.map(p => p.id - 1);
+            const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndices);
+
+            copiedPages.forEach((page, index) => {
+                const addedPage = newPdfDoc.addPage(page);
+                const previewForThisCopiedPage = previews.find((p) => p.id === pageIndices[index] + 1);
+
+                if (previewForThisCopiedPage) {
+                    const originalPage = pdfDoc.getPage(pageIndices[index]);
+                    const originalRotation = originalPage.getRotation().angle;
+                    const additionalRotation = previews[index].rotation;
+                    addedPage.setRotation(degrees(originalRotation + additionalRotation));
+                }
+            });
+
+            const pdfBytes = await newPdfDoc.save();
+            newPdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+        } catch (error) {
+            saveError = error instanceof Error ? error : new Error('An unknown error occurred.');
+            console.error("Save Error:", saveError);
+        }
+      })();
+
+      const progressInterval = setInterval(() => {
+          const elapsedTime = Date.now() - startTime;
+          const p = Math.min((elapsedTime / minDuration) * 100, 100);
+          setProgress(p);
+      }, 50);
       
-      try {
-          const existingPdfBytes = await file.arrayBuffer();
-          const pdfDoc = await PDFDocument.load(existingPdfBytes);
-          const newPdfDoc = await PDFDocument.create();
+      await Promise.all([savePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+      clearInterval(progressInterval);
+      
+      setIsSaving(false);
 
-          const pageIndices = previews.map(p => p.id - 1);
-          
-          const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndices);
-
-          copiedPages.forEach((page, index) => {
-            const previewForThisCopiedPage = previews[index];
-            const addedPage = newPdfDoc.addPage(page);
-            if (previewForThisCopiedPage) {
-              // Get the original rotation from the source page and add our new rotation
-              const originalPage = pdfDoc.getPage(previewForThisCopiedPage.id - 1);
-              const originalRotation = originalPage.getRotation().angle;
-              const additionalRotation = previewForThisCopiedPage.rotation;
-              addedPage.setRotation(degrees(originalRotation + additionalRotation));
-            }
-          });
-          
-          const pdfBytes = await newPdfDoc.save();
-          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `edited-${file.name}`;
-          document.body.appendChild(a);
-          a.click();
-          URL.revokeObjectURL(url);
-          document.body.removeChild(a);
+      if (saveError) {
+          toast({ title: "Error Saving PDF", description: saveError.message, variant: 'destructive' });
+      } else if (newPdfBlob) {
+          setProcessedFileBlob(newPdfBlob);
           setDone(true);
-      } catch (error) {
-          console.error(error);
-          toast({ title: "Error Saving PDF", description: "Something went wrong while saving.", variant: 'destructive' });
-      } finally {
-          setIsDownloading(false);
       }
+  };
+
+  const handleDownload = () => {
+    if (!processedFileBlob || !file) return;
+    const url = URL.createObjectURL(processedFileBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edited-${file.name}`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
 
 
@@ -219,22 +247,37 @@ export default function ReorderRotatePdfPage() {
         </div>
       );
     }
+
+    if(isSaving) {
+        return (
+            <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
+                <CircularProgress progress={progress} />
+                <p className="text-center text-sm text-muted-foreground">Saving your changes...</p>
+            </div>
+        );
+    }
     
     if (done) {
          return (
-             <div className="flex flex-col items-center justify-center space-y-6 text-center">
-                 <CheckCircle2 className="h-16 w-16 text-green-500" />
-                <h3 className="text-2xl font-bold">PDF Saved Successfully!</h3>
-                <p className="text-muted-foreground">Your reordered and rotated PDF has been downloaded.</p>
-                <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
-                    <Button onClick={handleSaveChanges} disabled={isDownloading}>
-                        <FileDown className="mr-2 h-4 w-4" /> Download Again
-                    </Button>
-                    <Button variant="secondary" onClick={resetState}>
-                        <RefreshCcw className="mr-2 h-4 w-4" /> Edit Another PDF
-                    </Button>
+            <div className="grid gap-6 md:grid-cols-2">
+                <div className="flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
+                    <PdfIcon className="h-24 w-24" />
+                    <p className="truncate text-lg font-medium">{file?.name}</p>
                 </div>
-                 <SharePrompt toolName="Reorder/Rotate PDF" />
+                 <div className="flex flex-col items-center justify-center space-y-6 text-center">
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    <h3 className="text-2xl font-bold">PDF Saved Successfully!</h3>
+                    <p className="text-muted-foreground">Your reordered and rotated PDF is ready.</p>
+                    <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
+                        <Button onClick={handleDownload}>
+                            <FileDown className="mr-2 h-4 w-4" /> Download PDF
+                        </Button>
+                        <Button variant="secondary" onClick={resetState}>
+                            <RefreshCcw className="mr-2 h-4 w-4" /> Edit Another PDF
+                        </Button>
+                    </div>
+                     <SharePrompt toolName="Reorder/Rotate PDF" />
+                </div>
             </div>
         );
     }
@@ -243,7 +286,7 @@ export default function ReorderRotatePdfPage() {
       return (
           <div className="space-y-6">
               <p className="text-center text-muted-foreground">Drag and drop pages to reorder them. Use the button to rotate.</p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`} 
@@ -263,8 +306,8 @@ export default function ReorderRotatePdfPage() {
                   ))}
               </div>
                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <Button onClick={handleSaveChanges} disabled={isDownloading} size="lg">
-                    {isDownloading ? "Saving..." : "Save Changes"}
+                  <Button onClick={handleSaveChanges} disabled={isSaving} size="lg">
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                   <Button onClick={resetState} variant="outline" size="lg">
                     Start Over
