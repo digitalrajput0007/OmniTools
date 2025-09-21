@@ -99,7 +99,7 @@ const DraggableItem = ({
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartPos = useRef({ x: 0, y: 0 });
+  const dragStartPos = useRef({ x: 0, y: 0, objX: 0, objY: 0 });
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
@@ -114,6 +114,8 @@ const DraggableItem = ({
     dragStartPos.current = {
       x: e.clientX,
       y: e.clientY,
+      objX: obj.x,
+      objY: obj.y,
     };
     e.stopPropagation();
   };
@@ -141,22 +143,22 @@ const DraggableItem = ({
         const dx = e.clientX - dragStartPos.current.x;
         const dy = e.clientY - dragStartPos.current.y;
         
-        let newX = obj.x + dx;
-        let newY = obj.y + dy;
+        let newX = dragStartPos.current.objX + dx;
+        let newY = dragStartPos.current.objY + dy;
 
         let newPageIndex = 0;
-        for(let i = 0; i < pageOffsets.length; i++) {
-          if (newY + containerRect.top > pageOffsets[i]) {
-            newPageIndex = i;
+        const absoluteY = newY + containerRect.top;
+
+        for (let i = 0; i < pageOffsets.length; i++) {
+          const pageTop = pageOffsets[i];
+          const pageBottom = pageOffsets[i+1] || Infinity;
+          if (absoluteY >= pageTop && absoluteY < pageBottom) {
+              newPageIndex = i;
+              break;
           }
         }
         
         onUpdate({ ...obj, x: newX, y: newY, pageIndex: newPageIndex });
-
-        dragStartPos.current = {
-            x: e.clientX,
-            y: e.clientY
-        }
 
       } else if (isResizing) {
           const dx = e.clientX - resizeStartPos.current.x;
@@ -192,7 +194,7 @@ const DraggableItem = ({
       className={cn(
         "group/item absolute cursor-move border border-dashed",
         isSelected ? 'border-primary' : 'border-transparent hover:border-primary/50',
-        isDragging || isResizing ? 'z-30' : 'z-20'
+        isDragging || isResizing ? 'z-30' : (isSelected ? 'z-20' : 'z-10')
       )}
       style={{
         left: obj.x,
@@ -314,7 +316,11 @@ export default function PdfSignaturePage() {
   useEffect(() => {
     updatePageOffsets();
     window.addEventListener('resize', updatePageOffsets);
-    return () => window.removeEventListener('resize', updatePageOffsets);
+    window.addEventListener('scroll', updatePageOffsets);
+    return () => {
+        window.removeEventListener('resize', updatePageOffsets);
+        window.removeEventListener('scroll', updatePageOffsets);
+    }
   }, [previews]);
 
 
@@ -620,7 +626,6 @@ export default function PdfSignaturePage() {
             const objFinalWidth = obj.width * scale;
             const objFinalHeight = obj.height * scale;
             
-            // Adjust y-coordinate calculation
             const pageTopInContainer = pageOffsets[obj.pageIndex] - (pageContainerRef.current?.getBoundingClientRect().top || 0);
             const x = obj.x * scale;
             const y = pageHeight - ((obj.y - pageTopInContainer) * scale + objFinalHeight);
@@ -688,7 +693,7 @@ export default function PdfSignaturePage() {
                             <DialogContent>
                                 <DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader>
                                 <form className="space-y-4" onChange={handleTextDialogChange} onSubmit={(e) => e.preventDefault()}>
-                                    <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content}/></div>
+                                    <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content || ''}/></div>
                                     <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
                                         <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
                                     </div>
@@ -742,12 +747,14 @@ export default function PdfSignaturePage() {
                   {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>}
             </div>
             <div
-              ref={pageContainerRef}
               className="md:col-span-3 space-y-4 relative"
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleObjectDrop}
             >
-              <div className="relative z-10">
+              <div
+                ref={pageContainerRef}
+                className="relative z-10"
+              >
                 {previews.map((src, index) => (
                     <div key={index} data-page-index={index} className="relative border rounded-lg overflow-hidden shadow-md bg-white mb-4">
                         <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto" />
@@ -755,23 +762,21 @@ export default function PdfSignaturePage() {
                 ))}
               </div>
               
-              <div className="absolute top-0 left-0 w-full h-full z-20">
+              <div className="absolute top-0 left-0 w-full h-full z-20 pointer-events-none">
                  {objects.filter(o => o.pageIndex !== -1).map(obj => (
-                    <DraggableItem
-                      key={obj.id}
-                      obj={{...obj, y: obj.y - (pageOffsets[obj.pageIndex] - (pageContainerRef.current?.getBoundingClientRect().top || 0))}}
-                      pageOffsets={pageOffsets}
-                      containerRef={pageContainerRef}
-                      isSelected={selectedObjectId === obj.id}
-                      onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
-                      onUpdate={(updatedObj) => handleUpdateObject({
-                        ...updatedObj,
-                        y: updatedObj.y + (pageOffsets[updatedObj.pageIndex] - (pageContainerRef.current?.getBoundingClientRect().top || 0))
-                      })}
-                      onDelete={handleDeleteObject}
-                      onEdit={handleEditObject}
-                      onDuplicate={handleDuplicateObject}
-                    />
+                    <div key={obj.id} className="pointer-events-auto">
+                        <DraggableItem
+                          obj={obj}
+                          pageOffsets={pageOffsets}
+                          containerRef={pageContainerRef}
+                          isSelected={selectedObjectId === obj.id}
+                          onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
+                          onUpdate={handleUpdateObject}
+                          onDelete={handleDeleteObject}
+                          onEdit={handleEditObject}
+                          onDuplicate={handleDuplicateObject}
+                        />
+                    </div>
                 ))}
               </div>
             </div>
@@ -818,3 +823,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
