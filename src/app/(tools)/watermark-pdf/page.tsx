@@ -212,6 +212,7 @@ export default function WatermarkPdfPage() {
         if (!colorRgb) {
             throw new Error('Invalid color format.');
         }
+        const color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
 
         const pages = pdfDoc.getPages();
         for (const page of pages) {
@@ -227,7 +228,7 @@ export default function WatermarkPdfPage() {
                         y: pageHeightPt / 2 - textHeightPt / 4, // Adjust for better vertical centering
                         font,
                         size: fontSize,
-                        color: colorRgb,
+                        color: color,
                         opacity: opacity[0],
                         rotate: degrees(rotation[0]),
                     });
@@ -239,7 +240,7 @@ export default function WatermarkPdfPage() {
                                 x: x - pageHeightPt,
                                 y: y - pageHeightPt,
                                 font, size: fontSize,
-                                color: colorRgb,
+                                color: color,
                                 opacity: opacity[0],
                                 rotate: degrees(rotation[0]),
                             });
