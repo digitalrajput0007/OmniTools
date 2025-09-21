@@ -123,36 +123,35 @@ export default function PdfMergerPage() {
 
     const minDuration = 3000;
     const startTime = Date.now();
+    let mergeError: Error | null = null;
     let createdBlob: Blob | null = null;
+    
+    const mergePromise = createMergedPdf()
+        .then(blob => { createdBlob = blob; })
+        .catch(error => { mergeError = error; });
 
     const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 99);
+        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
         setProgress(currentProgress);
     }, 50);
 
-    try {
-        createdBlob = await createMergedPdf();
-        const elapsedTime = Date.now() - startTime;
-        if (elapsedTime < minDuration) {
-            await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
-        }
-    } catch (error) {
-        clearInterval(progressInterval);
-        setIsMerging(false);
-        toast({
-            title: 'Error Merging PDFs',
-            description: error instanceof Error ? error.message : 'An unknown error occurred.',
-            variant: 'destructive',
-        });
-        return;
-    }
+    await Promise.all([mergePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
     
     clearInterval(progressInterval);
-    setProgress(100);
-    setMergedFile(createdBlob);
-    setMerged(true);
     setIsMerging(false);
+
+    if (mergeError) {
+        toast({
+            title: 'Error Merging PDFs',
+            description: mergeError instanceof Error ? mergeError.message : 'An unknown error occurred.',
+            variant: 'destructive',
+        });
+        resetState();
+    } else if (createdBlob) {
+        setMergedFile(createdBlob);
+        setMerged(true);
+    }
   };
   
   const handleDownload = () => {
@@ -197,15 +196,6 @@ export default function PdfMergerPage() {
       );
     }
 
-    if (isMerging) {
-      return (
-        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-          <CircularProgress progress={progress} />
-          <p className="text-center text-sm text-muted-foreground">Merging...</p>
-        </div>
-      );
-    }
-    
     if (merged) {
       return (
         <div className="flex flex-col items-center justify-center space-y-6">
@@ -226,7 +216,7 @@ export default function PdfMergerPage() {
         </div>
       );
     }
-
+    
     return (
        <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4">
@@ -262,7 +252,14 @@ export default function PdfMergerPage() {
               </div>
           </div>
           <div className="flex flex-col justify-center">
-             <Button onClick={handleMerge} size="lg" className="w-full" disabled={files.length < 2}>Merge PDFs</Button>
+            {isMerging ? (
+                 <div className="flex h-full flex-col items-center justify-center space-y-4">
+                    <CircularProgress progress={progress} />
+                    <p className="text-center text-sm text-muted-foreground">Merging PDFs... This may take a moment.</p>
+                 </div>
+              ) : (
+                <Button onClick={handleMerge} size="lg" className="w-full" disabled={files.length < 2}>Merge PDFs</Button>
+              )}
           </div>
        </div>
     );

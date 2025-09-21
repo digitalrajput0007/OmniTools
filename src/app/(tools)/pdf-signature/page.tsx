@@ -65,21 +65,23 @@ type DraggableObject = {
   id: number;
   type: 'image' | 'text';
   pageIndex: number;
-  x: number; // position on page in pixels
-  y: number; // position on page in pixels
+  x: number; // position on page in pixels relative to page container
+  y: number; // position on page in pixels relative to page container
   content: string; // data URL for image, text content for text
   width: number; // width in pixels
   height: number; // height in pixels
   aspectRatio: number;
+  // properties for text objects
   fontSize?: number;
   color?: ColorName;
   font?: SignatureFont;
+  // properties for saving
+  previewWidthPx?: number;
+  previewHeightPx?: number;
 };
 
 const DraggableItem = ({
   obj,
-  pageOffsets,
-  containerRef,
   isSelected,
   onSelect,
   onUpdate,
@@ -88,8 +90,6 @@ const DraggableItem = ({
   onDuplicate,
 }: {
   obj: DraggableObject;
-  pageOffsets: number[];
-  containerRef: React.RefObject<HTMLDivElement>;
   isSelected: boolean;
   onSelect: (e: React.MouseEvent, id: number) => void;
   onUpdate: (updatedObj: DraggableObject) => void;
@@ -103,21 +103,22 @@ const DraggableItem = ({
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  
+  const isInteracting = isDraggingRef.current || isResizing;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || (e.target as HTMLElement).classList.contains('resize-handle')) {
         return;
     }
     onSelect(e, obj.id);
+    e.stopPropagation();
     isDraggingRef.current = true;
-    
     dragStartPos.current = {
       x: e.clientX,
       y: e.clientY,
       objX: obj.x,
       objY: obj.y,
     };
-    e.stopPropagation();
   };
 
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -136,28 +137,10 @@ const DraggableItem = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const containerRect = containerRef.current?.getBoundingClientRect();
-      if (!containerRect) return;
-
       if (isDraggingRef.current) {
         const dx = e.clientX - dragStartPos.current.x;
         const dy = e.clientY - dragStartPos.current.y;
-        
-        let newX = dragStartPos.current.objX + dx;
-        let newY = dragStartPos.current.objY + dy;
-
-        let newPageIndex = 0;
-        const absoluteY = newY + containerRect.top + (containerRef.current?.scrollTop || 0);
-
-        for (let i = 0; i < pageOffsets.length; i++) {
-          const pageTop = pageOffsets[i];
-          if (absoluteY >= pageTop) {
-              newPageIndex = i;
-          }
-        }
-        
-        onUpdate({ ...obj, x: newX, y: newY, pageIndex: newPageIndex });
-
+        onUpdate({ ...obj, x: dragStartPos.current.objX + dx, y: dragStartPos.current.objY + dy });
       } else if (isResizing) {
           const dx = e.clientX - resizeStartPos.current.x;
           let newWidth = resizeStartPos.current.width + dx;
@@ -172,15 +155,16 @@ const DraggableItem = ({
       setIsResizing(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    if (isDraggingRef.current || isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [obj, onUpdate, containerRef, pageOffsets, isResizing]);
-
-  const topOffset = pageOffsets[obj.pageIndex] - (containerRef.current?.getBoundingClientRect().top || 0);
+  }, [obj, onUpdate, isResizing, isDraggingRef]);
 
   return (
     <div
@@ -189,7 +173,7 @@ const DraggableItem = ({
       className={cn(
         "group/item absolute cursor-move border border-dashed",
         isSelected ? 'border-primary' : 'border-transparent hover:border-primary/50',
-        isDraggingRef.current || isResizing ? 'z-30' : (isSelected ? 'z-20' : 'z-10')
+        isInteracting ? 'z-30' : (isSelected ? 'z-20' : 'z-10')
       )}
       style={{
         left: obj.x,
@@ -204,14 +188,14 @@ const DraggableItem = ({
         <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center', obj.font)}>{obj.content}</div>
       )}
       
-      <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", isSelected ? "opacity-100" : "group-hover/item:opacity-100")}>
+      <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", (isSelected || isInteracting) ? "opacity-100" : "group-hover/item:opacity-100")}>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
       </div>
       
-       {obj.type === 'image' && (
-        <div className={cn("opacity-0", isSelected ? "opacity-100" : "group-hover/item:opacity-100")}>
+      {obj.type === 'image' && (
+        <div className={cn("opacity-0", isSelected || isInteracting ? "opacity-100" : "group-hover/item:opacity-100")}>
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background z-40" />
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background z-40" />
           <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background z-40" />
@@ -227,7 +211,7 @@ export default function PdfSignaturePage() {
   const [file, setFile] = useState<File | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
   const [pageDimensions, setPageDimensions] = useState<{width: number, height: number}[]>([]);
-  const [pageOffsets, setPageOffsets] = useState<number[]>([]);
+  const [pageOffsets, setPageOffsets] = useState<{ top: number, height: number }[]>([]);
 
   const [objects, setObjects] = useState<DraggableObject[]>([]);
   
@@ -304,8 +288,8 @@ export default function PdfSignaturePage() {
 
   const updatePageOffsets = () => {
     if (!pageContainerRef.current) return;
-    const pageElements = pageContainerRef.current.querySelectorAll<HTMLElement>('[data-page-index]');
-    const newOffsets = Array.from(pageElements).map(el => el.offsetTop);
+    const pageElements = pageContainerRef.current.querySelectorAll<HTMLDivElement>('[data-page-index]');
+    const newOffsets = Array.from(pageElements).map(el => ({ top: el.offsetTop, height: el.offsetHeight }));
     setPageOffsets(newOffsets);
   }
 
@@ -394,10 +378,11 @@ export default function PdfSignaturePage() {
     const containerRect = pageContainerRef.current?.getBoundingClientRect();
     if (!containerRect) return;
 
-    let newPageIndex = 0;
     const dropYInContainer = e.clientY - containerRect.top + (pageContainerRef.current?.scrollTop || 0);
+    
+    let newPageIndex = 0;
     for(let i = 0; i < pageOffsets.length; i++) {
-      if (dropYInContainer > pageOffsets[i]) {
+      if (dropYInContainer > pageOffsets[i].top) {
         newPageIndex = i;
       }
     }
@@ -406,7 +391,14 @@ export default function PdfSignaturePage() {
       if (obj.id === objectId) {
         const x = e.clientX - containerRect.left - (obj.width / 2);
         const y = dropYInContainer - (obj.height / 2);
-        return { ...obj, pageIndex: newPageIndex, x, y };
+        return { 
+          ...obj, 
+          pageIndex: newPageIndex, 
+          x, 
+          y,
+          previewWidthPx: pageContainerRef.current?.clientWidth,
+          previewHeightPx: pageOffsets[newPageIndex].height,
+        };
       }
       return obj;
     }));
@@ -588,7 +580,6 @@ export default function PdfSignaturePage() {
     
     try {
         const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-        const pages = pdfDoc.getPages();
         const fontCache: Partial<Record<SignatureFont, PDFFont>> = {};
 
         const loadFont = async (fontKey: SignatureFont) => {
@@ -615,29 +606,39 @@ export default function PdfSignaturePage() {
         const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
 
         for (const obj of objectsToPlace) {
-            const page = pages[obj.pageIndex];
-            const { width: pageWidth, height: pageHeight } = page.getSize();
-            const pageDim = pageDimensions[obj.pageIndex];
-            const scale = pageWidth / pageDim.width;
+            const page = pdfDoc.getPage(obj.pageIndex);
+            const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
+            const { previewWidthPx, previewHeightPx } = obj;
+
+            if (!previewWidthPx || !previewHeightPx) continue;
             
-            const objFinalWidth = obj.width * scale;
-            const objFinalHeight = obj.height * scale;
-            
-            const pageTopInContainer = pageOffsets[obj.pageIndex];
-            const x = obj.x * scale;
-            const y = pageHeight - ((obj.y - pageTopInContainer) * scale + objFinalHeight);
-            
+            const scaleX = pageWidthPt / previewWidthPx;
+            const scaleY = pageHeightPt / previewHeightPx;
+
+            const finalWidthPt = obj.width * scaleX;
+            const finalHeightPt = obj.height * scaleY;
+
+            const finalXPt = obj.x * scaleX;
+            const finalYPt = pageHeightPt - ((obj.y - pageOffsets[obj.pageIndex].top) * scaleY + finalHeightPt);
+
             const objColor = colorOptions[obj.color || 'black'].rgb;
 
-            if (obj.type === 'text') {
-                 const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
-                 page.drawText(obj.content, {
-                    x, y, font: fontToEmbed, size: (obj.fontSize || 24) * scale, color: objColor,
+            if (obj.type === 'text' && obj.fontSize) {
+                const fontToEmbed = await loadFont(obj.font || 'font-dancing-script');
+                page.drawText(obj.content, {
+                    x: finalXPt,
+                    y: finalYPt,
+                    font: fontToEmbed,
+                    size: obj.fontSize * scaleY, // Scale font size based on height
+                    color: objColor,
                 });
             } else if (obj.type === 'image') {
                 const pngImage = await pdfDoc.embedPng(obj.content);
                 page.drawImage(pngImage, {
-                    x, y, width: objFinalWidth, height: objFinalHeight,
+                    x: finalXPt,
+                    y: finalYPt,
+                    width: finalWidthPt,
+                    height: finalHeightPt,
                 });
             }
         }
@@ -681,7 +682,7 @@ export default function PdfSignaturePage() {
 
     if (previews.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6" onClick={() => setSelectedObjectId(null)}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6" onClick={(e) => { e.stopPropagation(); setSelectedObjectId(null); }}>
             <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4">
                  <Card>
                     <CardHeader><CardTitle>Objects</CardTitle><CardDescription>Add items, then drag them onto a page.</CardDescription></CardHeader>
@@ -755,27 +756,25 @@ export default function PdfSignaturePage() {
               >
                 {previews.map((src, index) => (
                     <div key={index} data-page-index={index} className="relative border rounded-lg overflow-hidden shadow-md bg-white mb-4">
-                        <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto" />
+                        <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto pointer-events-none" />
                     </div>
                 ))}
-              </div>
-              
-              <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
-                 {objects.filter(o => o.pageIndex !== -1).map(obj => (
-                    <div key={obj.id} className="pointer-events-auto">
-                        <DraggableItem
-                          obj={obj}
-                          pageOffsets={pageOffsets}
-                          containerRef={pageContainerRef}
-                          isSelected={selectedObjectId === obj.id}
-                          onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
-                          onUpdate={handleUpdateObject}
-                          onDelete={handleDeleteObject}
-                          onEdit={handleEditObject}
-                          onDuplicate={handleDuplicateObject}
-                        />
-                    </div>
-                ))}
+
+                 <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
+                    {objects.filter(o => o.pageIndex !== -1).map(obj => (
+                        <div key={obj.id} className="pointer-events-auto" style={{ position: 'absolute', top: pageOffsets[obj.pageIndex]?.top, left: 0 }}>
+                            <DraggableItem
+                              obj={obj}
+                              isSelected={selectedObjectId === obj.id}
+                              onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
+                              onUpdate={handleUpdateObject}
+                              onDelete={handleDeleteObject}
+                              onEdit={handleEditObject}
+                              onDuplicate={handleDuplicateObject}
+                            />
+                        </div>
+                    ))}
+                 </div>
               </div>
             </div>
         </div>
