@@ -91,16 +91,20 @@ export default function PdfPasswordPage() {
     const processPromise = (async () => {
         try {
             const existingPdfBytes = await file.arrayBuffer();
-            const pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password, userPassword: password });
-            
+            let pdfDoc;
+
             if (mode === 'encrypt') {
+                pdfDoc = await PDFDocument.load(existingPdfBytes);
+                pdfDoc.setProducer('OmniBox');
+                pdfDoc.setCreator('OmniBox');
                 newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
+                pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password, userPassword: password });
                 newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
             processError = error instanceof Error ? error : new Error('An unknown error occurred.');
-            if (error.message.includes('Invalid password')) {
+            if (error.message.includes('Invalid password') || error.message.includes('password')) {
                 processError = new Error('Invalid password. Please check and try again.');
             }
         }
@@ -202,7 +206,7 @@ export default function PdfPasswordPage() {
         >
             <UploadCloud className="h-12 w-12 text-muted-foreground" />
             <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
-            <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
+            <Input id="pdf-upload" type="file" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} accept="application/pdf" />
             <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
         </label>
     );
