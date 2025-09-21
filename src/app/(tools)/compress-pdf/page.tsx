@@ -26,18 +26,10 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-type CompressionLevel = 'recommended' | 'high' | 'low';
-
-const compressionQualityMap = {
-  high: 0.5,
-  recommended: 0.75,
-  low: 0.9,
-};
 
 
 export default function CompressPdfPage() {
@@ -49,7 +41,7 @@ export default function CompressPdfPage() {
   const [done, setDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [compressedFile, setCompressedFile] = useState<Blob | null>(null);
-  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('recommended');
+  const [compressionQuality, setCompressionQuality] = useState([75]);
   const { toast } = useToast();
 
   const resetState = () => {
@@ -60,7 +52,7 @@ export default function CompressPdfPage() {
     setProgress(0);
     setDone(false);
     setCompressedFile(null);
-    setCompressionLevel('recommended');
+    setCompressionQuality([75]);
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -117,55 +109,64 @@ export default function CompressPdfPage() {
 
     let newPdfBytes: Uint8Array | null = null;
     let compressionError: Error | null = null;
+    
+    const startTime = Date.now();
+    const minDuration = 3000;
 
-    try {
-        const existingPdfBytes = await file.arrayBuffer();
-        const loadingTask = pdfjs.getDocument({ data: existingPdfBytes });
-        const pdf = await loadingTask.promise;
-        const numPages = pdf.numPages;
+    const compressionPromise = (async () => {
+        try {
+            const existingPdfBytes = await file.arrayBuffer();
+            const loadingTask = pdfjs.getDocument({ data: existingPdfBytes });
+            const pdf = await loadingTask.promise;
+            const numPages = pdf.numPages;
 
-        const newPdfDoc = await PDFDocument.create();
-        const quality = compressionQualityMap[compressionLevel];
+            const newPdfDoc = await PDFDocument.create();
+            const quality = compressionQuality[0] / 100;
 
-        for (let i = 1; i <= numPages; i++) {
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 }); // Use a reasonable scale
+            for (let i = 1; i <= numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 }); // Use a reasonable scale
 
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            
-            if(context) {
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: viewport,
-                };
-                await page.render(renderContext).promise;
-
-                const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-                const jpegImage = await newPdfDoc.embedJpg(jpegDataUrl);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
                 
-                const newPage = newPdfDoc.addPage([viewport.width, viewport.height]);
-                newPage.drawImage(jpegImage, {
-                    x: 0,
-                    y: 0,
-                    width: viewport.width,
-                    height: viewport.height,
-                });
+                if(context) {
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport,
+                    };
+                    await page.render(renderContext).promise;
+
+                    const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    const jpegImage = await newPdfDoc.embedJpg(jpegDataUrl);
+                    
+                    const newPage = newPdfDoc.addPage([viewport.width, viewport.height]);
+                    newPage.drawImage(jpegImage, {
+                        x: 0,
+                        y: 0,
+                        width: viewport.width,
+                        height: viewport.height,
+                    });
+                }
             }
-            setProgress(Math.round((i / numPages) * 100));
+
+            newPdfBytes = await newPdfDoc.save();
+        } catch (error) {
+            compressionError = error instanceof Error ? error : new Error('An unknown error occurred during compression.');
         }
+    })();
+    
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const p = Math.min((elapsedTime / minDuration) * 100, 100);
+        setProgress(p);
+    }, 50);
 
-        newPdfBytes = await newPdfDoc.save();
 
-    } catch (error) {
-      compressionError =
-        error instanceof Error
-          ? error
-          : new Error('An unknown error occurred during compression.');
-    }
-
+    await Promise.all([compressionPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    clearInterval(progressInterval);
     setIsProcessing(false);
 
     if (compressionError) {
@@ -264,26 +265,20 @@ export default function CompressPdfPage() {
                     <X className="h-4 w-4" />
                 </Button>
             </div>
-            <div className="flex flex-col space-y-6">
-                <div>
-                  <h3 className="mb-4 font-semibold">Compression Level</h3>
-                  <RadioGroup value={compressionLevel} onValueChange={(v) => setCompressionLevel(v as CompressionLevel)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="recommended" id="level-recommended" />
-                      <Label htmlFor="level-recommended" className="flex-1">Recommended</Label>
-                      <p className='text-xs text-muted-foreground'>Good balance between size and quality.</p>
-                    </div>
-                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="high" id="level-high" />
-                      <Label htmlFor="level-high" className="flex-1">High Compression</Label>
-                       <p className='text-xs text-muted-foreground'>Smallest size, may reduce quality.</p>
-                    </div>
-                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="low" id="level-basic" />
-                      <Label htmlFor="level-basic" className="flex-1">Lower Compression</Label>
-                       <p className='text-xs text-muted-foreground'>Less size reduction, best quality.</p>
-                    </div>
-                  </RadioGroup>
+            <div className="flex flex-col space-y-6 justify-center">
+                <div className="space-y-4">
+                  <Label htmlFor="compression-quality">Compression Quality: {compressionQuality[0]}%</Label>
+                  <Slider
+                    id="compression-quality"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={compressionQuality}
+                    onValueChange={setCompressionQuality}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Lower percentage means smaller file size but lower image quality.
+                  </p>
                 </div>
                  <Button onClick={handleCompress} size="lg" className="w-full">Compress PDF</Button>
             </div>
