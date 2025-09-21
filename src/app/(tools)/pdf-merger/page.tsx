@@ -136,13 +136,11 @@ export default function PdfMergerPage() {
         const elapsedTime = Date.now() - startTime;
         const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
         setProgress(currentProgress);
-        if (currentProgress >= 100) {
-            clearInterval(progressInterval);
-        }
     }, 50);
 
     await Promise.all([mergePromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
     
+    clearInterval(progressInterval);
     setIsMerging(false);
 
     if (mergeError) {
@@ -151,7 +149,7 @@ export default function PdfMergerPage() {
             description: mergeError.message,
             variant: 'destructive',
         });
-    } else {
+    } else if (mergedBlob) {
         setMerged(true);
         setMergedFile(mergedBlob);
     }
