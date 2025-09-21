@@ -62,10 +62,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-body antialiased bg-background text-foreground flex min-h-dvh flex-col" suppressHydrationWarning>
-        <main className="flex-1">
-            {children}
-        </main>
+      <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning>
+        {children}
         <Toaster />
       </body>
     </html>

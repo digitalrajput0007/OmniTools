@@ -36,45 +36,47 @@ export default function ContactPage() {
   };
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <Header />
-      <div className="container mx-auto max-w-2xl py-12 px-4 md:px-6">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-headline">Contact Us</CardTitle>
-            <CardDescription>
-              We'd love to hear from you.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6 text-center">
-            <p className="text-muted-foreground">
-              For support, feature requests, partnership opportunities, or general inquiries, please don't hesitate to reach out. The best way to get in touch with us is by email.
-            </p>
-            
-            <div className="flex flex-col items-center gap-4 rounded-lg border bg-secondary/30 p-6">
-              <div className="flex items-center gap-2 text-lg font-semibold text-primary">
-                <Mail className="h-5 w-5" />
-                <span>{email}</span>
+      <main className="flex-1">
+        <div className="container mx-auto max-w-2xl py-12 px-4 md:px-6">
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-3xl font-headline">Contact Us</CardTitle>
+              <CardDescription>
+                We'd love to hear from you.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 text-center">
+              <p className="text-muted-foreground">
+                For support, feature requests, partnership opportunities, or general inquiries, please don't hesitate to reach out. The best way to get in touch with us is by email.
+              </p>
+              
+              <div className="flex flex-col items-center gap-4 rounded-lg border bg-secondary/30 p-6">
+                <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                  <Mail className="h-5 w-5" />
+                  <span>{email}</span>
+                </div>
+                <div className='flex gap-4'>
+                    <Button onClick={copyEmail}>
+                        <Copy className="mr-2 h-4 w-4" /> Copy Email
+                    </Button>
+                     <Button variant="outline" asChild>
+                        <a href={`mailto:${email}`}>
+                            <Mail className="mr-2 h-4 w-4" /> Open in Mail App
+                        </a>
+                    </Button>
+                </div>
               </div>
-              <div className='flex gap-4'>
-                  <Button onClick={copyEmail}>
-                      <Copy className="mr-2 h-4 w-4" /> Copy Email
-                  </Button>
-                   <Button variant="outline" asChild>
-                      <a href={`mailto:${email}`}>
-                          <Mail className="mr-2 h-4 w-4" /> Open in Mail App
-                      </a>
-                  </Button>
-              </div>
-            </div>
-            
-            <p className="text-sm text-muted-foreground">
-              We do our best to respond to all messages within 2-3 business days.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+              
+              <p className="text-sm text-muted-foreground">
+                We do our best to respond to all messages within 2-3 business days.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
       <Footer />
-    </>
+    </div>
   );
 }
