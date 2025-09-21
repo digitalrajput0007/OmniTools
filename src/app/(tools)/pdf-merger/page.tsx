@@ -18,12 +18,14 @@ import {
   X,
   CheckCircle2,
   RefreshCcw,
+  PlusCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -215,36 +217,29 @@ export default function PdfMergerPage() {
     return (
        <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4">
-              <label
-                htmlFor="pdf-upload-additional"
-                className={cn(
-                  'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors',
-                  { 'border-primary bg-accent/50': isDragging }
-                )}
-                onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
-              >
-                <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">Drag & drop more files, or click to browse</p>
-                <Input id="pdf-upload-additional" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" multiple />
-              </label>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Selected Files ({files.length}):</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {files.map((file, index) => (
-                    <div key={index} className="relative flex items-center gap-4 rounded-md border p-2">
-                      <PdfIcon className="h-6 w-6" />
-                      <div className="flex-1 overflow-hidden">
-                        <p className="truncate text-sm font-medium">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFile(index)} disabled={isMerging}>
-                        <X className="h-4 w-4" />
-                      </Button>
+            <h3 className="font-semibold">Selected Files ({files.length}):</h3>
+            <ScrollArea className="h-80 w-full">
+              <div className="space-y-2 pr-4">
+                {files.map((file, index) => (
+                  <div key={index} className="relative flex items-center gap-4 rounded-md border p-2">
+                    <PdfIcon className="h-6 w-6 shrink-0" />
+                    <div className="flex-1 overflow-hidden">
+                      <p className="truncate text-sm font-medium">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                     </div>
-                  ))}
-                </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveFile(index)} disabled={isMerging}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
+            </ScrollArea>
+             <label htmlFor="pdf-upload-additional" className="w-full">
+                <Button variant="outline" asChild className="w-full cursor-pointer">
+                    <span><PlusCircle className="mr-2 h-4 w-4" /> Add More Files</span>
+                </Button>
+                <Input id="pdf-upload-additional" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" multiple />
+             </label>
           </div>
           <div className="flex flex-col justify-center space-y-6">
             {isMerging ? (
