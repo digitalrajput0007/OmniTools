@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import {
   Combine,
@@ -121,6 +122,6 @@ export const tools: Tool[] = [
   },
 ];
 
-export const AppLogo = Combine;
-export const AppName = 'OmniToolbox';
+export const AppLogo = FileOutput;
+export const AppName = 'Online JPG PDF';
 export const ShareIcon = Share2;

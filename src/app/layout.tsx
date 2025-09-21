@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from 'next';
 import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
@@ -51,10 +52,11 @@ export default function RootLayout({
       <head>
         {/* 
           PASTE YOUR GOOGLE ANALYTICS SNIPPET HERE.
-
+          
           It should look something like this, but with your actual ID.
           You can get this from your Google Analytics dashboard.
-
+          
+          <!-- Google tag (gtag.js) -->
           <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
           <script>
             window.dataLayer = window.dataLayer || [];

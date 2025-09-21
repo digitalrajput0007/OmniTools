@@ -16,22 +16,6 @@ interface SharePromptProps {
 export function SharePrompt({ toolName, className }: SharePromptProps) {
   const { toast } = useToast();
 
-  const handleCopy = () => {
-     navigator.clipboard.writeText(window.location.href).then(() => {
-      toast({
-        title: 'Link Copied!',
-        description: 'You can now share it with anyone.',
-      });
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
-      toast({
-        title: 'Error',
-        description: `Could not copy the link.`,
-        variant: 'destructive',
-      });
-    });
-  }
-
   const handleShare = async () => {
     const shareData = {
       title: `${toolName} | ${AppName}`,
@@ -56,7 +40,19 @@ export function SharePrompt({ toolName, className }: SharePromptProps) {
     }
     
     // Fallback for browsers that do not support Web Share API or if it fails.
-    handleCopy();
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      toast({
+        title: 'Link Copied!',
+        description: 'You can now share it with anyone.',
+      });
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      toast({
+        title: 'Error',
+        description: `Could not copy the link.`,
+        variant: 'destructive',
+      });
+    });
   };
 
 
