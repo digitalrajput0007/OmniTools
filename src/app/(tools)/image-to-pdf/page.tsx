@@ -18,8 +18,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
 
-export default function ImageToPdfPage() {
+function ImageToPdfConverter() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isConverting, setIsConverting] = useState(false);
@@ -124,15 +126,12 @@ export default function ImageToPdfPage() {
   };
 
   return (
-    <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image to PDF Converter</CardTitle>
-            <CardDescription className="text-base mt-2">
-              Convert your JPG, PNG, and other images to a PDF document.
-            </CardDescription>
-          </div>
+          <CardTitle className="text-2xl font-bold tracking-tight">Image to PDF</CardTitle>
+          <CardDescription>
+            Convert your JPG, PNG, and other images to a PDF document.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {!file ? (
@@ -251,43 +250,63 @@ export default function ImageToPdfPage() {
           )}
         </CardContent>
       </Card>
+  )
+}
+
+export default function ImagePdfConverterPage() {
+  return (
+    <div className="grid gap-6">
+       <Card>
+         <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image & PDF Converter</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Easily convert images to PDF or extract images from a PDF.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="image-to-pdf">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="image-to-pdf">Image to PDF</TabsTrigger>
+               <TabsTrigger value="pdf-to-image" asChild>
+                <Link href="/pdf-to-image">PDF to Image</Link>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="image-to-pdf" className="pt-6">
+              <ImageToPdfConverter />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+       </Card>
+
       <Card>
         <CardHeader>
-          <CardTitle>About the Image to PDF Converter</CardTitle>
+          <CardTitle>About the Image & PDF Converter</CardTitle>
           <CardDescription>
-            Easily turn your images into universally accessible PDF documents.
+            Turn images into PDFs and back again with ease.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Accordion type="single" collapsible defaultValue="item-1">
             <AccordionItem value="item-1">
-              <AccordionTrigger>Why Convert Images to PDF?</AccordionTrigger>
+              <AccordionTrigger>Why Convert Between Images and PDF?</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <p>
-                  Converting images to PDF is useful for many reasons. PDFs are a universal standard, meaning they can be opened on almost any device while preserving the original layout and quality. It's perfect for creating shareable documents, archiving images, or compiling multiple images into a single file for reports or portfolios.
+                  Converting images to PDF is perfect for creating shareable documents, archiving images, or compiling multiple images into a single file for reports or portfolios. PDFs are a universal standard, preserving layout and quality across devices.
+                </p>
+                 <p>
+                  Converting a PDF to images is useful when you need to extract photos, diagrams, or other visual elements from a PDF document for use in presentations, web pages, or social media. It allows you to isolate and save specific visual content as standard image files (like PNG).
                 </p>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-              <AccordionTrigger>How to Use the Image to PDF Converter</AccordionTrigger>
+              <AccordionTrigger>How to Use the Converter</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
-                  <li><strong>Upload an Image:</strong> Drag your file (JPG, PNG, WEBP, etc.) into the upload box or click to select a file from your computer.</li>
-                  <li><strong>Start Conversion:</strong> Once your image is uploaded, simply click the "Convert to PDF" button.</li>
-                  <li><strong>Download Your PDF:</strong> After a brief processing animation, the "Download PDF" button will appear. Click it to save your newly created PDF document.</li>
-                  <li><strong>Convert More:</strong> Use the "Convert another" button to quickly start the process over with a new image.</li>
+                  <li><strong>Select the Right Tool:</strong> Choose the 'Image to PDF' or 'PDF to Image' tab based on your needs.</li>
+                  <li><strong>Upload Your File:</strong> Drag and drop your file (an image or a PDF) into the upload box or click to browse.</li>
+                  <li><strong>Convert:</strong> Follow the on-screen instructions to start the conversion. For PDF to Image, you can select specific pages to extract.</li>
+                  <li><strong>Download Your File(s):</strong> After processing, download your new PDF or image files. When converting from PDF, you'll get a ZIP file containing all the extracted images.</li>
                 </ol>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger>Tips for Image to PDF Conversion</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>High-Quality Originals:</strong> For the best results, start with a high-quality source image. The PDF will retain the quality of the image you upload.</li>
-                  <li><strong>Page Orientation:</strong> The tool automatically detects your image's orientation (portrait or landscape) and sets the PDF page size accordingly to prevent cropping.</li>
-                  <li><strong>Multiple Images:</strong> While this tool converts one image at a time, you can use our "PDF Merger" tool to combine multiple converted PDFs into a single, multi-page document.</li>
-                  <li><strong>File Naming:</strong> The downloaded PDF will automatically be named after your original image file, making it easy to keep track of your documents.</li>
-                </ul>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

@@ -20,6 +20,7 @@ import {
   Ticket,
   Braces,
   Share2,
+  ImageIcon,
 } from 'lucide-react';
 
 export type Tool = {
@@ -37,10 +38,16 @@ export const tools: Tool[] = [
     icon: Minimize,
   },
   {
-    name: 'Image to PDF',
-    description: 'Convert your JPG, PNG, and other images to PDF.',
+    name: 'Image & PDF Converter',
+    description: 'Convert images to PDF and extract images from PDF.',
     path: '/image-to-pdf',
     icon: FileText,
+  },
+   {
+    name: 'PDF to Image',
+    description: 'Extract all pages from a PDF into high-quality images.',
+    path: '/pdf-to-image',
+    icon: ImageIcon,
   },
   {
     name: 'Image Format Converter',
