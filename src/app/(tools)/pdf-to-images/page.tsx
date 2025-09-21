@@ -15,10 +15,10 @@ import { Input } from '@/components/ui/input';
 import {
   FileDown,
   UploadCloud,
-  FileText as FileIcon,
   CheckCircle2,
   RefreshCcw,
   X,
+  FileText,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Label } from '@/components/ui/label';
 
 let pdfjs: any;
+
 
 export default function PdfToImagesPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -222,7 +223,7 @@ export default function PdfToImagesPage() {
       return (
         <div className="grid gap-6 md:grid-cols-2">
           <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8 bg-muted/20">
-            <FileIcon className="h-24 w-24 text-primary" />
+            <FileText className="h-24 w-24 text-primary" />
             <p className="truncate text-lg font-medium">{file?.name}</p>
             <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
               <X className="h-4 w-4" />

@@ -16,7 +16,6 @@ import {
   FileDown,
   UploadCloud,
   X,
-  FileImage,
   CheckCircle2,
   RefreshCcw,
 } from 'lucide-react';
@@ -26,6 +25,55 @@ import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+const JpgIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#D6EAF8" stroke="#3498DB" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#3498DB" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M10 12H8V18H10V15H11C11.5523 15 12 14.5523 12 14V13C12 12.4477 11.5523 12 11 12H10Z" stroke="#2980B9" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M15 12H14V18H15C16.1046 18 17 17.1046 17 16V13C17 12.4477 16.5523 12 16 12H15Z" stroke="#2980B9" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+);
+
+const PngIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#D5F5E3" stroke="#2ECC71" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#2ECC71" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M8 12H9C10.1046 12 11 12.8954 11 14V18" stroke="#28B463" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M13 18V12L15 18V12" stroke="#28B463" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const WebpIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FDEBD0" stroke="#F39C12" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M14 2V8H20" stroke="#F39C12" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M8 18L10 12L12 18L14 12L16 18" stroke="#D35400" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const GenericImageIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#EAECEE" stroke="#7F8C8D" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#7F8C8D" strokeWidth="1.5" strokeLinejoin="round"/>
+        <circle cx="9.5" cy="14.5" r="1.5" stroke="#95A5A6" strokeWidth="1.5"/>
+        <path d="M12 18L14 16L17 18" stroke="#95A5A6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const getFileIcon = (file: File) => {
+    if (file.type.includes('jpeg') || file.type.includes('jpg')) {
+        return <JpgIcon className="w-full h-auto rounded-md object-cover aspect-square" />;
+    }
+    if (file.type.includes('png')) {
+        return <PngIcon className="w-full h-auto rounded-md object-cover aspect-square" />;
+    }
+    if (file.type.includes('webp')) {
+        return <WebpIcon className="w-full h-auto rounded-md object-cover aspect-square" />;
+    }
+    return <GenericImageIcon className="w-full h-auto rounded-md object-cover aspect-square" />;
+};
+
 
 export default function ImagesToPdfPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -216,8 +264,10 @@ export default function ImagesToPdfPage() {
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                             {files.map((file, index) => (
                                 <div key={index} className="relative group">
-                                    <Image src={URL.createObjectURL(file)} alt={file.name} width={150} height={150} className="w-full h-auto rounded-md object-cover aspect-square"/>
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <div className="w-full h-auto rounded-md object-cover aspect-square border p-2 flex items-center justify-center">
+                                      {getFileIcon(file)}
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
                                         <Button
                                             variant="destructive"
                                             size="icon"
