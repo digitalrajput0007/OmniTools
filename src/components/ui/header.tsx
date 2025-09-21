@@ -37,7 +37,7 @@ export default function Header() {
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
         <Link href="/" className="flex items-center gap-3">
-          <AppLogo className="h-8 w-8 text-primary" />
+          <AppLogo />
           <h1 className="font-headline text-2xl font-bold tracking-tighter">
             {AppName}
           </h1>
@@ -150,7 +150,7 @@ export default function Header() {
             <SheetContent side="left">
                 <nav className="grid gap-6 text-lg font-medium">
                     <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-                        <AppLogo className="h-6 w-6" />
+                        <AppLogo />
                         <span className="sr-only">{AppName}</span>
                     </Link>
                     {tools.map((tool) => (
