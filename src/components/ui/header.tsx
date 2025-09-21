@@ -27,8 +27,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer', 'Background Remover'].includes(t.name));
-const pdfTools = tools.filter(t => ['PDF Merger', 'PDF Splitter'].includes(t.name));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover', 'Images to PDF'].includes(t.name));
+const pdfTools = tools.filter(t => ['PDF to Images', 'PDF Merger', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add/Remove Password', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));

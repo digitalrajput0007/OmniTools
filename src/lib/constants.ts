@@ -20,6 +20,14 @@ import {
   Ticket,
   Braces,
   Share2,
+  FileImage,
+  ImageIcon,
+  Minimize2,
+  RotateCw,
+  KeyRound,
+  PenSquare,
+  ScanText,
+  Droplets
 } from 'lucide-react';
 
 export type Tool = {
@@ -55,6 +63,18 @@ export const tools: Tool[] = [
     icon: Wand2,
   },
   {
+    name: 'Images to PDF',
+    description: 'Convert JPG, PNG, and other images to a single PDF file.',
+    path: '/images-to-pdf',
+    icon: ImageIcon,
+  },
+  {
+    name: 'PDF to Images',
+    description: 'Extract all images from a PDF or convert pages to JPG.',
+    path: '/pdf-to-images',
+    icon: FileImage,
+  },
+  {
     name: 'PDF Merger',
     description: 'Combine multiple PDF files into one single document.',
     path: '/pdf-merger',
@@ -65,6 +85,42 @@ export const tools: Tool[] = [
     description: 'Extract pages from a PDF or save each page as a new PDF.',
     path: '/pdf-splitter',
     icon: Scissors,
+  },
+  {
+    name: 'Compress PDF',
+    description: 'Reduce the file size of your PDF while maintaining quality.',
+    path: '/compress-pdf',
+    icon: Minimize2,
+  },
+  {
+    name: 'Reorder / Rotate Pages',
+    description: 'Organize or rotate pages in your PDF documents easily.',
+    path: '/reorder-rotate-pdf',
+    icon: RotateCw,
+  },
+   {
+    name: 'Add/Remove Password',
+    description: 'Secure your PDF with a password or remove existing encryption.',
+    path: '/pdf-password',
+    icon: KeyRound,
+  },
+   {
+    name: 'Add Signature / Fill Form',
+    description: 'Sign documents electronically or fill out PDF forms online.',
+    path: '/pdf-signature',
+    icon: PenSquare,
+  },
+   {
+    name: 'Extract Text',
+    description: 'Extract all text content from a PDF file using OCR.',
+    path: '/extract-text-pdf',
+    icon: ScanText,
+  },
+  {
+    name: 'Watermark PDF',
+    description: 'Add a text or image watermark to your PDF documents.',
+    path: '/watermark-pdf',
+    icon: Droplets,
   },
   {
     name: 'QR Code Generator',
