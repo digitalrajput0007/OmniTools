@@ -99,18 +99,14 @@ export default function PdfPasswordPage() {
             if (mode === 'encrypt') {
                 pdfDoc = await PDFDocument.load(existingPdfBytes);
                 // The key is to set both passwords. Many viewers ignore the userPassword if an ownerPassword isn't set.
-                pdfDoc.setProducer('OnlineJPGPDF.com');
-                pdfDoc.setCreator('OnlineJPGPDF.com');
                 newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
                 try {
-                     pdfDoc = await PDFDocument.load(existingPdfBytes, { userPassword: password });
+                     pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password });
                 } catch(e) {
                      // pdf-lib has a bug where it requires ownerPassword for decryption. Try that as a fallback.
-                     pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password });
+                     pdfDoc = await PDFDocument.load(existingPdfBytes, { userPassword: password });
                 }
-                pdfDoc.setProducer('OnlineJPGPDF.com');
-                pdfDoc.setCreator('OnlineJPGPDF.com');
                 newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
@@ -153,60 +149,80 @@ export default function PdfPasswordPage() {
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
+   const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 KB';
+    if (bytes >= 1024 * 1024) {
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    } else {
+      return (bytes / 1024).toFixed(2) + ' KB';
+    }
+  };
   
   const renderContent = () => {
-    if (isProcessing) {
-      return (
-        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
-          <CircularProgress progress={progress} />
-          <p className="text-center text-sm text-muted-foreground">Processing PDF...</p>
-        </div>
-      );
-    }
-    
     if (done) {
         const successTitle = mode === 'encrypt' ? 'PDF Encrypted!' : 'PDF Decrypted!';
         const successDesc = mode === 'encrypt' ? 'Your PDF is now password protected.' : 'The password has been removed from your PDF.';
         return (
-          <div className="flex flex-col items-center justify-center space-y-6 text-center">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
-            <h3 className="text-2xl font-bold">{successTitle}</h3>
-            <p className="text-muted-foreground">{successDesc}</p>
-            <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
-              <Button onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" /> Download PDF</Button>
-              <Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" /> Start Over</Button>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
+              <FileIcon className="h-24 w-24 text-primary" />
+              <p className="truncate text-lg font-medium">{file?.name}</p>
             </div>
-            <SharePrompt toolName="PDF Password Tool" />
+            <div className="flex flex-col items-center justify-center space-y-6 text-center">
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
+              <h3 className="text-2xl font-bold">{successTitle}</h3>
+              <p className="text-muted-foreground">{successDesc}</p>
+              <div className="flex w-full max-w-sm flex-col gap-2 pt-4">
+                <Button onClick={handleDownload}><FileDown className="mr-2 h-4 w-4" /> Download PDF</Button>
+                <Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2 h-4 w-4" /> Start Over</Button>
+              </div>
+              <SharePrompt toolName="PDF Password Tool" />
+            </div>
           </div>
         );
     }
     
     if (file) {
       return (
-          <div className="mx-auto max-w-md space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
               <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
-                  <FileIcon className="h-16 w-16 text-muted-foreground" />
-                  <p className="truncate text-sm font-medium">{file.name}</p>
-                  <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
+                  <FileIcon className="h-24 w-24 text-muted-foreground" />
+                  <p className="truncate text-lg font-medium">{file.name}</p>
+                   <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
                       <X className="h-4 w-4" />
                   </Button>
               </div>
-               <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="encrypt"><Lock className="mr-2 h-4 w-4" />Encrypt</TabsTrigger>
-                    <TabsTrigger value="decrypt"><Unlock className="mr-2 h-4 w-4" />Decrypt</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="encrypt" className="pt-4 space-y-2">
-                      <Label htmlFor="password-encrypt">Set a Password</Label>
-                      <Input id="password-encrypt" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password to protect file" />
-                      <Button onClick={handleProcess} className="w-full mt-4" size="lg" disabled={!password}>Add Password</Button>
-                  </TabsContent>
-                  <TabsContent value="decrypt" className="pt-4 space-y-2">
-                      <Label htmlFor="password-decrypt">Current Password</Label>
-                      <Input id="password-decrypt" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password to unlock file" />
-                      <Button onClick={handleProcess} className="w-full mt-4" size="lg" disabled={!password}>Remove Password</Button>
-                  </TabsContent>
-              </Tabs>
+              <div className="flex flex-col space-y-6 justify-center">
+                {isProcessing ? (
+                  <div className="flex h-full flex-col items-center justify-center space-y-4">
+                      <CircularProgress progress={progress} />
+                      <p className="text-center text-sm text-muted-foreground">Processing PDF...</p>
+                  </div>
+                ): (
+                  <>
+                    <div>
+                      <h3 className="mb-2 font-semibold">File Information</h3>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p>Name: {file?.name}</p>
+                        <p>Original Size: {formatFileSize(file?.size)}</p>
+                      </div>
+                    </div>
+                    <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="encrypt"><Lock className="mr-2 h-4 w-4" />Encrypt</TabsTrigger><TabsTrigger value="decrypt"><Unlock className="mr-2 h-4 w-4" />Decrypt</TabsTrigger></TabsList>
+                      <TabsContent value="encrypt" className="pt-4 space-y-2">
+                          <Label htmlFor="password-encrypt">Set a Password</Label>
+                          <Input id="password-encrypt" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password to protect file" />
+                          <Button onClick={handleProcess} className="w-full mt-4" disabled={!password}>Add Password</Button>
+                      </TabsContent>
+                      <TabsContent value="decrypt" className="pt-4 space-y-2">
+                          <Label htmlFor="password-decrypt">Current Password</Label>
+                          <Input id="password-decrypt" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password to unlock file" />
+                          <Button onClick={handleProcess} className="w-full mt-4" disabled={!password}>Remove Password</Button>
+                      </TabsContent>
+                  </Tabs>
+                  </>
+                )}
+              </div>
           </div>
       );
     }
@@ -288,5 +304,3 @@ export default function PdfPasswordPage() {
     </div>
   );
 }
-
-    
