@@ -26,6 +26,7 @@ import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { Label } from '@/components/ui/label';
 
 let pdfjs: any;
 
@@ -254,7 +255,9 @@ export default function PdfToImagesPage() {
           </div>
         ))}
       </div>
-      <SharePrompt toolName="PDF to Images" />
+      <div className="flex justify-center">
+        <SharePrompt toolName="PDF to Images" />
+      </div>
     </div>
   );
 
@@ -322,5 +325,3 @@ export default function PdfToImagesPage() {
     </div>
   );
 }
-
-    
