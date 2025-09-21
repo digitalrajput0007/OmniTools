@@ -390,21 +390,31 @@ export default function PdfSignaturePage() {
     const containerRect = pageContainerRef.current?.getBoundingClientRect();
     if (!containerRect) return;
 
-    setObjects(prev => prev.map(obj => {
-      if (obj.id === objectId) {
-        const x = e.clientX - containerRect.left - (obj.width / 2);
-        const y = e.clientY - containerRect.top - (obj.height / 2);
-        return { 
-          ...obj, 
-          pageIndex: currentPage, 
-          x: Math.max(0, Math.min(x, containerRect.width - obj.width)),
-          y: Math.max(0, Math.min(y, containerRect.height - obj.height)),
-          previewWidthPx: containerRect.width,
-          previewHeightPx: containerRect.height,
-        };
-      }
-      return obj;
-    }));
+    const draggedObject = objects.find(obj => obj.id === objectId);
+    if (!draggedObject) return;
+    
+    const x = e.clientX - containerRect.left - (draggedObject.width / 2);
+    const y = e.clientY - containerRect.top - (draggedObject.height / 2);
+    const commonProps = {
+        pageIndex: currentPage, 
+        x: Math.max(0, Math.min(x, containerRect.width - draggedObject.width)),
+        y: Math.max(0, Math.min(y, containerRect.height - draggedObject.height)),
+        previewWidthPx: containerRect.width,
+        previewHeightPx: containerRect.height,
+    };
+
+    if (draggedObject.pageIndex === -1) { // Dropping from library
+      const newObject: DraggableObject = {
+        ...draggedObject,
+        id: Date.now(),
+        ...commonProps,
+      };
+      setObjects(prev => [...prev, newObject]);
+    } else { // Moving an object already on the page
+      setObjects(prev => prev.map(obj => 
+        obj.id === objectId ? { ...obj, ...commonProps } : obj
+      ));
+    }
   };
 
   const handleAddOrUpdateText = () => {
