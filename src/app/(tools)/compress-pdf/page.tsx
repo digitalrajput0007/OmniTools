@@ -2,7 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { PDFDocument, PDFInvalidObjectError } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
+import * as pdfjs from 'pdfjs-dist';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +29,16 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
-type CompressionLevel = 'recommended' | 'high' | 'basic';
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+type CompressionLevel = 'recommended' | 'high' | 'low';
+
+const compressionQualityMap = {
+  high: 0.5,
+  recommended: 0.75,
+  low: 0.9,
+};
+
 
 export default function CompressPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -104,53 +114,58 @@ export default function CompressPdfPage() {
     setIsProcessing(true);
     setDone(false);
     setProgress(0);
-    const startTime = Date.now();
-    const minDuration = 3000;
 
-    let compressionError: Error | null = null;
     let newPdfBytes: Uint8Array | null = null;
+    let compressionError: Error | null = null;
 
-    const compressionPromise = (async () => {
-      try {
+    try {
         const existingPdfBytes = await file.arrayBuffer();
-        
-        // pdf-lib's compression is about how it structures the file.
-        // `useObjectStreams: true` is generally better for compression.
-        // For 'high' compression, we can try to remove metadata.
-        const pdfDoc = await PDFDocument.load(existingPdfBytes);
-        
-        if (compressionLevel === 'high') {
-            pdfDoc.setTitle('');
-            pdfDoc.setAuthor('');
-            pdfDoc.setSubject('');
-            pdfDoc.setCreator('');
-            pdfDoc.setProducer('');
-            pdfDoc.setKeywords([]);
+        const loadingTask = pdfjs.getDocument({ data: existingPdfBytes });
+        const pdf = await loadingTask.promise;
+        const numPages = pdf.numPages;
+
+        const newPdfDoc = await PDFDocument.create();
+        const quality = compressionQualityMap[compressionLevel];
+
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 }); // Use a reasonable scale
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            if(context) {
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport,
+                };
+                await page.render(renderContext).promise;
+
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+                const jpegImage = await newPdfDoc.embedJpg(jpegDataUrl);
+                
+                const newPage = newPdfDoc.addPage([viewport.width, viewport.height]);
+                newPage.drawImage(jpegImage, {
+                    x: 0,
+                    y: 0,
+                    width: viewport.width,
+                    height: viewport.height,
+                });
+            }
+            setProgress(Math.round((i / numPages) * 100));
         }
 
-        newPdfBytes = await pdfDoc.save({
-            useObjectStreams: compressionLevel !== 'basic'
-        });
+        newPdfBytes = await newPdfDoc.save();
 
-      } catch (error) {
-        compressionError =
-          error instanceof Error
-            ? error
-            : new Error('An unknown error occurred during compression.');
-      }
-    })();
+    } catch (error) {
+      compressionError =
+        error instanceof Error
+          ? error
+          : new Error('An unknown error occurred during compression.');
+    }
 
-    const progressInterval = setInterval(() => {
-      const elapsedTime = Date.now() - startTime;
-      const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
-      setProgress(currentProgress);
-    }, 50);
-
-    await Promise.all([
-      compressionPromise,
-      new Promise((resolve) => setTimeout(resolve, minDuration)),
-    ]);
-    clearInterval(progressInterval);
     setIsProcessing(false);
 
     if (compressionError) {
@@ -159,6 +174,7 @@ export default function CompressPdfPage() {
         description: compressionError.message,
         variant: 'destructive',
       });
+      resetState();
     } else if (newPdfBytes) {
       setDone(true);
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
@@ -198,7 +214,7 @@ export default function CompressPdfPage() {
       return (
         <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4">
           <CircularProgress progress={progress} />
-          <p className="text-center text-sm text-muted-foreground">Compressing PDF...</p>
+          <p className="text-center text-sm text-muted-foreground">Compressing PDF... This may take a moment.</p>
         </div>
       );
     }
@@ -260,12 +276,12 @@ export default function CompressPdfPage() {
                      <div className="flex items-center space-x-2">
                       <RadioGroupItem value="high" id="level-high" />
                       <Label htmlFor="level-high" className="flex-1">High Compression</Label>
-                       <p className='text-xs text-muted-foreground'>Smaller size, might reduce quality.</p>
+                       <p className='text-xs text-muted-foreground'>Smallest size, may reduce quality.</p>
                     </div>
                      <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="basic" id="level-basic" />
-                      <Label htmlFor="level-basic" className="flex-1">Basic Compression</Label>
-                       <p className='text-xs text-muted-foreground'>Less size reduction, preserves structure.</p>
+                      <RadioGroupItem value="low" id="level-basic" />
+                      <Label htmlFor="level-basic" className="flex-1">Lower Compression</Label>
+                       <p className='text-xs text-muted-foreground'>Less size reduction, best quality.</p>
                     </div>
                   </RadioGroup>
                 </div>
@@ -351,7 +367,7 @@ export default function CompressPdfPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ul className="list-disc list-inside space-y-2">
                   <li><strong>Client-Side Processing:</strong> Your privacy is our priority. The entire compression process happens in your web browser. Your PDF is never uploaded to a server.</li>
-                  <li><strong>How It Works:</strong> This tool uses different methods of re-saving the PDF, such as using object streams and removing metadata, which can remove redundant data and use more efficient formatting. The reduction in size can vary greatly depending on the original file's structure.</li>
+                  <li><strong>How It Works:</strong> This tool renders each page of your PDF into an image and then recompresses that image at a lower quality to save space. This is highly effective for PDFs with many images but will cause text to become non-selectable.</li>
                   <li><strong>When to Use:</strong> This tool is ideal for PDFs that need to be shared quickly or for meeting file size limits on web portals and email clients.</li>
                 </ul>
               </AccordionContent>
