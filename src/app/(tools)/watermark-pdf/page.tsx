@@ -221,22 +221,25 @@ export default function WatermarkPdfPage() {
             
             if (mode === 'text') {
                 const textWidthPt = font.widthOfTextAtSize(text, fontSize);
-                const textHeightPt = font.heightAtSize(fontSize);
                 
                 if (position === 'center') {
                     page.drawText(text, {
-                        x: pageWidthPt / 2 - textWidthPt / 2,
-                        y: pageHeightPt / 2 - textHeightPt / 4, // Adjust for better vertical centering
+                        x: pageWidthPt / 2,
+                        y: pageHeightPt / 2,
                         font,
                         size: fontSize,
-                        color: color,
+                        color,
                         opacity: opacity[0],
-                        rotate: degrees(-rotation[0]),
+                        rotate: {
+                            type: 'degrees',
+                            angle: -rotation[0],
+                            origin: { x: pageWidthPt / 2 - textWidthPt / 2, y: pageHeightPt / 2 }
+                        }
                     });
                 } else { // Tiled
                     const tileGap = 150;
                     for (let x = 0; x < pageWidthPt + pageHeightPt; x += (textWidthPt + tileGap)) {
-                        for (let y = 0; y < pageHeightPt + pageHeightPt; y += (textHeightPt + tileGap)) {
+                        for (let y = 0; y < pageHeightPt + pageHeightPt; y += (fontSize + tileGap)) {
                              page.drawText(text, {
                                 x: x - pageHeightPt,
                                 y: y - pageHeightPt,
@@ -255,12 +258,16 @@ export default function WatermarkPdfPage() {
 
                 if(position === 'center') {
                     page.drawImage(watermarkImage, {
-                        x: pageWidthPt / 2 - imgWidthPt / 2,
-                        y: pageHeightPt / 2 - imgHeightPt / 2,
+                        x: pageWidthPt / 2,
+                        y: pageHeightPt / 2,
                         width: imgWidthPt,
                         height: imgHeightPt,
                         opacity: opacity[0],
-                        rotate: degrees(-rotation[0]),
+                        rotate: {
+                            type: 'degrees',
+                            angle: -rotation[0],
+                            origin: { x: pageWidthPt / 2, y: pageHeightPt / 2 }
+                        }
                     });
                 } else {
                     const tileWidthPt = 150;
@@ -315,7 +322,7 @@ export default function WatermarkPdfPage() {
     a.href = url;
     a.download = `watermarked-${file.name}`;
     document.body.appendChild(a);
-    a.click();
+a.click();
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
