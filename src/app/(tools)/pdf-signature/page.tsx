@@ -76,17 +76,20 @@ export default function PdfSignaturePage() {
   }, []);
 
   useEffect(() => {
-    let signaturePad: SignaturePad | null = null;
     if (isAddSigOpen && canvasRef.current) {
-        signaturePad = new SignaturePad(canvasRef.current);
-        signaturePadRef.current = signaturePad;
+      const canvas = canvasRef.current;
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+      canvas.getContext('2d')?.scale(ratio, ratio);
+      
+      const signaturePad = new SignaturePad(canvas);
+      signaturePadRef.current = signaturePad;
+      
+      return () => {
+        signaturePad.off();
+      };
     }
-    return () => {
-        // When the dialog is closed, ensure we clean up the signature pad
-        if (signaturePad) {
-            signaturePad.off();
-        }
-    };
   }, [isAddSigOpen]);
 
   const resetState = () => {
@@ -379,5 +382,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
