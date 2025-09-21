@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -178,9 +178,9 @@ export default function ReorderRotatePdfPage() {
 
           copiedPages.forEach((page, index) => {
             const previewForThisCopiedPage = previews[index];
-            const newPage = newPdfDoc.addPage(page);
+            const addedPage = newPdfDoc.addPage(page);
             if (previewForThisCopiedPage) {
-              newPage.setRotation(previewForThisCopiedPage.rotation);
+              addedPage.setRotation(degrees(previewForThisCopiedPage.rotation));
             }
           });
           
