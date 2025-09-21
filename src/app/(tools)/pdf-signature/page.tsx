@@ -90,6 +90,7 @@ const DraggableItem = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging && !isResizing) return;
+      e.preventDefault();
       
       const parent = itemRef.current?.parentElement;
       if (!parent) return;
@@ -126,7 +127,7 @@ const DraggableItem = ({
       onMouseDown={handleMouseDown}
       className={cn(
         "absolute cursor-move border border-dashed p-1",
-        isSelected ? 'border-primary' : 'border-transparent'
+        isSelected ? 'border-primary z-10' : 'border-transparent'
       )}
       style={{
         left: `calc(${obj.x}%)`,
@@ -136,9 +137,10 @@ const DraggableItem = ({
         transform: 'translate(-50%, -50%)',
       }}
     >
-      {obj.type === 'image' && <Image src={obj.content} alt="signature" layout="fill" />}
-      {obj.type === 'text' && (
-        <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap' }}>{obj.content}</div>
+      {obj.type === 'image' ? (
+        <Image src={obj.content} alt="signature" layout="fill" />
+      ) : (
+        <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: 'black' }}>{obj.content}</div>
       )}
       {isSelected && (
         <>
@@ -412,7 +414,7 @@ export default function PdfSignaturePage() {
     if (previews.length > 0) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6" onClick={() => setSelectedObjectId(null)}>
-            <div className="md:col-span-1 space-y-4">
+            <div className="md:col-span-1 md:sticky md:top-20 self-start space-y-4">
                  <Card>
                     <CardHeader><CardTitle>Objects</CardTitle><CardDescription>Add items, then drag them onto a page.</CardDescription></CardHeader>
                     <CardContent className="space-y-2">
@@ -450,7 +452,7 @@ export default function PdfSignaturePage() {
             </div>
             <div className="md:col-span-3 space-y-4">
                 {previews.map((src, index) => (
-                    <div key={index} onDragOver={handleDragEvents} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white">
+                    <div key={index} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white">
                         <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto" />
                          {objects.filter(o => o.pageIndex === index).map(obj => (
                             <DraggableItem
