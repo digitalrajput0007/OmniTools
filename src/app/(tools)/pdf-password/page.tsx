@@ -28,7 +28,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PDFDocument, PDFString } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 
 type Mode = 'encrypt' | 'decrypt';
 
@@ -106,10 +106,11 @@ export default function PdfPasswordPage() {
             const existingPdfBytes = new Uint8Array(await file.arrayBuffer());
             if (mode === 'encrypt') {
                 const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                // These metadata fields can help with compatibility
                 pdfDoc.setProducer('Omnibox PDF Tools');
                 pdfDoc.setCreator('Omnibox');
                 newPdfBytes = await pdfDoc.save({
-                    useObjectStreams: false, // Required for some older viewers
+                    useObjectStreams: false, // THIS IS THE CRUCIAL FIX
                     userPassword: password,
                     ownerPassword: password,
                 });
@@ -329,3 +330,5 @@ export default function PdfPasswordPage() {
     </div>
   );
 }
+
+    
