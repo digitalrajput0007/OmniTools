@@ -190,8 +190,71 @@ export default function PdfToImagesPage() {
     }
   };
   
-  const renderUploadStep = () => (
-    <label
+  const renderContent = () => {
+    if (done) {
+        return (
+            <div className="space-y-6">
+                <div className="text-center space-y-2">
+                    <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
+                    <h3 className="text-2xl font-bold">Conversion Successful!</h3>
+                    <p className="text-muted-foreground">{previews.length} pages have been converted to images.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <Button onClick={handleDownloadAll}><FileDown className="mr-2" /> Download All as ZIP</Button>
+                    <Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2" /> Convert Another PDF</Button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {previews.map((src, index) => (
+                    <div key={index} className="relative group border rounded-lg overflow-hidden">
+                        <Image src={src} alt={`Page ${index + 1}`} width={200} height={280} className="w-full h-auto object-contain" />
+                        <p className="text-center text-xs p-1 bg-secondary/50">{`Page ${index + 1}`}</p>
+                    </div>
+                    ))}
+                </div>
+                <div className="flex justify-center">
+                    <SharePrompt toolName="PDF to Images" />
+                </div>
+            </div>
+        );
+    }
+    
+    if (file) {
+      return (
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8 bg-muted/20">
+            <FileIcon className="h-24 w-24 text-primary" />
+            <p className="truncate text-lg font-medium">{file?.name}</p>
+            <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex flex-col space-y-6 justify-center">
+            {isProcessing ? (
+              <div className="flex h-full flex-col items-center justify-center space-y-4">
+                <CircularProgress progress={progress} />
+                <p className="text-center text-sm text-muted-foreground">Converting PDF to images...</p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h3 className="mb-2 font-semibold">File Information</h3>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <p>Name: {file?.name}</p>
+                    <p>Size: {formatFileSize(file?.size)}</p>
+                  </div>
+                </div>
+                <Button onClick={handleConvert} size="lg" className="w-full">
+                  Convert to Images
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+       <label
         htmlFor="pdf-upload"
         className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })}
         onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
@@ -201,70 +264,7 @@ export default function PdfToImagesPage() {
         <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
         <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
     </label>
-  );
-
-  const renderFileSelectedStep = () => (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8 bg-muted/20">
-        <FileIcon className="h-24 w-24 text-primary" />
-        <p className="truncate text-lg font-medium">{file?.name}</p>
-        <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="flex flex-col space-y-6 justify-center">
-        {isProcessing ? (
-          <div className="flex h-full flex-col items-center justify-center space-y-4">
-            <CircularProgress progress={progress} />
-            <p className="text-center text-sm text-muted-foreground">Converting PDF to images...</p>
-          </div>
-        ) : (
-          <>
-            <div>
-              <h3 className="mb-2 font-semibold">File Information</h3>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p>Name: {file?.name}</p>
-                <p>Size: {formatFileSize(file?.size)}</p>
-              </div>
-            </div>
-            <Button onClick={handleConvert} size="lg" className="w-full">
-              Convert to Images
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-  
-  const renderDoneStep = () => (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-        <h3 className="text-2xl font-bold">Conversion Successful!</h3>
-        <p className="text-muted-foreground">{previews.length} pages have been converted to images.</p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-        <Button onClick={handleDownloadAll}><FileDown className="mr-2" /> Download All as ZIP</Button>
-        <Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2" /> Convert Another PDF</Button>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {previews.map((src, index) => (
-          <div key={index} className="relative group border rounded-lg overflow-hidden">
-            <Image src={src} alt={`Page ${index + 1}`} width={200} height={280} className="w-full h-auto object-contain" />
-            <p className="text-center text-xs p-1 bg-secondary/50">{`Page ${index + 1}`}</p>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-center">
-        <SharePrompt toolName="PDF to Images" />
-      </div>
-    </div>
-  );
-
-  const renderContent = () => {
-    if (done) return renderDoneStep();
-    if (file) return renderFileSelectedStep();
-    return renderUploadStep();
+    );
   };
   
   return (
