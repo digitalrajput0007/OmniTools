@@ -78,26 +78,20 @@ type DraggableObject = {
 
 const DraggableItem = ({
   obj,
-  page,
   isSelected,
-  isHovered,
   onSelect,
   onUpdate,
   onDelete,
   onEdit,
   onDuplicate,
-  onHover,
 }: {
   obj: DraggableObject;
-  page: { width: number; height: number };
   isSelected: boolean;
-  isHovered: boolean;
   onSelect: (e: React.MouseEvent, id: number) => void;
   onUpdate: (updatedObj: DraggableObject) => void;
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
   onDuplicate: (id: number) => void;
-  onHover: (id: number | null) => void;
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -107,7 +101,11 @@ const DraggableItem = ({
   const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || e.target.classList.contains('resize-handle')) return;
+    // Prevent deselecting when clicking on controls or resize handles
+    if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || (e.target as HTMLElement).classList.contains('resize-handle')) {
+        e.stopPropagation();
+        return;
+    }
     onSelect(e, obj.id);
     setIsDragging(true);
     
@@ -157,7 +155,7 @@ const DraggableItem = ({
     };
     
     const handleMouseUp = (e: MouseEvent) => {
-      if (isDragging) {
+      if (isDragging || isResizing) {
         e.stopPropagation();
       }
       setIsDragging(false);
@@ -176,11 +174,10 @@ const DraggableItem = ({
     <div
       ref={itemRef}
       onMouseDown={handleMouseDown}
-      onMouseEnter={() => onHover(obj.id)}
-      onMouseLeave={() => onHover(null)}
       className={cn(
-        "absolute cursor-move border border-dashed z-20",
-        isSelected ? 'border-primary' : 'border-transparent'
+        "group/item absolute cursor-move border border-dashed z-20",
+        isSelected ? 'border-primary' : 'border-transparent hover:border-primary/50',
+        isDragging || isResizing ? 'z-30' : ''
       )}
       style={{
         left: `${obj.x}%`,
@@ -196,19 +193,18 @@ const DraggableItem = ({
         <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center', obj.font)}>{obj.content}</div>
       )}
       
-      {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
-        </div>
-      )}
+      <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 group-hover/item:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
+      </div>
+      
        {isSelected && obj.type === 'image' && (
         <>
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background" />
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background" />
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background" />
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -left-1 h-3 w-3 cursor-nw-resize rounded-full border border-primary bg-background" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -left-1 h-3 w-3 cursor-nw-resize rounded-full border border-primary bg-background z-40" />
         </>
       )}
     </div>
@@ -233,7 +229,6 @@ export default function PdfSignaturePage() {
   
   const [editingObject, setEditingObject] = useState<DraggableObject | null>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
-  const [hoveredObjectId, setHoveredObjectId] = useState<number | null>(null);
   const [signatureColor, setSignatureColor] = useState<ColorName>('black');
   
   // For text preview in dialog
@@ -241,7 +236,6 @@ export default function PdfSignaturePage() {
   
   // For Image Upload and BG Removal
   const [uploadedImage, setUploadedImage] = useState<string|null>(null);
-  const [uploadedImageType, setUploadedImageType] = useState<string>('image/png');
   const [bgColorToRemove, setBgColorToRemove] = useState<{r:number, g:number, b:number}|null>(null);
   const [tolerance, setTolerance] = useState([10]);
 
@@ -306,7 +300,6 @@ export default function PdfSignaturePage() {
     setDone(false);
     setProcessedFile(null);
     setSelectedObjectId(null);
-    setHoveredObjectId(null);
     setEditingObject(null);
   };
 
@@ -387,13 +380,22 @@ export default function PdfSignaturePage() {
     const font = formData.get('font') as SignatureFont;
     if (!text) return;
 
+    const tempSpan = document.createElement('span');
+    tempSpan.innerText = text;
+    tempSpan.style.font = `${fontSize}px ${font.replace('font-', '')}`;
+    tempSpan.style.visibility = 'hidden';
+    document.body.appendChild(tempSpan);
+    const textWidth = tempSpan.offsetWidth;
+    document.body.removeChild(tempSpan);
+    const textHeight = fontSize * 1.2;
+
     if (editingObject) {
-      setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: text, fontSize, width: text.length * (fontSize * 0.6), height: fontSize * 1.2, aspectRatio: (text.length * (fontSize * 0.6)) / (fontSize * 1.2), color, font } : o));
+      setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: text, fontSize, width: textWidth, height: textHeight, aspectRatio: textWidth / textHeight, color, font } : o));
       setEditingObject(null);
     } else {
       const newObject: DraggableObject = {
         id: Date.now(), type: 'text', pageIndex: -1, x: 50, y: 50, content: text,
-        width: text.length * (fontSize * 0.6), height: fontSize * 1.2, aspectRatio: (text.length * (fontSize * 0.6)) / (fontSize * 1.2), fontSize, color, font
+        width: textWidth, height: textHeight, aspectRatio: textWidth / textHeight, fontSize, color, font
       };
       setObjects(prev => [...prev, newObject]);
     }
@@ -427,7 +429,6 @@ export default function PdfSignaturePage() {
             toast({ title: 'Invalid File Type', variant: 'destructive' });
             return;
         }
-        setUploadedImageType(file.type);
         const reader = new FileReader();
         reader.onloadend = () => {
             setUploadedImage(reader.result as string);
@@ -560,7 +561,7 @@ export default function PdfSignaturePage() {
                 if (fontKey === 'font-sans') {
                     fontBytes = await pdfDoc.embedFont(StandardFonts.Helvetica);
                 } else {
-                    const fontName = signatureFonts[fontKey].replace('font-', '');
+                    const fontName = signatureFonts[fontKey].replace('font-', '').replace(/ /g, '');
                     const response = await fetch(`/fonts/${fontName}.ttf`);
                     if (!response.ok) throw new Error('Font not found');
                     fontBytes = await response.arrayBuffer();
@@ -624,7 +625,18 @@ export default function PdfSignaturePage() {
     document.body.removeChild(a);
   };
   
-  const selectedObject = objects.find(o => o.id === selectedObjectId);
+  const handleTextDialogChange = (e: React.FormEvent<HTMLFormElement>) => {
+    const form = e.currentTarget;
+    const text = (form.elements.namedItem('text-input') as HTMLInputElement).value;
+    const font = (form.elements.namedItem('font') as HTMLSelectElement).value as SignatureFont;
+    const color = (form.elements.namedItem('color') as HTMLInputElement).value as ColorName;
+    const fontSize = parseInt((form.elements.namedItem('font-size') as HTMLInputElement).value, 10);
+    
+    // Defer state update to allow DOM to catch up, if needed, though direct is often fine
+    requestAnimationFrame(() => {
+        setTextPreview({ text, font, color, fontSize });
+    });
+  };
 
   const renderContent = () => {
     if (isProcessing) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Processing PDF...</p></div>;
@@ -641,22 +653,14 @@ export default function PdfSignaturePage() {
                             <DialogTrigger asChild><Button variant="outline" className="w-full"><Type className="mr-2"/>Add Text</Button></DialogTrigger>
                             <DialogContent>
                                 <DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader>
-                                <form onSubmit={handleAddOrUpdateText} className="space-y-4" onChange={(e) => {
-                                    const form = e.currentTarget;
-                                    setTextPreview({
-                                        text: (form.elements.namedItem('text-input') as HTMLInputElement).value,
-                                        font: (form.elements.namedItem('font') as HTMLSelectElement).value as SignatureFont,
-                                        color: (form.elements.namedItem('color') as HTMLInputElement).value as ColorName,
-                                        fontSize: parseInt((form.elements.namedItem('font-size') as HTMLInputElement).value, 10)
-                                    });
-                                }}>
+                                <form onSubmit={handleAddOrUpdateText} className="space-y-4" onChange={handleTextDialogChange}>
                                     <div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content}/></div>
                                     <div className="p-4 border rounded-md min-h-[60px] flex items-center justify-center bg-muted/50">
                                         <p style={{fontSize: textPreview.fontSize, color: colorOptions[textPreview.color].value}} className={cn(textPreview.font)}>{textPreview.text || "Preview"}</p>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 24} /></div><div className="space-y-2"><Label htmlFor="font">Font Style</Label><Select name="font" defaultValue={editingObject?.font || 'font-dancing-script'}><SelectTrigger id="font"><SelectValue/></SelectTrigger><SelectContent>{Object.entries(signatureFonts).map(([className, name]) => <SelectItem key={className} value={className} className={className}>{name}</SelectItem>)}</SelectContent></Select></div></div>
                                     <div className="space-y-2"><Label>Color</Label><RadioGroup name="color" defaultValue={editingObject?.color || 'black'} className="flex gap-4">{Object.entries(colorOptions).map(([key, {name, value}]) => <div key={key} className="flex items-center space-x-2"><RadioGroupItem value={key} id={`text-${key}`}/><Label htmlFor={`text-${key}`} style={{color: value}}>{name}</Label></div>)}</RadioGroup></div>
-                                    <Button type="submit" className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button>
+                                    <DialogClose asChild><Button type="submit" className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></DialogClose>
                                 </form>
                             </DialogContent>
                         </Dialog>
@@ -711,15 +715,12 @@ export default function PdfSignaturePage() {
                             <DraggableItem
                               key={obj.id}
                               obj={obj}
-                              page={pageDimensions[index]}
                               isSelected={selectedObjectId === obj.id}
-                              isHovered={hoveredObjectId === obj.id}
                               onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
                               onUpdate={handleUpdateObject}
                               onDelete={handleDeleteObject}
                               onEdit={handleEditObject}
                               onDuplicate={handleDuplicateObject}
-                              onHover={setHoveredObjectId}
                             />
                         ))}
                     </div>
@@ -760,7 +761,7 @@ export default function PdfSignaturePage() {
             <li><strong>Upload PDF:</strong> Drag and drop your PDF file or click to browse.</li>
             <li><strong>Add Objects:</strong> Use the "Add Text", "Add Signature", or "Upload Image" buttons to create items. They will appear in the left panel.</li>
             <li><strong>Position Objects:</strong> Drag your created text or signature from the panel and drop it onto the desired location on any page.</li>
-            <li><strong>Manipulate Objects:</strong> Hover over an object on the page to see controls to Duplicate, Edit, or Delete it. Click and drag an object to move it.</li>
+            <li><strong>Manipulate Objects:</strong> Hover over an object on the page to see controls to Duplicate, Edit, or Delete it. Click an object to select it, then click and drag to move it. Image objects will show resize handles when selected.</li>
             <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes" to generate and download your new PDF.</li>
           </ol>
         </CardContent>
@@ -768,3 +769,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
