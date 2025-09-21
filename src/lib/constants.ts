@@ -99,12 +99,6 @@ export const tools: Tool[] = [
     icon: RotateCw,
   },
    {
-    name: 'Add/Remove Password',
-    description: 'Secure your PDF with a password or remove existing encryption.',
-    path: '/pdf-password',
-    icon: KeyRound,
-  },
-   {
     name: 'Add Signature / Fill Form',
     description: 'Sign documents electronically or fill out PDF forms online.',
     path: '/pdf-signature',
