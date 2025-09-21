@@ -23,13 +23,15 @@ import {
   Plus,
   PenLine,
   Type,
+  Trash2,
+  Edit,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 
 let pdfjs: any;
@@ -46,6 +48,111 @@ type DraggableObject = {
   fontSize?: number;
 };
 
+const DraggableItem = ({
+  obj,
+  page,
+  isSelected,
+  onSelect,
+  onUpdate,
+  onDelete,
+}: {
+  obj: DraggableObject;
+  page: { width: number; height: number };
+  isSelected: boolean;
+  onSelect: (e: React.MouseEvent, id: number) => void;
+  onUpdate: (updatedObj: DraggableObject) => void;
+  onDelete: (id: number) => void;
+}) => {
+  const itemRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    onSelect(e, obj.id);
+    setIsDragging(true);
+    const pageRect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (pageRect) {
+      dragStartPos.current = {
+        x: e.clientX - pageRect.left - (obj.x / 100) * pageRect.width,
+        y: e.clientY - pageRect.top - (obj.y / 100) * pageRect.height,
+      };
+    }
+    e.stopPropagation();
+  };
+  
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    e.stopPropagation();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging && !isResizing) return;
+      
+      const parent = itemRef.current?.parentElement;
+      if (!parent) return;
+      const pageRect = parent.getBoundingClientRect();
+      
+      if (isDragging) {
+         let newX = ((e.clientX - pageRect.left - dragStartPos.current.x) / pageRect.width) * 100;
+         let newY = ((e.clientY - pageRect.top - dragStartPos.current.y) / pageRect.height) * 100;
+         onUpdate({ ...obj, x: newX, y: newY });
+      } else if (isResizing) {
+         const dx = e.clientX - dragStartPos.current.x;
+         const dy = e.clientY - dragStartPos.current.y;
+         onUpdate({ ...obj, width: Math.max(20, obj.width + dx), height: Math.max(20, obj.height + dy) });
+         dragStartPos.current = { x: e.clientX, y: e.clientY };
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, isResizing, obj, onUpdate]);
+
+  return (
+    <div
+      ref={itemRef}
+      onMouseDown={handleMouseDown}
+      className={cn(
+        "absolute cursor-move border border-dashed p-1",
+        isSelected ? 'border-primary' : 'border-transparent'
+      )}
+      style={{
+        left: `calc(${obj.x}%)`,
+        top: `calc(${obj.y}%)`,
+        width: obj.width,
+        height: obj.height,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      {obj.type === 'image' && <Image src={obj.content} alt="signature" layout="fill" />}
+      {obj.type === 'text' && (
+        <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap' }}>{obj.content}</div>
+      )}
+      {isSelected && (
+        <>
+          <div
+            className="absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full bg-primary border-2 border-background"
+            onMouseDown={handleResizeMouseDown}
+          />
+        </>
+      )}
+    </div>
+  );
+};
+
+
 export default function PdfSignaturePage() {
   const [file, setFile] = useState<File | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -59,6 +166,9 @@ export default function PdfSignaturePage() {
   const [processedFile, setProcessedFile] = useState<Blob | null>(null);
   const [isAddTextOpen, setIsAddTextOpen] = useState(false);
   const [isAddSigOpen, setIsAddSigOpen] = useState(false);
+  const [editingObject, setEditingObject] = useState<DraggableObject | null>(null);
+  const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
+
 
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -86,9 +196,14 @@ export default function PdfSignaturePage() {
           const ctx = canvas.getContext("2d");
           ctx?.scale(ratio, ratio);
           signaturePadRef.current = new SignaturePad(canvas);
-          signaturePadRef.current.clear();
+          
+          if (editingObject?.type === 'image') {
+            signaturePadRef.current.fromDataURL(editingObject.content);
+          } else {
+            signaturePadRef.current.clear();
+          }
         }
-      }, 100); // Wait for dialog to render
+      }, 100);
 
       return () => {
         clearTimeout(timeoutId);
@@ -98,7 +213,7 @@ export default function PdfSignaturePage() {
         signaturePadRef.current = null;
       };
     }
-  }, [isAddSigOpen]);
+  }, [isAddSigOpen, editingObject]);
 
   const resetState = () => {
     setFile(null);
@@ -109,6 +224,8 @@ export default function PdfSignaturePage() {
     setProgress(0);
     setDone(false);
     setProcessedFile(null);
+    setSelectedObjectId(null);
+    setEditingObject(null);
   };
 
   const handleFileSelect = async (selectedFile: File) => {
@@ -179,48 +296,53 @@ export default function PdfSignaturePage() {
     }));
   };
 
-  const handleAddText = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddOrUpdateText = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const text = formData.get('text-input') as string;
     const fontSize = parseInt(formData.get('font-size') as string, 10);
-
     if (!text) return;
-    
-    // Estimate width/height
-    const width = text.length * (fontSize * 0.6);
-    const height = fontSize * 1.2;
 
-    const newObject: DraggableObject = {
-      id: Date.now(),
-      type: 'text',
-      pageIndex: -1,
-      x: 50, y: 50,
-      content: text,
-      width, height,
-      fontSize
-    };
-    setObjects(prev => [...prev, newObject]);
+    if (editingObject) {
+      setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: text, fontSize, width: text.length * (fontSize * 0.6), height: fontSize * 1.2 } : o));
+      setEditingObject(null);
+    } else {
+      const newObject: DraggableObject = {
+        id: Date.now(), type: 'text', pageIndex: -1, x: 50, y: 50, content: text,
+        width: text.length * (fontSize * 0.6), height: fontSize * 1.2, fontSize
+      };
+      setObjects(prev => [...prev, newObject]);
+    }
     setIsAddTextOpen(false);
   };
   
-  const handleAddSignature = () => {
+  const handleAddOrUpdateSignature = () => {
     if (!signaturePadRef.current || signaturePadRef.current.isEmpty()) {
       toast({ title: "Signature is empty", variant: 'destructive' });
       return;
     }
     const dataUrl = signaturePadRef.current.toDataURL('image/png');
     
-    const newObject: DraggableObject = {
-      id: Date.now(),
-      type: 'image',
-      pageIndex: -1,
-      x: 50, y: 50,
-      content: dataUrl,
-      width: 150, height: 75,
-    };
-    setObjects(prev => [...prev, newObject]);
+    if (editingObject) {
+      setObjects(prev => prev.map(o => o.id === editingObject.id ? { ...o, content: dataUrl } : o));
+      setEditingObject(null);
+    } else {
+      const newObject: DraggableObject = {
+        id: Date.now(), type: 'image', pageIndex: -1, x: 50, y: 50, content: dataUrl,
+        width: 150, height: 75,
+      };
+      setObjects(prev => [...prev, newObject]);
+    }
     setIsAddSigOpen(false);
+  };
+
+  const handleDeleteObject = (id: number) => {
+    setObjects(prev => prev.filter(o => o.id !== id));
+    setSelectedObjectId(null);
+  }
+
+  const handleUpdateObject = (updatedObj: DraggableObject) => {
+    setObjects(prev => prev.map(o => o.id === updatedObj.id ? updatedObj : o));
   };
   
   const handleSave = async () => {
@@ -240,25 +362,20 @@ export default function PdfSignaturePage() {
             const page = pages[obj.pageIndex];
             const { width: pageWidth, height: pageHeight } = page.getSize();
             
-            // Adjust y-coordinate because pdf-lib has 0,0 at bottom-left
-            const y = pageHeight - (obj.y / 100 * pageHeight);
-            const x = obj.x / 100 * pageWidth;
+            const objFinalWidth = obj.width;
+            const objFinalHeight = obj.height;
+
+            const x = (obj.x / 100 * pageWidth) - (objFinalWidth / 2);
+            const y = pageHeight - ((obj.y / 100 * pageHeight) + (objFinalHeight / 2));
             
             if (obj.type === 'text') {
                  page.drawText(obj.content, {
-                    x: x - (obj.width / 2),
-                    y: y - (obj.height / 2),
-                    font: helveticaFont,
-                    size: obj.fontSize,
-                    color: rgb(0, 0, 0),
+                    x, y, font: helveticaFont, size: obj.fontSize, color: rgb(0, 0, 0),
                 });
             } else if (obj.type === 'image') {
                 const pngImage = await pdfDoc.embedPng(obj.content);
                 page.drawImage(pngImage, {
-                    x: x - (obj.width / 2),
-                    y: y - (obj.height / 2),
-                    width: obj.width,
-                    height: obj.height,
+                    x, y, width: objFinalWidth, height: objFinalHeight
                 });
             }
         }
@@ -286,57 +403,65 @@ export default function PdfSignaturePage() {
     document.body.removeChild(a);
   };
   
+  const selectedObject = objects.find(o => o.id === selectedObjectId);
+
   const renderContent = () => {
     if (isProcessing) return <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4"><CircularProgress progress={progress} /><p className="text-sm text-muted-foreground">Processing PDF...</p></div>;
     if (done) return <div className="text-center space-y-4"><CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" /><h3 className="text-2xl font-bold">PDF Saved!</h3><p className="text-muted-foreground">Your changes have been applied.</p><div className="flex flex-col sm:flex-row gap-2 justify-center"><Button onClick={handleDownload}><FileDown className="mr-2"/>Download PDF</Button><Button variant="secondary" onClick={resetState}><RefreshCcw className="mr-2"/>Start Over</Button></div><SharePrompt toolName="PDF Signature Tool" /></div>;
 
     if (previews.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6" onClick={() => setSelectedObjectId(null)}>
             <div className="md:col-span-1 space-y-4">
                  <Card>
-                    <CardHeader><CardTitle>Objects</CardTitle><CardDescription>Add text or a signature, then drag it onto a page.</CardDescription></CardHeader>
+                    <CardHeader><CardTitle>Objects</CardTitle><CardDescription>Add items, then drag them onto a page.</CardDescription></CardHeader>
                     <CardContent className="space-y-2">
-                         <Dialog open={isAddTextOpen} onOpenChange={setIsAddTextOpen}>
+                         <Dialog open={isAddTextOpen} onOpenChange={(open) => { if (!open) setEditingObject(null); setIsAddTextOpen(open); }}>
                             <DialogTrigger asChild><Button variant="outline" className="w-full"><Type className="mr-2"/>Add Text</Button></DialogTrigger>
-                            <DialogContent><DialogHeader><DialogTitle>Add Text</DialogTitle></DialogHeader><form onSubmit={handleAddText} className="space-y-4"><div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" /></div><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue="12" /></div><Button type="submit" className="w-full">Add Text Object</Button></form></DialogContent>
+                            <DialogContent><DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Add'} Text</DialogTitle></DialogHeader><form onSubmit={handleAddOrUpdateText} className="space-y-4"><div className="space-y-2"><Label htmlFor="text-input">Text</Label><Input id="text-input" name="text-input" defaultValue={editingObject?.content}/></div><div className="space-y-2"><Label htmlFor="font-size">Font Size</Label><Input id="font-size" name="font-size" type="number" defaultValue={editingObject?.fontSize || 12} /></div><Button type="submit" className="w-full">{editingObject ? 'Update' : 'Add'} Text</Button></form></DialogContent>
                         </Dialog>
-                         <Dialog open={isAddSigOpen} onOpenChange={setIsAddSigOpen}>
+                         <Dialog open={isAddSigOpen} onOpenChange={(open) => { if (!open) setEditingObject(null); setIsAddSigOpen(open); }}>
                             <DialogTrigger asChild><Button variant="outline" className="w-full"><PenLine className="mr-2"/>Add Signature</Button></DialogTrigger>
-                            <DialogContent><DialogHeader><DialogTitle>Draw Signature</DialogTitle></DialogHeader><div className="space-y-4"><canvas ref={canvasRef} className="border rounded-md w-full h-48 bg-gray-50" /> <div className="flex gap-2"><Button onClick={handleAddSignature} className="w-full">Add Signature</Button><Button variant="secondary" onClick={() => signaturePadRef.current?.clear()}>Clear</Button></div></div></DialogContent>
+                            <DialogContent><DialogHeader><DialogTitle>{editingObject ? 'Edit' : 'Draw'} Signature</DialogTitle></DialogHeader><div className="space-y-4"><canvas ref={canvasRef} className="border rounded-md w-full h-48 bg-gray-50" /> <div className="flex gap-2"><Button onClick={handleAddOrUpdateSignature} className="w-full">{editingObject ? 'Update' : 'Add'}</Button><Button variant="secondary" onClick={() => signaturePadRef.current?.clear()}>Clear</Button></div></div></DialogContent>
                         </Dialog>
                         <div className="space-y-2 pt-4">
-                            {objects.filter(o => o.pageIndex === -1).map(obj => (
-                                <div key={obj.id} draggable onDragStart={(e) => e.dataTransfer.setData('text/plain', obj.id.toString())} className="border p-2 rounded-md cursor-grab flex items-center gap-2">
+                             {objects.filter(o => o.pageIndex === -1).map(obj => (
+                                <div key={obj.id} draggable onDragStart={(e) => { e.dataTransfer.setData('text/plain', obj.id.toString()); setSelectedObjectId(obj.id); }} className="border p-2 rounded-md cursor-grab flex items-center gap-2">
                                     {obj.type === 'text' ? <Type className="h-5 w-5 shrink-0"/> : <PenLine className="h-5 w-5 shrink-0"/>}
-                                    <p className="truncate text-sm">{obj.type === 'text' ? obj.content : "Signature"}</p>
+                                    <p className="truncate text-sm flex-1">{obj.type === 'text' ? obj.content : "Signature"}</p>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteObject(obj.id)}><Trash2 className="h-4 w-4"/></Button>
                                 </div>
                             ))}
                         </div>
                     </CardContent>
                  </Card>
-                  {objects.some(o => o.pageIndex !== -1) && <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>}
+
+                 {selectedObject && (
+                   <Card>
+                      <CardHeader><CardTitle>Edit Selection</CardTitle></CardHeader>
+                      <CardContent className="flex gap-2">
+                         <Button variant="outline" size="sm" onClick={() => { setEditingObject(selectedObject); if (selectedObject.type === 'text') setIsAddTextOpen(true); else setIsAddSigOpen(true); }}><Edit className="mr-2"/>Edit</Button>
+                         <Button variant="destructive" size="sm" onClick={() => handleDeleteObject(selectedObject.id)}><Trash2 className="mr-2"/>Delete</Button>
+                      </CardContent>
+                   </Card>
+                 )}
+
+                  {(objects.some(o => o.pageIndex !== -1) || previews.length > 0) && <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>}
             </div>
             <div className="md:col-span-3 space-y-4">
                 {previews.map((src, index) => (
-                    <div key={index} onDragOver={handleDragEvents} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md">
+                    <div key={index} onDragOver={handleDragEvents} onDrop={(e) => handleObjectDrop(e, index)} className="relative border rounded-lg overflow-hidden shadow-md bg-white">
                         <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto" />
                          {objects.filter(o => o.pageIndex === index).map(obj => (
-                            <div 
-                                key={obj.id} 
-                                draggable 
-                                onDragStart={(e) => e.dataTransfer.setData('text/plain', obj.id.toString())}
-                                className="absolute cursor-move border border-dashed border-primary"
-                                style={{ 
-                                    left: `calc(${obj.x}% - ${obj.width / 2}px)`, 
-                                    top: `calc(${obj.y}% - ${obj.height / 2}px)`,
-                                    width: obj.width,
-                                    height: obj.height,
-                                }}
-                            >
-                               {obj.type === 'image' && <Image src={obj.content} alt="signature" layout="fill" />}
-                               {obj.type === 'text' && <div style={{fontSize: obj.fontSize, whiteSpace: 'nowrap'}}>{obj.content}</div>}
-                            </div>
+                            <DraggableItem
+                              key={obj.id}
+                              obj={obj}
+                              page={pageDimensions[index]}
+                              isSelected={selectedObjectId === obj.id}
+                              onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
+                              onUpdate={handleUpdateObject}
+                              onDelete={handleDeleteObject}
+                            />
                         ))}
                     </div>
                 ))}
@@ -359,7 +484,7 @@ export default function PdfSignaturePage() {
           <div className="text-center">
              <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add Signature / Fill Form</CardTitle>
              <CardDescription className="text-base mt-2">
-              Add text or a signature to your PDF document.
+              Add, edit, resize, and delete text or signatures on your PDF document.
             </CardDescription>
           </div>
         </CardHeader>
@@ -374,17 +499,17 @@ export default function PdfSignaturePage() {
         <CardContent className="space-y-4 text-muted-foreground">
           <ol className="list-decimal list-inside space-y-2">
             <li><strong>Upload PDF:</strong> Drag and drop your PDF file or click to browse.</li>
-            <li><strong>Add Objects:</strong> Use the "Add Text" or "Add Signature" buttons to create objects you want to place on the PDF.</li>
-            <li><strong>Position Objects:</strong> Drag your created text or signature from the "Objects" panel and drop it onto the desired location on any page.</li>
-            <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes". Your new PDF will be generated and you can download it.</li>
+            <li><strong>Add Objects:</strong> Use the "Add Text" or "Add Signature" buttons to create items. They will appear in the left panel.</li>
+            <li><strong>Position Objects:</strong> Drag your created text or signature from the panel and drop it onto the desired location on any page.</li>
+            <li><strong>Select & Manipulate:</strong> Click on an object on the page to select it. You can then:
+                <ul className='list-disc list-inside pl-4 mt-1'>
+                    <li>Drag it to a new position.</li>
+                    <li>Use the "Edit" and "Delete" buttons in the left panel.</li>
+                    <li>For signatures, drag the corner handle to resize it.</li>
+                </ul>
+            </li>
+            <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes" to generate and download your new PDF.</li>
           </ol>
-          <h3 className="font-semibold text-foreground pt-2">Tips for Best Results:</h3>
-          <ul className="list-disc list-inside space-y-2">
-            <li>For precise placement, you can drag an object multiple times until it's in the perfect spot.</li>
-            <li>The signature pad captures your drawing as an image. For best quality, draw slowly and clearly.</li>
-            <li>All processing is done in your browser. Your documents are never uploaded to a server, ensuring your privacy.</li>
-            <li>For large PDFs, generating the initial previews may take a moment. Please be patient.</li>
-          </ul>
         </CardContent>
       </Card>
     </div>
