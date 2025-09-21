@@ -27,6 +27,8 @@ import {
   Copy,
   Upload,
   Palette,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -94,7 +96,6 @@ const DraggableItem = ({
   obj,
   isSelected,
   pageContainerRef,
-  pageOffsets,
   onSelect,
   onUpdate,
   onDelete,
@@ -104,7 +105,6 @@ const DraggableItem = ({
   obj: DraggableObject;
   isSelected: boolean;
   pageContainerRef: React.RefObject<HTMLDivElement>;
-  pageOffsets: { top: number, height: number }[];
   onSelect: (e: React.MouseEvent, id: number) => void;
   onUpdate: (updatedObj: DraggableObject) => void;
   onDelete: (id: number) => void;
@@ -159,15 +159,10 @@ const DraggableItem = ({
         let newY = dragStartPos.current.objY + dy;
         
         // Constrain within parent page boundaries
-        if (pageContainerRef.current && obj.pageIndex >= 0 && pageOffsets[obj.pageIndex]) {
-            const pageInfo = pageOffsets[obj.pageIndex];
-            const parentWidth = pageContainerRef.current.clientWidth;
-            
-            newX = Math.max(0, Math.min(newX, parentWidth - obj.width));
-            
-            const relativeY = newY - pageInfo.top;
-            const constrainedRelativeY = Math.max(0, Math.min(relativeY, pageInfo.height - obj.height));
-            newY = constrainedRelativeY + pageInfo.top;
+        if (pageContainerRef.current) {
+            const parentRect = pageContainerRef.current.getBoundingClientRect();
+            newX = Math.max(0, Math.min(newX, parentRect.width - obj.width));
+            newY = Math.max(0, Math.min(newY, parentRect.height - obj.height));
         }
 
         onUpdate({ ...obj, x: newX, y: newY });
@@ -194,7 +189,7 @@ const DraggableItem = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [obj, onUpdate, isResizing, isDraggingRef, pageContainerRef, pageOffsets]);
+  }, [obj, onUpdate, isResizing, isDraggingRef, pageContainerRef]);
 
   return (
     <div
@@ -241,8 +236,8 @@ export default function PdfSignaturePage() {
   const [file, setFile] = useState<File | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
   const [pageDimensions, setPageDimensions] = useState<{width: number, height: number}[]>([]);
-  const [pageOffsets, setPageOffsets] = useState<{ top: number, height: number }[]>([]);
-
+  
+  const [currentPage, setCurrentPage] = useState(0);
   const [objects, setObjects] = useState<DraggableObject[]>([]);
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -316,30 +311,12 @@ export default function PdfSignaturePage() {
     }
   }, [isAddSigOpen, editingObject, signatureColor]);
 
-  const updatePageOffsets = () => {
-    if (!pageContainerRef.current) return;
-    const pageElements = pageContainerRef.current.querySelectorAll<HTMLDivElement>('[data-page-index]');
-    const newOffsets = Array.from(pageElements).map(el => ({ top: el.offsetTop, height: el.offsetHeight }));
-    setPageOffsets(newOffsets);
-  }
-
-  useEffect(() => {
-    if (previews.length > 0) {
-      const timeoutId = setTimeout(updatePageOffsets, 100);
-      window.addEventListener('resize', updatePageOffsets);
-      return () => {
-          clearTimeout(timeoutId);
-          window.removeEventListener('resize', updatePageOffsets);
-      }
-    }
-  }, [previews]);
-
 
   const resetState = () => {
     setFile(null);
     setPreviews([]);
     setPageDimensions([]);
-    setPageOffsets([]);
+    setCurrentPage(0);
     setObjects([]);
     setIsProcessing(false);
     setProgress(0);
@@ -408,26 +385,17 @@ export default function PdfSignaturePage() {
     const containerRect = pageContainerRef.current?.getBoundingClientRect();
     if (!containerRect) return;
 
-    const dropYInContainer = e.clientY - containerRect.top + (pageContainerRef.current?.scrollTop || 0);
-    
-    let newPageIndex = 0;
-    for(let i = 0; i < pageOffsets.length; i++) {
-      if (dropYInContainer > pageOffsets[i].top) {
-        newPageIndex = i;
-      }
-    }
-    
     setObjects(prev => prev.map(obj => {
       if (obj.id === objectId) {
         const x = e.clientX - containerRect.left - (obj.width / 2);
-        const y = dropYInContainer - (obj.height / 2);
+        const y = e.clientY - containerRect.top - (obj.height / 2);
         return { 
           ...obj, 
-          pageIndex: newPageIndex, 
+          pageIndex: currentPage, 
           x, 
           y,
-          previewWidthPx: pageContainerRef.current?.clientWidth,
-          previewHeightPx: pageOffsets[newPageIndex].height,
+          previewWidthPx: containerRect.width,
+          previewHeightPx: containerRect.height,
         };
       }
       return obj;
@@ -649,8 +617,7 @@ export default function PdfSignaturePage() {
             const finalHeightPt = obj.height * scaleY;
 
             // Adjust Y for pdf-lib's bottom-left origin
-            const objYInPagePx = obj.y - pageOffsets[obj.pageIndex].top;
-            const finalYPt = pageHeightPt - (objYInPagePx * scaleY) - finalHeightPt;
+            const finalYPt = pageHeightPt - (obj.y * scaleY) - finalHeightPt;
             const finalXPt = obj.x * scaleX;
 
             const objColor = colorOptions[obj.color || 'black'].rgb;
@@ -779,40 +746,48 @@ export default function PdfSignaturePage() {
             </div>
             <div
               className="md:col-span-3 space-y-4 relative"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleObjectDrop}
             >
               <div
                 ref={pageContainerRef}
-                className="relative z-0"
+                className="relative z-0 border rounded-lg overflow-hidden shadow-md bg-white"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleObjectDrop}
               >
-                {previews.map((src, index) => (
-                    <div key={index} data-page-index={index} className="relative border rounded-lg overflow-hidden shadow-md bg-white mb-4">
-                        <Image src={src} alt={`Page ${index + 1}`} width={pageDimensions[index].width} height={pageDimensions[index].height} className="w-full h-auto pointer-events-none" />
-                        
-                         {/* This inner div is crucial for positioning objects relative to the page */}
-                        <div className="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
-                            {objects.filter(o => o.pageIndex === index).map(obj => (
-                                <DraggableItem
-                                  key={obj.id}
-                                  obj={{...obj, y: obj.y - pageOffsets[index].top}} // Adjust y to be relative to this container
-                                  isSelected={selectedObjectId === obj.id}
-                                  pageContainerRef={pageContainerRef}
-                                  pageOffsets={pageOffsets}
-                                  onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
-                                  onUpdate={(updatedObj) => {
-                                      // Re-adjust y to be absolute before updating state
-                                      handleUpdateObject({...updatedObj, y: updatedObj.y + pageOffsets[index].top});
-                                  }}
-                                  onDelete={handleDeleteObject}
-                                  onEdit={handleEditObject}
-                                  onDuplicate={handleDuplicateObject}
-                                />
-                            ))}
-                        </div>
+                {previews[currentPage] && (
+                  <div data-page-index={currentPage} className="relative">
+                    <Image src={previews[currentPage]} alt={`Page ${currentPage + 1}`} width={pageDimensions[currentPage].width} height={pageDimensions[currentPage].height} className="w-full h-auto pointer-events-none" />
+                    <div className="absolute top-0 left-0 w-full h-full z-10">
+                      {objects.filter(o => o.pageIndex === currentPage).map(obj => (
+                          <DraggableItem
+                            key={obj.id}
+                            obj={obj}
+                            isSelected={selectedObjectId === obj.id}
+                            pageContainerRef={pageContainerRef}
+                            onSelect={(e, id) => { e.stopPropagation(); setSelectedObjectId(id); }}
+                            onUpdate={handleUpdateObject}
+                            onDelete={handleDeleteObject}
+                            onEdit={handleEditObject}
+                            onDuplicate={handleDuplicateObject}
+                          />
+                      ))}
                     </div>
-                ))}
+                  </div>
+                )}
               </div>
+              
+              {previews.length > 1 && (
+                  <div className="flex items-center justify-center gap-4">
+                      <Button variant="outline" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                          <ChevronLeft className="mr-2 h-4 w-4"/> Previous
+                      </Button>
+                      <span className="text-sm font-medium text-muted-foreground">
+                          Page {currentPage + 1} of {previews.length}
+                      </span>
+                      <Button variant="outline" onClick={() => setCurrentPage(p => Math.min(previews.length - 1, p + 1))} disabled={currentPage === previews.length - 1}>
+                          Next <ChevronRight className="ml-2 h-4 w-4"/>
+                      </Button>
+                  </div>
+              )}
             </div>
         </div>
       )
