@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -48,6 +48,7 @@ const hexToRgb = (hex: string): {r: number, g: number, b: number} => {
 export default function WatermarkPdfPage() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewDimensions, setPreviewDimensions] = useState<{ width: number, height: number } | null>(null);
   const [mode, setMode] = useState<WatermarkMode>('text');
   
   // Text options
@@ -73,6 +74,7 @@ export default function WatermarkPdfPage() {
   const [processedFile, setProcessedFile] = useState<Blob | null>(null);
   
   const { toast } = useToast();
+  const previewImageRef = useRef<HTMLImageElement>(null);
   
   useEffect(() => {
     import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
@@ -87,6 +89,7 @@ export default function WatermarkPdfPage() {
   const resetState = () => {
     setFile(null);
     setPreviewUrl(null);
+    setPreviewDimensions(null);
     setMode('text');
     setText('CONFIDENTIAL');
     setFontStyle('font-sans');
@@ -184,7 +187,7 @@ export default function WatermarkPdfPage() {
         
         let font;
         if (fontStyle === 'font-dancing-script') {
-            const fontBytes = await fetch('/fonts/DancingScript.ttf').then(res => res.arrayBuffer());
+            const fontBytes = await fetch('/fonts/DancingScript-Regular.ttf').then(res => res.arrayBuffer());
             font = await pdfDoc.embedFont(fontBytes);
         } else if (fontStyle === 'font-great-vibes') {
             const fontBytes = await fetch('/fonts/GreatVibes-Regular.ttf').then(res => res.arrayBuffer());
@@ -196,15 +199,15 @@ export default function WatermarkPdfPage() {
         const color = hexToRgb(fontColor);
 
         for (const page of pdfDoc.getPages()) {
-          const { width, height } = page.getSize();
+          const { width: pageWidthPt, height: pageHeightPt } = page.getSize();
           
           if (mode === 'text') {
               const textWidth = font.widthOfTextAtSize(text, fontSize);
-              const textHeight = font.heightAtSize(fontSize);
+              
               if (position === 'center') {
                  page.drawText(text, {
-                    x: width / 2 - textWidth / 2,
-                    y: height / 2 - textHeight / 2,
+                    x: pageWidthPt / 2 - textWidth / 2,
+                    y: pageHeightPt / 2,
                     font,
                     size: fontSize,
                     color: rgb(color.r, color.g, color.b),
@@ -213,26 +216,31 @@ export default function WatermarkPdfPage() {
                 });
               } else { // Tiled
                   const tileGap = 150;
-                  for (let x = -width; x < width * 2; x += textWidth + tileGap) {
-                      for (let y = -height; y < height * 2; y += tileGap) {
+                  for (let x = 0; x < pageWidthPt; x += textWidth + tileGap) {
+                      for (let y = 0; y < pageHeightPt; y += tileGap) {
                            page.drawText(text, {
                             x, y, font, size: fontSize,
                             color: rgb(color.r, color.g, color.b),
                             opacity: opacity[0],
                             rotate: degrees(rotation[0]),
-                            xSkew: degrees(15),
-                            ySkew: degrees(15),
                         });
                       }
                   }
               }
           } else if (watermarkImage) {
-            const imgWidth = watermarkImage.width;
-            const imgHeight = watermarkImage.height;
+            let imgWidth = watermarkImage.width;
+            let imgHeight = watermarkImage.height;
+            const maxDim = 150;
+            if (imgWidth > maxDim || imgHeight > maxDim) {
+                const scale = Math.min(maxDim / imgWidth, maxDim / imgHeight);
+                imgWidth *= scale;
+                imgHeight *= scale;
+            }
+
              if(position === 'center') {
                 page.drawImage(watermarkImage, {
-                    x: width / 2 - imgWidth / 2,
-                    y: height / 2 - imgHeight / 2,
+                    x: pageWidthPt / 2 - imgWidth / 2,
+                    y: pageHeightPt / 2 - imgHeight / 2,
                     width: imgWidth,
                     height: imgHeight,
                     opacity: opacity[0],
@@ -240,8 +248,8 @@ export default function WatermarkPdfPage() {
                 });
              } else {
                  const tileGap = 50;
-                 for (let x = 0; x < width; x += imgWidth + tileGap) {
-                     for (let y = 0; y < height; y += imgHeight + tileGap) {
+                 for (let x = 0; x < pageWidthPt; x += imgWidth + tileGap) {
+                     for (let y = 0; y < pageHeightPt; y += imgHeight + tileGap) {
                          page.drawImage(watermarkImage, { x, y, width: imgWidth, height: imgHeight, opacity: opacity[0], rotate: degrees(rotation[0]) });
                      }
                  }
@@ -268,7 +276,6 @@ export default function WatermarkPdfPage() {
     
     if (processError) {
       toast({ title: 'Error Applying Watermark', description: processError.message, variant: 'destructive'});
-      // Don't reset state to allow user to fix settings
     } else if (newPdfBytes) {
       setDone(true);
       setProcessedFile(new Blob([newPdfBytes], { type: 'application/pdf' }));
@@ -285,6 +292,15 @@ export default function WatermarkPdfPage() {
     a.click();
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  };
+
+  const onImageLoad = () => {
+    if (previewImageRef.current) {
+        setPreviewDimensions({
+            width: previewImageRef.current.offsetWidth,
+            height: previewImageRef.current.offsetHeight,
+        });
+    }
   };
   
   const renderContent = () => {
@@ -328,14 +344,21 @@ export default function WatermarkPdfPage() {
             <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-4 bg-muted/20">
                 {previewUrl ? (
                     <div className="relative w-full h-full min-h-[400px] overflow-hidden">
-                        <Image src={previewUrl} alt="PDF Preview" layout="fill" objectFit="contain" />
+                        <Image
+                            ref={previewImageRef}
+                            src={previewUrl}
+                            alt="PDF Preview"
+                            layout="fill"
+                            objectFit="contain"
+                            onLoad={onImageLoad}
+                         />
                         
                         {/* Watermark Preview Overlay */}
                         <div className="absolute inset-0 pointer-events-none" style={{ opacity: opacity[0] }}>
                             {position === 'center' ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {mode === 'text' ? (
-                                        <p style={{ transform: `rotate(${rotation[0]}deg)`, fontSize: `${fontSize * 0.75}px`, color: fontColor }} className={cn('font-bold', fontStyle)}>
+                                        <p style={{ transform: `rotate(${rotation[0]}deg)`, fontSize: `${fontSize * 0.75}px`, color: fontColor }} className={cn('font-bold whitespace-nowrap', fontStyle)}>
                                             {text}
                                         </p>
                                     ) : imagePreview && (
