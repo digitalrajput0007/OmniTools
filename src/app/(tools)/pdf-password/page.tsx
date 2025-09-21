@@ -16,7 +16,6 @@ import {
   FileDown,
   UploadCloud,
   X,
-  File as FileIcon,
   CheckCircle2,
   RefreshCcw,
   Lock,
@@ -32,6 +31,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 
 type Mode = 'encrypt' | 'decrypt';
+
+const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FADBD8" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M14 2V8H20" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M8 12H9C10.1046 12 11 12.8954 11 14V18" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14 18V12H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14 15H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
 
 export default function PdfPasswordPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -165,7 +175,7 @@ export default function PdfPasswordPage() {
         return (
           <div className="grid gap-6 md:grid-cols-2">
             <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
-              <FileIcon className="h-24 w-24 text-primary" />
+              <PdfIcon className="h-24 w-24" />
               <p className="truncate text-lg font-medium">{file?.name}</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-6 text-center">
@@ -186,7 +196,7 @@ export default function PdfPasswordPage() {
       return (
           <div className="grid gap-6 md:grid-cols-2">
               <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
-                  <FileIcon className="h-24 w-24 text-muted-foreground" />
+                  <PdfIcon className="h-24 w-24" />
                   <p className="truncate text-lg font-medium">{file.name}</p>
                    <Button variant="destructive" size="icon" className="absolute right-2 top-2" onClick={resetState}>
                       <X className="h-4 w-4" />
