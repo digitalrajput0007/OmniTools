@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,9 +95,10 @@ export default function PdfPasswordPage() {
 
             if (mode === 'encrypt') {
                 pdfDoc = await PDFDocument.load(existingPdfBytes);
-                newPdfBytes = await pdfDoc.save({ userPassword: password });
+                // Set both userPassword and ownerPassword to ensure compatibility
+                newPdfBytes = await pdfDoc.save({ userPassword: password, ownerPassword: password });
             } else { // decrypt
-                pdfDoc = await PDFDocument.load(existingPdfBytes, { userPassword: password });
+                pdfDoc = await PDFDocument.load(existingPdfBytes, { ownerPassword: password });
                 newPdfBytes = await pdfDoc.save();
             }
         } catch (error) {
@@ -215,16 +216,16 @@ export default function PdfPasswordPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add or Remove PDF Password</CardTitle>
-            <CardDescription className="text-base mt-2">
+             <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add or Remove PDF Password</CardTitle>
+             <CardDescription className="text-base mt-2">
               Secure your PDFs with a password or remove existing protection.
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
-          {renderContent()}
-        </CardContent>
+        <CardContent>{renderContent()}</CardContent>
       </Card>
     </div>
   );
 }
+
+    
