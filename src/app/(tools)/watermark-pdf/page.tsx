@@ -211,6 +211,7 @@ export default function WatermarkPdfPage() {
 
         const colorRgb = hexToRgb(fontColor);
         if (!colorRgb) {
+            toast({ title: 'Invalid Color', description: 'The selected color is invalid.', variant: 'destructive'});
             throw new Error('Invalid color format.');
         }
         const color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
@@ -225,13 +226,17 @@ export default function WatermarkPdfPage() {
                 
                 if (position === 'center') {
                     page.drawText(text, {
-                        x: pageWidthPt / 2 - textWidthPt / 2,
-                        y: pageHeightPt / 2 - textHeightPt / 2,
+                        x: pageWidthPt / 2,
+                        y: pageHeightPt / 2,
                         font,
                         size: fontSize,
                         color,
                         opacity: opacity[0],
                         rotate: degrees(-rotation[0]),
+                        origin: {
+                            x: textWidthPt / 2,
+                            y: textHeightPt / 2,
+                        }
                     });
                 } else { // Tiled
                     const tileGap = 150;
@@ -255,12 +260,16 @@ export default function WatermarkPdfPage() {
 
                 if(position === 'center') {
                     page.drawImage(watermarkImage, {
-                        x: pageWidthPt / 2 - imgWidthPt / 2,
-                        y: pageHeightPt / 2 - imgHeightPt / 2,
+                        x: pageWidthPt / 2,
+                        y: pageHeightPt / 2,
                         width: imgWidthPt,
                         height: imgHeightPt,
                         opacity: opacity[0],
                         rotate: degrees(-rotation[0]),
+                        origin: {
+                           x: imgWidthPt / 2,
+                           y: imgHeightPt / 2,
+                        }
                     });
                 } else {
                     const tileWidthPt = 150;
@@ -315,7 +324,7 @@ export default function WatermarkPdfPage() {
     a.href = url;
     a.download = `watermarked-${file.name}`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
   };
