@@ -17,8 +17,6 @@ export default {
         sans: ['var(--font-body)', 'sans-serif'],
         serif: ['Times New Roman', 'serif'],
         mono: ['Courier New', 'monospace'],
-        'great-vibes': ['var(--font-great-vibes)', 'cursive'],
-        'dancing-script': ['var(--font-dancing-script)', 'cursive'],
       },
       colors: {
         background: 'hsl(var(--background))',

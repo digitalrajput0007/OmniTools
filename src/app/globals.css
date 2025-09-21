@@ -84,18 +84,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@layer base {
-  @font-face {
-    font-family: 'Great Vibes';
-    src: url('/fonts/GreatVibes-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
-  @font-face {
-    font-family: 'Dancing Script';
-    src: url('/fonts/DancingScript-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
-}

@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { PDFDocument, rgb, StandardFonts, PDFImage, PDFFont, degrees } from 'pdf-lib';
-import * as fontkit from 'fontkit';
 import SignaturePad from 'signature_pad';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,8 +49,6 @@ const signatureFonts = {
     'Helvetica': { name: 'Helvetica', className: 'font-sans' },
     'Times-Roman': { name: 'Times Roman', className: 'font-serif' },
     'Courier': { name: 'Courier', className: 'font-mono' },
-    'GreatVibes-Regular': { name: 'Great Vibes', className: 'font-great-vibes' },
-    'DancingScript-Regular': { name: 'Dancing Script', className: 'font-dancing-script' },
 } as const;
 
 type SignatureFontKey = keyof typeof signatureFonts;
@@ -249,8 +246,6 @@ export default function PdfSignaturePage() {
   const [bgColorToRemove, setBgColorToRemove] = useState<{r:number, g:number, b:number}|null>(null);
   const [tolerance, setTolerance] = useState([10]);
 
-  const [loadedFonts, setLoadedFonts] = useState<Record<string, ArrayBuffer>>({});
-
 
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const signaturePadRef = useRef<SignaturePad | null>(null);
@@ -268,25 +263,7 @@ export default function PdfSignaturePage() {
         import.meta.url
       ).toString();
     });
-
-    const loadCustomFonts = async () => {
-        try {
-            const [greatVibes, dancingScript] = await Promise.all([
-                fetch("/fonts/GreatVibes-Regular.ttf").then(res => res.arrayBuffer()),
-                fetch("/fonts/DancingScript-Regular.ttf").then(res => res.arrayBuffer())
-            ]);
-            setLoadedFonts({
-                'GreatVibes-Regular': greatVibes,
-                'DancingScript-Regular': dancingScript,
-            });
-        } catch (error) {
-            console.error("Failed to load custom fonts", error);
-            toast({ title: "Could not load stylish fonts", description: "Default fonts will be available.", variant: "destructive" });
-        }
-    };
-    loadCustomFonts();
-
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (isAddSigOpen) {
@@ -633,9 +610,6 @@ export default function PdfSignaturePage() {
             const pdfDoc = await PDFDocument.load(await file.arrayBuffer(), {
                 ignoreEncryption: true,
             });
-            
-            pdfDoc.registerFontkit(fontkit);
-
             const objectsToPlace = objects.filter(obj => obj.pageIndex !== -1);
             const embeddedFontCache: Partial<Record<string, PDFFont>> = {};
 
@@ -663,11 +637,7 @@ export default function PdfSignaturePage() {
                 if (obj.type === 'text' && obj.fontSize && obj.font) {
                     let fontToEmbed = embeddedFontCache[obj.font];
                     if (!fontToEmbed) {
-                        if (loadedFonts[obj.font]) {
-                            fontToEmbed = await pdfDoc.embedFont(loadedFonts[obj.font], { subset: true });
-                        } else {
-                            fontToEmbed = await pdfDoc.embedFont(obj.font as StandardFonts);
-                        }
+                        fontToEmbed = await pdfDoc.embedFont(obj.font as StandardFonts);
                         embeddedFontCache[obj.font] = fontToEmbed;
                     }
 
@@ -950,5 +920,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
