@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,12 +26,8 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
+let pdfjs: any;
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -42,6 +38,16 @@ export default function PdfSplitterPage() {
   const [split, setSplit] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
+      pdfjs = pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
 
   const resetState = () => {
     setFile(null);
@@ -54,6 +60,10 @@ export default function PdfSplitterPage() {
 
   const handleFileSelect = async (selectedFile: File) => {
     if (selectedFile.type === 'application/pdf') {
+       if (!pdfjs) {
+        toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+        return;
+      }
       resetState();
       setFile(selectedFile);
       try {
@@ -382,3 +392,5 @@ export default function PdfSplitterPage() {
     </div>
   );
 }
+
+    

@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -29,11 +28,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
-
+let pdfjs: any;
 
 export default function CompressPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -46,6 +41,16 @@ export default function CompressPdfPage() {
   const [compressedFile, setCompressedFile] = useState<Blob | null>(null);
   const [compressionQuality, setCompressionQuality] = useState([75]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
+      pdfjs = pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
 
   const resetState = () => {
     setFile(null);
@@ -105,6 +110,10 @@ export default function CompressPdfPage() {
     if (!file) {
       toast({ title: 'No File Selected', variant: 'destructive' });
       return;
+    }
+    if (!pdfjs) {
+        toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+        return;
     }
     setIsProcessing(true);
     setDone(false);
@@ -201,10 +210,10 @@ export default function CompressPdfPage() {
   
   const formatFileSize = (bytes: number | null | undefined): string => {
     if (!bytes) return '0 KB';
-    if (bytes < 1024 * 1024) {
-      return (bytes / 1024).toFixed(2) + ' KB';
-    } else {
+    if (bytes >= 1024 * 1024) {
       return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    } else {
+      return (bytes / 1024).toFixed(2) + ' KB';
     }
   };
 
@@ -382,3 +391,5 @@ export default function CompressPdfPage() {
     </div>
   );
 }
+
+    

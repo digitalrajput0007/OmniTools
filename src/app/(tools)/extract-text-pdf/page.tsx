@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,10 +26,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
+let pdfjs: any;
 
 export default function ExtractTextPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -40,6 +36,16 @@ export default function ExtractTextPdfPage() {
   const [done, setDone] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
+      pdfjs = pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
 
   const resetState = () => {
     setFile(null);
@@ -73,6 +79,10 @@ export default function ExtractTextPdfPage() {
   
   const handleExtract = async () => {
     if (!file) return;
+    if (!pdfjs) {
+        toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+        return;
+    }
     setIsProcessing(true);
     setDone(false);
     setProgress(0);
@@ -185,3 +195,5 @@ export default function ExtractTextPdfPage() {
     </div>
   );
 }
+
+    

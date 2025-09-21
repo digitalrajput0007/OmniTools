@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+import { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,11 +27,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 
-// Required for pdfjs-dist
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
+let pdfjs: any;
 
 export default function PdfToImagesPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -42,6 +37,16 @@ export default function PdfToImagesPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
+      pdfjs = pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
 
   const resetState = () => {
     setFile(null);
@@ -97,6 +102,10 @@ export default function PdfToImagesPage() {
     if (!file) {
       toast({ title: 'No File', description: 'Please select a PDF file.', variant: 'destructive' });
       return;
+    }
+    if (!pdfjs) {
+        toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+        return;
     }
     setIsProcessing(true);
     setDone(false);
@@ -173,10 +182,10 @@ export default function PdfToImagesPage() {
 
   const formatFileSize = (bytes: number | null | undefined): string => {
     if (!bytes) return '0 KB';
-    if (bytes < 1024 * 1024) {
-      return (bytes / 1024).toFixed(2) + ' KB';
-    } else {
+    if (bytes >= 1024 * 1024) {
       return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    } else {
+      return (bytes / 1024).toFixed(2) + ' KB';
     }
   };
   
@@ -312,3 +321,5 @@ export default function PdfToImagesPage() {
     </div>
   );
 }
+
+    

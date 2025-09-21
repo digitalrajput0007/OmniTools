@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,10 +27,7 @@ import Image from 'next/image';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
+let pdfjs: any;
 
 interface PagePreview {
   id: number;
@@ -52,6 +48,16 @@ export default function ReorderRotatePdfPage() {
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
+  useEffect(() => {
+    import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
+      pdfjs = pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url
+      ).toString();
+    });
+  }, []);
+
   const resetState = () => {
     setFile(null);
     setPreviews([]);
@@ -65,6 +71,10 @@ export default function ReorderRotatePdfPage() {
     if (selectedFile.type !== 'application/pdf') {
       toast({ title: 'Invalid File Type', variant: 'destructive' });
       return;
+    }
+     if (!pdfjs) {
+        toast({ title: 'PDF library not loaded', description: 'Please wait a moment and try again.', variant: 'destructive' });
+        return;
     }
     resetState();
     setFile(selectedFile);
@@ -159,7 +169,9 @@ export default function ReorderRotatePdfPage() {
           copiedPages.forEach((page, index) => {
             const previewForThisCopiedPage = previews[index];
             const newPage = newPdfDoc.addPage(page);
-            newPage.setRotation(previewForThisCopiedPage.rotation);
+            if (previewForThisCopiedPage) {
+              newPage.setRotation(previewForThisCopiedPage.rotation);
+            }
           });
           
           const pdfBytes = await newPdfDoc.save();
@@ -278,3 +290,5 @@ export default function ReorderRotatePdfPage() {
     </div>
   );
 }
+
+    
