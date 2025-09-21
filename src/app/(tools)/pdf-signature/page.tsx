@@ -92,7 +92,9 @@ export default function PdfSignaturePage() {
 
       return () => {
         clearTimeout(timeoutId);
-        signaturePadRef.current?.off();
+        if (signaturePadRef.current) {
+            signaturePadRef.current.off();
+        }
         signaturePadRef.current = null;
       };
     }
