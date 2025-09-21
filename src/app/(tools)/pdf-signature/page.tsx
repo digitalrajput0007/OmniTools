@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RotateCw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -84,6 +85,7 @@ type DraggableObject = {
   width: number; // width in pixels
   height: number; // height in pixels
   aspectRatio: number;
+  rotation: number; // in degrees
   // properties for text objects
   fontSize?: number;
   color?: ColorName;
@@ -148,6 +150,12 @@ const DraggableItem = ({
       height: obj.height,
     };
   };
+
+  const handleRotate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newRotation = (obj.rotation + 90) % 360;
+    onUpdate({ ...obj, rotation: newRotation });
+  };
   
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -204,6 +212,7 @@ const DraggableItem = ({
         top: obj.y,
         width: obj.width,
         height: obj.height,
+        transform: `rotate(${obj.rotation}deg)`,
       }}
     >
       {obj.type === 'image' ? (
@@ -214,6 +223,7 @@ const DraggableItem = ({
       
       <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", (isSelected || isInteracting) ? "opacity-100" : "group-hover/item:opacity-100")}>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleRotate(e);}}><RotateCw className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
       </div>
@@ -436,8 +446,7 @@ export default function PdfSignaturePage() {
     if (!text) return;
     
     const tempSpan = document.createElement('span');
-    tempSpan.style.fontFamily = `'${signatureFonts[font].name}', ${signatureFonts[font].className.replace('font-', '')}`;
-    tempSpan.style.fontSize = `${fontSize}px`;
+    tempSpan.style.font = `${fontSize}px ${signatureFonts[font].className}`;
     tempSpan.style.whiteSpace = 'nowrap';
     tempSpan.style.visibility = 'hidden';
     tempSpan.innerText = text;
@@ -453,7 +462,7 @@ export default function PdfSignaturePage() {
     } else {
       const newObject: DraggableObject = {
         id: Date.now(), type: 'text', pageIndex: -1, x: 50, y: 50, content: text,
-        width: textWidth, height: textHeight, aspectRatio: textWidth / textHeight, fontSize, color, font
+        width: textWidth, height: textHeight, aspectRatio: textWidth / textHeight, fontSize, color, font, rotation: 0,
       };
       setObjects(prev => [...prev, newObject]);
     }
@@ -473,7 +482,7 @@ export default function PdfSignaturePage() {
     } else {
       const newObject: DraggableObject = {
         id: Date.now(), type: 'image', pageIndex: -1, x: 50, y: 50, content: dataUrl,
-        width: 150, height: 75, aspectRatio: 2, color: signatureColor
+        width: 150, height: 75, aspectRatio: 2, color: signatureColor, rotation: 0
       };
       setObjects(prev => [...prev, newObject]);
     }
@@ -556,7 +565,7 @@ export default function PdfSignaturePage() {
         const newObject: DraggableObject = {
             id: Date.now(), type: 'image', pageIndex: -1, x: 50, y: 50, content: finalImage,
             width: image.width > 200 ? 200 : image.width, height: (image.width > 200 ? 200 : image.width) * (image.height / image.width),
-            aspectRatio: image.width / image.height,
+            aspectRatio: image.width / image.height, rotation: 0,
         };
         setObjects(prev => [...prev, newObject]);
         setUploadedImage(null);
@@ -661,6 +670,7 @@ export default function PdfSignaturePage() {
                         size: obj.fontSize * scaleY,
                         color: rgb(objColor.r, objColor.g, objColor.b),
                         opacity: 1,
+                        rotate: degrees(obj.rotation),
                     });
                 } else if (obj.type === 'image') {
                     const pngImage = await pdfDoc.embedPng(obj.content);
@@ -669,6 +679,7 @@ export default function PdfSignaturePage() {
                         y: finalYPt,
                         width: finalWidthPt,
                         height: finalHeightPt,
+                        rotate: degrees(obj.rotation),
                     });
                 }
             }
@@ -924,7 +935,7 @@ export default function PdfSignaturePage() {
             <li><strong>Upload PDF:</strong> Drag and drop your PDF file or click to browse.</li>
             <li><strong>Add Objects:</strong> Use the "Text", "Signature", or "Image" buttons to create items. They will appear in the Object Library.</li>
             <li><strong>Position Objects:</strong> Drag your created text or signature from the library and drop it onto the desired location on any page.</li>
-            <li><strong>Manipulate Objects:</strong> Hover over an object on the page to see controls to Duplicate, Edit, or Delete it. Click an object to select it, then click and drag to move it. Image objects will show resize handles when selected.</li>
+            <li><strong>Manipulate Objects:</strong> Hover over an object on the page to see controls to Duplicate, Rotate, Edit, or Delete it. Click an object to select it, then click and drag to move it. Image objects will show resize handles when selected.</li>
             <li><strong>Save and Download:</strong> Once you've placed all your objects, click "Save Changes" to generate and download your new PDF.</li>
           </ol>
         </CardContent>
@@ -932,3 +943,5 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
+
+    
