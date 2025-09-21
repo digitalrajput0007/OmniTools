@@ -19,6 +19,10 @@ import {
   X,
   CheckCircle2,
   RefreshCcw,
+  ChevronLeft,
+  ChevronRight,
+  PlusCircle,
+  MinusCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -26,24 +30,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import Image from 'next/image';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 let pdfjs: any;
-
-const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FADBD8" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M14 2V8H20" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M8 12H9C10.1046 12 11 12.8954 11 14V18" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14 18V12H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14 15H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-);
-
 
 export default function PdfSplitterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [totalPages, setTotalPages] = useState(0);
   const [ranges, setRanges] = useState('');
@@ -67,6 +60,7 @@ export default function PdfSplitterPage() {
   const resetState = () => {
     setFile(null);
     setPreviews([]);
+    setCurrentPreviewIndex(0);
     setSelectedPages(new Set());
     setTotalPages(0);
     setSplit(false);
@@ -98,7 +92,7 @@ export default function PdfSplitterPage() {
       const pagePreviews: string[] = [];
       for (let i = 1; i <= numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: 1.5 });
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -143,24 +137,26 @@ export default function PdfSplitterPage() {
     }
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const rangesArray: (string | number)[] = [];
-    let startOfRange = sortedPages[0];
+    if (sortedPages.length > 0) {
+        let startOfRange = sortedPages[0];
 
-    for (let i = 0; i < sortedPages.length; i++) {
-      const currentPage = sortedPages[i];
-      const nextRage = i + 1 < sortedPages.length ? sortedPages[i + 1] : null;
+        for (let i = 0; i < sortedPages.length; i++) {
+          const currentPage = sortedPages[i];
+          const nextRage = i + 1 < sortedPages.length ? sortedPages[i + 1] : null;
 
-      if (nextRage === null || nextRage > currentPage + 1) {
-        if (currentPage === startOfRange) {
-          rangesArray.push(currentPage);
-        } else {
-          rangesArray.push(`${startOfRange}-${currentPage}`);
+          if (nextRage === null || nextRage > currentPage + 1) {
+            if (currentPage === startOfRange) {
+              rangesArray.push(currentPage);
+            } else {
+              rangesArray.push(`${startOfRange}-${currentPage}`);
+            }
+            if(nextRage !== null) {
+                startOfRange = nextRage;
+            }
+          }
         }
-        if(nextRage !== null) {
-            startOfRange = nextRage;
-        }
-      }
     }
-    setRanges(rangesArray.join(','));
+    setRanges(rangesArray.join(', '));
   };
 
   const handleRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,7 +171,7 @@ export default function PdfSplitterPage() {
       setSelectedPages(newSelectedPages);
       return;
     }
-    const parts = rangesStr.split(',');
+    const parts = rangesStr.split(/[, ]+/);
     for (const part of parts) {
       if (part.includes('-')) {
         const [start, end] = part.split('-').map(Number);
@@ -190,22 +186,22 @@ export default function PdfSplitterPage() {
     setSelectedPages(newSelectedPages);
   };
 
-  const handleDragEvents = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragEvents = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragEnter = (e: React.DragEvent<HTMLElement>) => {
     handleDragEvents(e);
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
     handleDragEvents(e);
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -213,12 +209,16 @@ export default function PdfSplitterPage() {
     }
   };
 
-  const handleRemoveFile = () => {
-    resetState();
-  };
-
   const handleSplit = () => {
     if (!file) return;
+    if (selectedPages.size === 0) {
+      toast({
+        title: 'No Pages Selected',
+        description: 'Please select at least one page to extract.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsSplitting(true);
     setSplit(false);
     setProgress(0);
@@ -277,6 +277,8 @@ export default function PdfSplitterPage() {
       });
     }
   };
+  
+  const isCurrentPageSelected = selectedPages.has(currentPreviewIndex + 1);
 
   return (
     <div className="grid gap-6">
@@ -326,56 +328,50 @@ export default function PdfSplitterPage() {
             </div>
           ) : (
             <div className="space-y-6">
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                    {previews.map((preview, index) => (
-                        <div
-                        key={index}
-                        onClick={() => handleTogglePage(index + 1)}
-                        className={cn(
-                            'relative cursor-pointer rounded-lg border-2 p-1 transition-all',
-                            selectedPages.has(index + 1)
-                            ? 'border-primary shadow-lg'
-                            : 'border-transparent hover:border-primary/50'
-                        )}
-                        >
+              <div className="grid gap-8 md:grid-cols-2">
+                {/* Left Column: Preview */}
+                <div className="relative flex flex-col items-center justify-center rounded-lg border bg-muted/20 p-4">
+                  <div className="relative w-full h-[400px]">
+                    {previews[currentPreviewIndex] && (
                         <Image
-                            src={preview}
-                            alt={`Page ${index + 1}`}
-                            width={150}
-                            height={212}
-                            className="w-full h-auto rounded-md shadow-md"
+                            src={previews[currentPreviewIndex]}
+                            alt={`Page ${currentPreviewIndex + 1} preview`}
+                            layout="fill"
+                            objectFit="contain"
+                            className={cn("shadow-md", isCurrentPageSelected && "ring-2 ring-primary ring-offset-2 rounded-sm")}
                         />
-                        <div
-                            className={cn(
-                            'absolute inset-0 flex items-center justify-center rounded-md bg-black/50 opacity-0 transition-opacity',
-                            selectedPages.has(index + 1) && 'opacity-100'
-                            )}
-                        >
-                            <CheckCircle2 className="h-8 w-8 text-white" />
-                        </div>
-                        <p className="text-center text-xs font-medium mt-1">{index + 1}</p>
-                        </div>
-                    ))}
+                    )}
+                  </div>
+                   {previews.length > 1 && (
+                      <div className="mt-4 flex items-center justify-center gap-4 w-full">
+                          <Button variant="outline" size="icon" onClick={() => setCurrentPreviewIndex(p => Math.max(0, p - 1))} disabled={currentPreviewIndex === 0}>
+                              <ChevronLeft />
+                          </Button>
+                          <p className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                              Page {currentPreviewIndex + 1} of {previews.length}
+                          </p>
+                          <Button variant="outline" size="icon" onClick={() => setCurrentPreviewIndex(p => Math.min(previews.length - 1, p + 1))} disabled={currentPreviewIndex === previews.length - 1}>
+                              <ChevronRight />
+                          </Button>
+                      </div>
+                  )}
+                  <Button variant={isCurrentPageSelected ? "destructive" : "outline"} className="w-full mt-2" onClick={() => handleTogglePage(currentPreviewIndex + 1)}>
+                     {isCurrentPageSelected ? <MinusCircle className="mr-2 h-4 w-4" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                     {isCurrentPageSelected ? 'Deselect Page' : 'Select Page'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={resetState}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="ranges">Pages to Extract</Label>
-                        <Input
-                            id="ranges"
-                            type="text"
-                            value={ranges}
-                            onChange={handleRangeChange}
-                            placeholder="e.g., 1, 3-5, 8"
-                            disabled={isSplitting}
-                        />
-                        <p className="mt-2 text-xs text-muted-foreground">
-                            Click pages above or enter page numbers/ranges separated by commas.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col justify-end">
-                    {split ? (
+                
+                {/* Right Column: Controls */}
+                <div className="flex flex-col justify-center space-y-6">
+                   {split ? (
                         <div className="flex h-full flex-col items-start justify-center space-y-4">
                             <div className="w-full text-center space-y-2">
                                 <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
@@ -383,6 +379,10 @@ export default function PdfSplitterPage() {
                                 <p className="text-muted-foreground">
                                 Your PDF has been split based on your selection.
                                 </p>
+                            </div>
+                             <div className="w-full text-sm rounded-lg border p-4">
+                                <p>Pages to be extracted: <span className="font-medium text-foreground">{ranges}</span></p>
+                                <p>Total selected: <span className="font-medium text-foreground">{selectedPages.size}</span></p>
                             </div>
                             <div className="flex w-full flex-col gap-2 pt-4">
                             <Button className="w-full" onClick={downloadSplitPdf}>
@@ -408,15 +408,31 @@ export default function PdfSplitterPage() {
                             </p>
                         </div>
                         ) : (
-                        <Button
-                            onClick={handleSplit}
-                            className="w-full"
-                            disabled={!ranges}
-                        >
-                            Split PDF
-                        </Button>
+                        <>
+                           <div className="space-y-2">
+                              <Label htmlFor="ranges">Pages to Extract</Label>
+                              <Input
+                                  id="ranges"
+                                  type="text"
+                                  value={ranges}
+                                  onChange={handleRangeChange}
+                                  placeholder="e.g., 1, 3-5, 8"
+                              />
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                  Click pages using the preview or enter page numbers/ranges separated by commas.
+                              </p>
+                          </div>
+                          <Button
+                              onClick={handleSplit}
+                              className="w-full"
+                              size="lg"
+                              disabled={!ranges}
+                          >
+                              Split PDF
+                          </Button>
+                        </>
                     )}
-                    </div>
+                </div>
               </div>
             </div>
           )}
@@ -443,10 +459,15 @@ export default function PdfSplitterPage() {
               <AccordionTrigger>How to Use the PDF Splitter</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
-                  <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file into the upload area, or click to browse and select it from your device. The tool will show you the total number of pages.</li>
-                  <li><strong>Specify Pages to Extract:</strong> In the "Pages to Extract" input field, type the page numbers you want. You can specify single pages, ranges, or a combination.</li>
-                  <li><strong>Start Splitting:</strong> Click the "Split PDF" button to begin the extraction process.</li>
-                  <li><strong>Download Your New PDF:</strong> Once processing is complete, click the "Download Split PDF" button to save the new file containing only your selected pages.</li>
+                  <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file, or click to browse and select it. Page previews will be loaded.</li>
+                  <li><strong>Select Pages:</strong> You have two ways to select pages:
+                    <ul className="list-disc list-inside pl-4 mt-1">
+                      <li><strong>Visually:</strong> Use the arrow buttons to navigate through the pages. Click "Select Page" to add the current page to your extraction list.</li>
+                       <li><strong>Manually:</strong> Type page numbers or ranges (e.g., "1, 3-5, 9") into the "Pages to Extract" field.</li>
+                    </ul>
+                  </li>
+                  <li><strong>Split the PDF:</strong> Once you have selected all desired pages, click the "Split PDF" button.</li>
+                  <li><strong>Download:</strong> After a brief processing animation, click "Download Split PDF" to save your new, smaller document.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
