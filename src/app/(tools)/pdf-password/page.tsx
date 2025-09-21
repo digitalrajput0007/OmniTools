@@ -28,7 +28,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PDFDocument, QPDFWriter, PDFFillableForm, PDFRef, PDFString, PDFHexString } from 'pdf-lib';
+import { PDFDocument, PDFString } from 'pdf-lib';
 
 type Mode = 'encrypt' | 'decrypt';
 
@@ -106,26 +106,31 @@ export default function PdfPasswordPage() {
             const existingPdfBytes = new Uint8Array(await file.arrayBuffer());
             if (mode === 'encrypt') {
                 const pdfDoc = await PDFDocument.load(existingPdfBytes);
-                // pdf-lib's encryption is basic. It primarily sets the user/owner passwords.
-                // More complex encryption requires a more powerful library, but this works for many viewers.
+                pdfDoc.setProducer('Omnibox PDF Tools');
+                pdfDoc.setCreator('Omnibox');
                 newPdfBytes = await pdfDoc.save({
-                    useObjectStreams: false,
-                    userPassword: PDFString.of(password),
-                    ownerPassword: PDFString.of(password),
+                    useObjectStreams: false, // Required for some older viewers
+                    userPassword: password,
+                    ownerPassword: password,
                 });
 
             } else { // decrypt
                 let pdfDoc;
                 try {
+                  // Try loading with the password as the owner password first
                   pdfDoc = await PDFDocument.load(existingPdfBytes, {
                     ownerPassword: password,
+                    ignoreEncryption: false,
                   });
                 } catch (e) {
                    try {
+                     // If that fails, try as the user password
                      pdfDoc = await PDFDocument.load(existingPdfBytes, {
                        userPassword: password,
+                       ignoreEncryption: false,
                      });
                    } catch (finalError) {
+                      console.error(finalError);
                       throw new Error('Invalid password or PDF is not encrypted.');
                    }
                 }
