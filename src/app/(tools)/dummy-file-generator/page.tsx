@@ -20,14 +20,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Download, FilePlus2, RefreshCcw, FileText, FileSpreadsheet, FileImage } from 'lucide-react';
+import { Download, FilePlus2, RefreshCcw, FileText, FileSpreadsheet } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { PDFDocument } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 
-type FileType = 'pdf' | 'jpg' | 'png' | 'docx' | 'xlsx';
+type FileType = 'pdf' | 'docx' | 'xlsx';
 type SizeUnit = 'KB' | 'MB';
 
 const getFileIcon = (fileType: FileType) => {
@@ -35,23 +35,23 @@ const getFileIcon = (fileType: FileType) => {
         case 'pdf': return <FileText className="h-24 w-24 text-red-500" />;
         case 'docx': return <FileText className="h-24 w-24 text-blue-500" />;
         case 'xlsx': return <FileSpreadsheet className="h-24 w-24 text-green-500" />;
-        default: return <FileImage className="h-24 w-24 text-gray-500" />;
     }
 }
 
+const LOREM_IPSUM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. '.repeat(5);
 
 const generateDummyPdf = async (sizeInBytes: number, onProgress: (p: number) => void): Promise<Blob> => {
   const pdfDoc = await PDFDocument.create();
   let currentBytes = new Uint8Array(0);
 
-  // Add pages with random text until the size is met
   while (currentBytes.length < sizeInBytes) {
     const page = pdfDoc.addPage([600, 800]);
-    // Add a chunk of text. The size is an approximation.
-    page.drawText('Random dummy content for file size. '.repeat(200), {
+    page.drawText(LOREM_IPSUM, {
         x: 50,
         y: 750,
-        size: 12,
+        size: 10,
+        lineHeight: 14,
+        maxWidth: 500,
     });
     currentBytes = await pdfDoc.save();
     onProgress(Math.min(99, (currentBytes.length / sizeInBytes) * 100));
@@ -60,53 +60,9 @@ const generateDummyPdf = async (sizeInBytes: number, onProgress: (p: number) => 
   return new Blob([currentBytes], { type: 'application/pdf' });
 };
 
-
-const generateDummyImage = (sizeInBytes: number, format: 'jpg' | 'png'): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-        // Estimate canvas dimensions. This is a heuristic.
-        // JPG is more compressed, PNG is less so.
-        const compressionFactor = format === 'jpg' ? 0.15 : 0.7;
-        const dimension = Math.ceil(Math.sqrt(sizeInBytes / compressionFactor));
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.min(dimension, 8000); // Cap dimensions to avoid browser crashes
-        canvas.height = Math.min(dimension, 8000);
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error("Could not get canvas context."));
-
-        // Fill with random noise for less compressibility
-        const imageData = ctx.createImageData(canvas.width, canvas.height);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i++) {
-            data[i] = Math.floor(Math.random() * 256);
-        }
-        ctx.putImageData(imageData, 0, 0);
-
-        // Export with variable quality for JPG to better match size
-        let quality = 0.9;
-        const tryExport = () => {
-            canvas.toBlob((blob) => {
-                if (!blob) return reject(new Error("Failed to create blob."));
-
-                // For JPG, try to get closer to the target size by adjusting quality
-                if (format === 'jpg' && blob.size < sizeInBytes * 0.8 && quality > 0.2) {
-                    quality -= 0.1;
-                    tryExport();
-                    return;
-                }
-                
-                resolve(blob);
-
-            }, `image/${format}`, quality);
-        };
-        tryExport();
-    });
-};
-
 const generateDummyDocx = (sizeInBytes: number): Blob => {
-  const baseContent = `This is a dummy .docx file. To reach the target size, we are adding padding content. `;
-  const repeatCount = Math.floor(sizeInBytes / baseContent.length);
-  const finalContent = baseContent.repeat(repeatCount);
+  const repeatCount = Math.floor(sizeInBytes / LOREM_IPSUM.length);
+  const finalContent = LOREM_IPSUM.repeat(repeatCount || 1);
   return new Blob([finalContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 };
 
@@ -191,8 +147,6 @@ export default function DummyFileGeneratorPage() {
         try {
             switch (fileType) {
                 case 'pdf': blob = await generateDummyPdf(sizeInBytes, onProgress); break;
-                case 'jpg': blob = await generateDummyImage(sizeInBytes, 'jpg'); break;
-                case 'png': blob = await generateDummyImage(sizeInBytes, 'png'); break;
                 case 'docx': blob = generateDummyDocx(sizeInBytes); break;
                 case 'xlsx': blob = generateDummyXlsx(sizeInBytes); break;
             }
@@ -260,8 +214,6 @@ a.href = url;
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="pdf">PDF (.pdf)</SelectItem>
-                    <SelectItem value="jpg">JPG (.jpg)</SelectItem>
-                    <SelectItem value="png">PNG (.png)</SelectItem>
                     <SelectItem value="docx">Word (.docx)</SelectItem>
                     <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
                 </SelectContent>
@@ -358,7 +310,7 @@ a.href = url;
               <AccordionTrigger>How to Use This Tool</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
-                  <li><strong>Select File Type:</strong> Choose the desired format for your dummy file (e.g., PDF, JPG, XLSX).</li>
+                  <li><strong>Select File Type:</strong> Choose the desired format for your dummy file (e.g., PDF, DOCX, XLSX).</li>
                   <li><strong>Enter File Size:</strong> Specify the target size of the file and select the unit (KB or MB).</li>
                   <li><strong>Generate:</strong> Click the "Generate File" button. The tool will create the file in your browser.</li>
                   <li><strong>Download:</strong> Once complete, click the "Download File" button to save it to your device.</li>

@@ -125,7 +125,7 @@ export const tools: Tool[] = [
   },
   {
     name: 'Dummy File Generator',
-    description: 'Create dummy files (PDF, JPG, etc.) of a specific size.',
+    description: 'Create dummy files (PDF, Word, Excel) of a specific size.',
     path: '/dummy-file-generator',
     icon: FilePlus2,
   },
