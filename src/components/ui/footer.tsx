@@ -6,7 +6,9 @@ export default function Footer() {
         <footer className="border-t bg-secondary">
             <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row md:px-6">
                 <div className="flex flex-col items-center gap-2 sm:items-start">
-                    {/* Logo and copyright text removed as per request */}
+                    <p className="text-center text-xs text-muted-foreground sm:text-left">
+                        © {new Date().getFullYear()} onlinejpgpdf.com. All rights reserved.
+                    </p>
                 </div>
                 <nav className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-center sm:ml-auto sm:justify-end sm:gap-6">
                     <Link
