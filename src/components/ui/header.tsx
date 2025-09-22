@@ -35,6 +35,7 @@ const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', '
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
 const imagesToPdfTool = tools.find(t => t.name === 'Images to PDF');
 
+
 export const AppLogo = ({ className }: { className?: string }) => (
     <svg
         viewBox="0 0 200 40"
@@ -43,14 +44,9 @@ export const AppLogo = ({ className }: { className?: string }) => (
     >
         <defs>
             <linearGradient id="logoGradient" x1="0%" y1="50%" x2="100%" y2="50%">
-                <stop offset="0%" style={{ stopColor: '#2065d1' }} />
-                <stop offset="45%" style={{ stopColor: '#3993dd' }} />
-                <stop offset="55%" style={{ stopColor: '#f9a147' }} />
-                <stop offset="100%" style={{ stopColor: '#ff7e0a' }} />
+                <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))' }} />
+                <stop offset="100%" style={{ stopColor: 'hsl(var(--ring))' }} />
             </linearGradient>
-            <filter id="textShadow" x="-0.05" y="-0.05" width="1.1" height="1.2">
-              <feDropShadow dx="0" dy="1" stdDeviation="0.5" floodColor="#000000" floodOpacity="0.2"/>
-            </filter>
         </defs>
         <text
             x="50%"
@@ -58,9 +54,9 @@ export const AppLogo = ({ className }: { className?: string }) => (
             textAnchor="middle"
             fontSize="24"
             fontWeight="bold"
-            fontFamily="sans-serif"
+            fontFamily="var(--font-headline), sans-serif"
             fill="url(#logoGradient)"
-            filter="url(#textShadow)"
+            letterSpacing="-0.5"
         >
             Online JPG PDF
         </text>
@@ -87,142 +83,91 @@ export default function Header() {
         }, 100);
     };
 
+    const navItems = [
+        {
+            name: 'Image Tools',
+            icon: ImageIcon,
+            tools: imageTools
+        },
+        {
+            name: 'PDF Tools',
+            icon: FileText,
+            tools: pdfTools
+        },
+        {
+            name: 'Data Tools',
+            icon: Database,
+            tools: dataTools
+        },
+        {
+            name: 'Text Tools',
+            icon: ALargeSmall,
+            tools: textToolsList
+        },
+        {
+            name: 'Other Tools',
+            icon: Globe,
+            tools: otherTools
+        }
+    ];
+
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2 font-headline text-lg font-semibold" aria-label="Home">
-            <AppLogo />
-        </Link>
-        <nav className="hidden items-center gap-1 md:flex">
-             {imagesToPdfTool && (
-                <Button variant="ghost" asChild>
-                    <Link href={imagesToPdfTool.path}>
-                        <imagesToPdfTool.icon className="mr-2" /> {imagesToPdfTool.name}
-                    </Link>
-                </Button>
-             )}
-            <div onMouseEnter={() => handleMouseEnter('data')} onMouseLeave={handleMouseLeave}>
-                <DropdownMenu open={activeMenu === 'data'} onOpenChange={(open) => !open && setActiveMenu(null)}>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="cursor-pointer">
-                        <Database className="mr-2" /> Data Tools <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                    {dataTools.map(tool => (
-                        <DropdownMenuItem key={tool.name} asChild>
-                        <Link href={tool.path}>
-                            <tool.icon className="mr-2" />
-                            <span>{tool.name}</span>
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+            <Link href="/" className="flex items-center gap-2 font-headline text-lg font-semibold" aria-label="Home">
+                <AppLogo />
+            </Link>
+            <nav className="hidden items-center gap-1 md:flex">
+                {imagesToPdfTool && (
+                    <Button variant="ghost" asChild>
+                        <Link href={imagesToPdfTool.path}>
+                            <imagesToPdfTool.icon className="mr-2" /> {imagesToPdfTool.name}
                         </Link>
-                        </DropdownMenuItem>
-                    ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-
-            <div onMouseEnter={() => handleMouseEnter('image')} onMouseLeave={handleMouseLeave}>
-                <DropdownMenu open={activeMenu === 'image'} onOpenChange={(open) => !open && setActiveMenu(null)}>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="cursor-pointer">
-                        <ImageIcon className="mr-2" /> Image Tools <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                    {imageTools.map(tool => (
-                        <DropdownMenuItem key={tool.name} asChild>
-                        <Link href={tool.path}>
-                            <tool.icon className="mr-2" />
-                            <span>{tool.name}</span>
-                        </Link>
-                        </DropdownMenuItem>
-                    ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+                )}
 
-            <div onMouseEnter={() => handleMouseEnter('pdf')} onMouseLeave={handleMouseLeave}>
-                <DropdownMenu open={activeMenu === 'pdf'} onOpenChange={(open) => !open && setActiveMenu(null)}>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="cursor-pointer">
-                        <FileText className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
+                {navItems.map((item) => (
+                    <div key={item.name} onMouseEnter={() => handleMouseEnter(item.name)} onMouseLeave={handleMouseLeave}>
+                        <DropdownMenu open={activeMenu === item.name} onOpenChange={(open) => !open && setActiveMenu(null)}>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="cursor-pointer">
+                                    <item.icon className="mr-2" /> {item.name} <ChevronDown className="ml-1 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                {item.tools.map(tool => (
+                                    <DropdownMenuItem key={tool.name} asChild>
+                                        <Link href={tool.path}>
+                                            <tool.icon className="mr-2" />
+                                            <span>{tool.name}</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                ))}
+            </nav>
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                        <PanelLeft className="h-5 w-5" />
+                        <span className="sr-only">Toggle navigation menu</span>
                     </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                    {pdfTools.map(tool => (
-                        <DropdownMenuItem key={tool.name} asChild>
-                        <Link href={tool.path}>
-                            <tool.icon className="mr-2" />
-                            <span>{tool.name}</span>
+                </SheetTrigger>
+                <SheetContent side="left">
+                    <nav className="grid gap-6 text-lg font-medium">
+                        <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+                            <span className="sr-only">{AppName}</span>
                         </Link>
-                        </DropdownMenuItem>
-                    ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-
-            <div onMouseEnter={() => handleMouseEnter('text')} onMouseLeave={handleMouseLeave}>
-                <DropdownMenu open={activeMenu === 'text'} onOpenChange={(open) => !open && setActiveMenu(null)}>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="cursor-pointer">
-                        <ALargeSmall className="mr-2" /> Text Tools <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                    {textToolsList.map(tool => (
-                        <DropdownMenuItem key={tool.name} asChild>
-                        <Link href={tool.path}>
-                            <tool.icon className="mr-2" />
-                            <span>{tool.name}</span>
-                        </Link>
-                        </DropdownMenuItem>
-                    ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-
-            {otherTools.length > 0 && (
-                <div onMouseEnter={() => handleMouseEnter('other')} onMouseLeave={handleMouseLeave}>
-                    <DropdownMenu open={activeMenu === 'other'} onOpenChange={(open) => !open && setActiveMenu(null)}>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="cursor-pointer">
-                            <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                        {otherTools.map(tool => (
-                            <DropdownMenuItem key={tool.name} asChild>
-                            <Link href={tool.path}>
-                                <tool.icon className="mr-2" />
-                                <span>{tool.name}</span>
+                        {tools.map((tool) => (
+                            <Link key={tool.name} href={tool.path} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+                                <tool.icon className="h-5 w-5" />
+                                {tool.name}
                             </Link>
-                            </DropdownMenuItem>
                         ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )}
-        </nav>
-        <Sheet>
-            <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-                    <PanelLeft className="h-5 w-5" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-                <nav className="grid gap-6 text-lg font-medium">
-                    <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-                        <span className="sr-only">{AppName}</span>
-                    </Link>
-                    {tools.map((tool) => (
-                        <Link key={tool.name} href={tool.path} className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-                            <tool.icon className="h-5 w-5" />
-                            {tool.name}
-                        </Link>
-                    ))}
-                </nav>
-            </SheetContent>
-        </Sheet>
-      </header>
+                    </nav>
+                </SheetContent>
+            </Sheet>
+        </header>
     );
 }
