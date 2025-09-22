@@ -36,9 +36,9 @@ const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].inc
 
 export const AppLogo = () => (
     <svg
-        viewBox="0 0 160 52"
+        viewBox="0 0 70 46"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-auto w-40"
+        className="h-auto w-12"
     >
         <defs>
             <linearGradient id="jpgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -50,10 +50,10 @@ export const AppLogo = () => (
                 <stop offset="100%" style={{ stopColor: '#2065d1', stopOpacity: 1 }} />
             </linearGradient>
             <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-                <feOffset dx="1" dy="1" result="offsetblur"/>
+                <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                <feOffset dx="1" dy="2" result="offsetblur"/>
                 <feComponentTransfer>
-                    <feFuncA type="linear" slope="0.5"/>
+                    <feFuncA type="linear" slope="0.3"/>
                 </feComponentTransfer>
                 <feMerge> 
                     <feMergeNode/>
@@ -64,7 +64,7 @@ export const AppLogo = () => (
 
         <g filter="url(#shadow)">
             {/* OJP Icon */}
-            <g transform="translate(0, 0)">
+            <g transform="translate(5, 5)">
                 <rect width="60" height="36" rx="8" ry="8" fill="url(#jpgGradient)" />
                 <path d="M10 10.5 L 14 6.5 L 18 10.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
                 <path d="M6 14 L 11 9 L 18 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
@@ -72,11 +72,6 @@ export const AppLogo = () => (
                 <text x="30" y="30" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">OJP</text>
             </g>
         </g>
-        
-        {/* Text */}
-        <text x="68" y="32" textAnchor="start" fontSize="12" fontFamily="sans-serif" fontWeight="bold">
-            <tspan fill="#2065d1">online</tspan><tspan fill="#555555">jpgpdf.com</tspan>
-        </text>
     </svg>
 );
 
