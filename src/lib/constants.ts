@@ -27,7 +27,8 @@ import {
   KeyRound,
   PenSquare,
   ScanText,
-  Droplets
+  Droplets,
+  FilePlus2,
 } from 'lucide-react';
 
 export type Tool = {
@@ -121,6 +122,12 @@ export const tools: Tool[] = [
     description: 'Add or remove a password from your PDF documents.',
     path: '/pdf-password',
     icon: KeyRound,
+  },
+  {
+    name: 'Dummy File Generator',
+    description: 'Create dummy files (PDF, JPG, etc.) of a specific size.',
+    path: '/dummy-file-generator',
+    icon: FilePlus2,
   },
   {
     name: 'QR Code Generator',
