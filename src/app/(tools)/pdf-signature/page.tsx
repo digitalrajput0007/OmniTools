@@ -31,7 +31,7 @@ import {
   ChevronRight,
   Loader2,
   RotateCw,
-  MoveVertical,
+  Move,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -109,112 +109,106 @@ const DraggableItem = ({
   obj: DraggableObject;
   isSelected: boolean;
   pageContainerRef: React.RefObject<HTMLDivElement>;
-  onSelect: (e: React.MouseEvent, id: number) => void;
+  onSelect: (e: React.MouseEvent | React.TouchEvent, id: number) => void;
   onUpdate: (updatedObj: DraggableObject) => void;
   onDelete: (id: number) => void;
   onEdit: (id: number) => void;
   onDuplicate: (id: number) => void;
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef(false);
-  const dragStartPos = useRef({ x: 0, y: 0, objX: 0, objY: 0 });
-
-  const [isResizing, setIsResizing] = useState(false);
-  const resizeStartPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
-  const [isRotating, setIsRotating] = useState(false);
   
-  const isInteracting = isDraggingRef.current || isResizing || isRotating;
+  const [interactionState, setInteractionState] = useState<'idle' | 'dragging' | 'resizing' | 'rotating'>('idle');
+  const interactionStartPos = useRef({ x: 0, y: 0, objX: 0, objY: 0, width: 0, height: 0 });
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target instanceof HTMLButtonElement || e.target.parentElement instanceof HTMLButtonElement || (e.target as HTMLElement).classList.contains('resize-handle')) {
-        return;
-    }
-    onSelect(e, obj.id);
+  const isInteracting = interactionState !== 'idle';
+  
+  const handleInteractionStart = (e: React.MouseEvent | React.TouchEvent, type: 'dragging' | 'resizing' | 'rotating') => {
     e.stopPropagation();
-    isDraggingRef.current = true;
-    dragStartPos.current = {
-      x: e.clientX,
-      y: e.clientY,
+    onSelect(e, obj.id);
+    
+    setInteractionState(type);
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    interactionStartPos.current = {
+      x: clientX,
+      y: clientY,
       objX: obj.x,
       objY: obj.y,
-    };
-  };
-
-  const handleResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(e, obj.id);
-    setIsResizing(true);
-    resizeStartPos.current = {
-      x: e.clientX,
-      y: e.clientY,
       width: obj.width,
       height: obj.height,
     };
   };
 
-  const handleRotateStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(e, obj.id);
-    setIsRotating(true);
-  };
-  
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      e.preventDefault();
-      if (isDraggingRef.current && pageContainerRef.current) {
-        const parentRect = pageContainerRef.current.getBoundingClientRect();
-        const dx = e.clientX - dragStartPos.current.x;
-        const dy = e.clientY - dragStartPos.current.y;
-        
-        let newX = dragStartPos.current.objX + dx;
-        let newY = dragStartPos.current.objY + dy;
-        
-        // Constrain within parent page boundaries
-        newX = Math.max(0, Math.min(newX, parentRect.width - obj.width));
-        newY = Math.max(0, Math.min(newY, parentRect.height - obj.height));
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+        if (!isInteracting) return;
+        e.preventDefault();
 
-        onUpdate({ ...obj, x: newX, y: newY });
-      } else if (isResizing) {
-          const dx = e.clientX - resizeStartPos.current.x;
-          let newWidth = resizeStartPos.current.width + dx;
-          newWidth = Math.max(20, newWidth); // min width
-          const newHeight = newWidth / obj.aspectRatio;
-          onUpdate({ ...obj, width: newWidth, height: newHeight });
-      } else if (isRotating && itemRef.current) {
-          const itemRect = itemRef.current.getBoundingClientRect();
-          const centerX = itemRect.left + itemRect.width / 2;
-          const centerY = itemRect.top + itemRect.height / 2;
-          const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-          const degrees = (angle * 180) / Math.PI + 90; // +90 to offset initial handle position
-          onUpdate({ ...obj, rotation: degrees });
-      }
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        if (interactionState === 'dragging' && pageContainerRef.current) {
+            const parentRect = pageContainerRef.current.getBoundingClientRect();
+            const dx = clientX - interactionStartPos.current.x;
+            const dy = clientY - interactionStartPos.current.y;
+            
+            let newX = interactionStartPos.current.objX + dx;
+            let newY = interactionStartPos.current.objY + dy;
+            
+            newX = Math.max(0, Math.min(newX, parentRect.width - obj.width));
+            newY = Math.max(0, Math.min(newY, parentRect.height - obj.height));
+
+            onUpdate({ ...obj, x: newX, y: newY });
+        } else if (interactionState === 'resizing') {
+            const dx = clientX - interactionStartPos.current.x;
+            let newWidth = interactionStartPos.current.width + dx;
+            newWidth = Math.max(20, newWidth);
+            const newHeight = newWidth / obj.aspectRatio;
+            onUpdate({ ...obj, width: newWidth, height: newHeight });
+        } else if (interactionState === 'rotating' && itemRef.current) {
+            const itemRect = itemRef.current.getBoundingClientRect();
+            const centerX = itemRect.left + itemRect.width / 2;
+            const centerY = itemRect.top + itemRect.height / 2;
+            const angle = Math.atan2(clientY - centerY, clientX - centerX);
+            const degrees = (angle * 180) / Math.PI + 90;
+            onUpdate({ ...obj, rotation: degrees });
+        }
     };
     
-    const handleMouseUp = (e: MouseEvent) => {
-      isDraggingRef.current = false;
-      setIsResizing(false);
-      setIsRotating(false);
+    const handleEnd = () => {
+      setInteractionState('idle');
     };
 
-    if (isDraggingRef.current || isResizing || isRotating) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+    if (isInteracting) {
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
     }
     
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('mouseup', handleEnd);
+        document.removeEventListener('touchmove', handleMove);
+        document.removeEventListener('touchend', handleEnd);
     };
-  }, [obj, onUpdate, isResizing, isRotating, isDraggingRef, pageContainerRef]);
+  }, [obj, onUpdate, isInteracting, pageContainerRef, interactionState]);
+  
+  const handleButtonInteraction = (handler: (id: number) => void) => (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    handler(obj.id);
+  };
+  
 
   return (
     <div
       ref={itemRef}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e) => handleInteractionStart(e, 'dragging')}
+      onTouchStart={(e) => handleInteractionStart(e, 'dragging')}
       className={cn(
-        "group/item absolute cursor-move border border-dashed",
+        "group/item absolute cursor-grab active:cursor-grabbing border border-dashed",
         isSelected ? 'border-primary' : 'border-transparent hover:border-primary/50',
         isInteracting ? 'z-30' : (isSelected ? 'z-20' : 'z-10')
       )}
@@ -232,19 +226,20 @@ const DraggableItem = ({
         <div style={{ fontSize: obj.fontSize, whiteSpace: 'nowrap', color: colorOptions[obj.color || 'black'].value }} className={cn('h-full w-full flex items-center justify-center', obj.font ? signatureFonts[obj.font].className : '')}>{obj.content}</div>
       )}
       
-      <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", (isSelected || isInteracting) ? "opacity-100" : "group-hover/item:opacity-100")}>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDuplicate(obj.id)}><Copy className="h-4 w-4"/></Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6 cursor-grab active:cursor-grabbing" onMouseDown={handleRotateStart}><RotateCw className="h-4 w-4"/></Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(obj.id)}><Edit className="h-4 w-4"/></Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onDelete(obj.id)}><Trash2 className="h-4 w-4"/></Button>
+       <div className={cn("absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-md bg-secondary p-1 z-30 opacity-0 transition-opacity", (isSelected || isInteracting) ? "opacity-100" : "group-hover/item:opacity-100")}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onMouseDown={(e) => e.stopPropagation()} onTouchStart={handleButtonInteraction(onDuplicate)} onClick={handleButtonInteraction(onDuplicate)}><Copy className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 cursor-grab active:cursor-grabbing" onMouseDown={(e) => handleInteractionStart(e, 'dragging')} onTouchStart={(e) => handleInteractionStart(e, 'dragging')}><Move className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 cursor-alias" onMouseDown={(e) => handleInteractionStart(e, 'rotating')} onTouchStart={(e) => handleInteractionStart(e, 'rotating')}><RotateCw className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onMouseDown={(e) => e.stopPropagation()} onTouchStart={handleButtonInteraction(onEdit)} onClick={handleButtonInteraction(onEdit)}><Edit className="h-4 w-4"/></Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onMouseDown={(e) => e.stopPropagation()} onTouchStart={handleButtonInteraction(onDelete)} onClick={handleButtonInteraction(onDelete)}><Trash2 className="h-4 w-4"/></Button>
       </div>
       
       {obj.type === 'image' && (
         <div className={cn("opacity-0", isSelected || isInteracting ? "opacity-100" : "group-hover/item:opacity-100")}>
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background z-40" />
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background z-40" />
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background z-40" />
-          <div onMouseDown={handleResizeStart} className="resize-handle absolute -top-1 -left-1 h-3 w-3 cursor-nw-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={(e) => handleInteractionStart(e, 'resizing')} onTouchStart={(e) => handleInteractionStart(e, 'resizing')} className="resize-handle absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={(e) => handleInteractionStart(e, 'resizing')} onTouchStart={(e) => handleInteractionStart(e, 'resizing')} className="resize-handle absolute -bottom-1 -left-1 h-3 w-3 cursor-sw-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={(e) => handleInteractionStart(e, 'resizing')} onTouchStart={(e) => handleInteractionStart(e, 'resizing')} className="resize-handle absolute -top-1 -right-1 h-3 w-3 cursor-ne-resize rounded-full border border-primary bg-background z-40" />
+          <div onMouseDown={(e) => handleInteractionStart(e, 'resizing')} onTouchStart={(e) => handleInteractionStart(e, 'resizing')} className="resize-handle absolute -top-1 -left-1 h-3 w-3 cursor-nw-resize rounded-full border border-primary bg-background z-40" />
         </div>
       )}
     </div>
@@ -783,7 +778,7 @@ export default function PdfSignaturePage() {
 
     if (previews.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6" onClick={(e) => { e.stopPropagation(); setSelectedObjectId(null); }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div
               className="md:col-span-2 space-y-4 relative"
             >
@@ -805,6 +800,7 @@ export default function PdfSignaturePage() {
                 className="relative z-0 border rounded-lg overflow-hidden shadow-md bg-white"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleObjectDrop}
+                onClick={() => setSelectedObjectId(null)}
               >
                 {previews[currentPage] && (
                   <div data-page-index={currentPage} className="relative">
@@ -952,5 +948,3 @@ export default function PdfSignaturePage() {
     </div>
   );
 }
-
-    
