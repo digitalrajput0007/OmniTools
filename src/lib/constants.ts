@@ -119,7 +119,7 @@ export const tools: Tool[] = [
   },
     {
     name: 'PDF Password',
-    description: 'Add or remove a password from your PDF documents.',
+    description: 'This feature is currently unavailable due to technical limitations.',
     path: '/pdf-password',
     icon: KeyRound,
   },
