@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFEncryption } from 'pdf-lib';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -87,16 +87,33 @@ export default function PdfPasswordPage() {
     const processPromise = (async () => {
       try {
         const fileBuffer = await file.arrayBuffer();
-        const loadOptions = mode === 'decrypt' ? { userPassword: password } : {};
-        const pdfDoc = await PDFDocument.load(fileBuffer, loadOptions);
         
-        if(mode === 'encrypt') {
-            pdfDoc.encrypt({
-                userPassword: password,
-                ownerPassword: password,
+        if (mode === 'encrypt') {
+            const pdfDoc = await PDFDocument.load(fileBuffer);
+            pdfDoc.setProducer('onlinejpgpdf.com');
+            pdfDoc.setCreator('onlinejpgpdf.com');
+            newPdfBytes = await pdfDoc.save({ 
+                useObjectStreams: false,
+                encrypt: {
+                    userPassword: password,
+                    ownerPassword: password,
+                    permissions: {
+                        printing: 'highResolution',
+                        modifying: false,
+                        copying: false,
+                        annotating: false,
+                        fillingForms: false,
+                        contentAccessibility: false,
+                        documentAssembly: false,
+                    },
+                },
             });
+        } else { // Decrypt
+            const pdfDoc = await PDFDocument.load(fileBuffer, { ownerPassword: password });
+            pdfDoc.setProducer('onlinejpgpdf.com');
+            pdfDoc.setCreator('onlinejpgpdf.com');
+            newPdfBytes = await pdfDoc.save({ useObjectStreams: false });
         }
-        newPdfBytes = await pdfDoc.save();
       } catch (error) {
         processError = error instanceof Error ? error : new Error('An unknown error occurred.');
         console.error(error);
@@ -189,7 +206,10 @@ export default function PdfPasswordPage() {
 
     return (
         <label htmlFor="pdf-upload" className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}>
-            <UploadCloud className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p><Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" /><Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
+            <UploadCloud className="h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
+            <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
+            <Button variant="outline" className="mt-4 pointer-events-none">Browse File</Button>
         </label>
     );
   };
