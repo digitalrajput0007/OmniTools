@@ -37,7 +37,7 @@ const imagesToPdfTool = tools.find(t => t.name === 'Images to PDF');
 
 
 export const AppLogo = ({ className }: { className?: string }) => (
-    <svg
+     <svg
         viewBox="0 0 160 30"
         xmlns="http://www.w3.org/2000/svg"
         className={cn("w-auto", className)}
