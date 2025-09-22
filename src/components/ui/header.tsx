@@ -39,7 +39,6 @@ export const AppLogo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) 
         viewBox="0 0 160 52"
         xmlns="http://www.w3.org/2000/svg"
         className={cn("w-auto", className)}
-        {...props}
     >
         <defs>
             <linearGradient id="jpgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -100,7 +99,7 @@ export default function Header() {
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
         <Link href="/" className="font-headline text-lg font-semibold" aria-label="Home">
-            
+            <AppLogo className="h-10" />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
              <Button variant="ghost" asChild>
