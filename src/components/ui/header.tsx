@@ -87,8 +87,8 @@ export const AppLogo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) 
         </g>
         
         {/* Text */}
-        <text x="80" y="48" textAnchor="middle" fontSize="10" fontFamily="sans-serif" fontWeight="bold" fill="hsl(var(--foreground))">
-            onlinejpgpdf.com
+        <text x="80" y="48" textAnchor="middle" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
+            <tspan fill="#2065d1">online</tspan><tspan fill="#555555">jpgpdf.com</tspan>
         </text>
     </svg>
 );
