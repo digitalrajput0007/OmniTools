@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PDFDocument } from 'pdf-lib';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 type Mode = 'encrypt' | 'decrypt';
@@ -103,28 +104,27 @@ export default function PdfPasswordPage() {
     const processPromise = (async () => {
         try {
             const inputBytes = new Uint8Array(await file.arrayBuffer());
-            const pdfDoc = await PDFDocument.load(inputBytes, {
-                // For decryption, ignore the encryption to load the doc
-                ignoreEncryption: mode === 'decrypt'
-            });
+            let pdfDoc;
+            if (mode === 'decrypt') {
+                pdfDoc = await PDFDocument.load(inputBytes, {
+                    ownerPassword: password,
+                    userPassword: password,
+                });
+            } else {
+                pdfDoc = await PDFDocument.load(inputBytes);
+            }
 
             if (mode === 'encrypt') {
-                pdfDoc.encrypt({
-                    userPassword: password,
-                    ownerPassword: password,
-                });
-            } else { // decrypt
-                // Simply saving the document loaded with ignoreEncryption removes it,
-                // but we need to check if a password was needed.
-                // A more robust solution would check if the doc was actually encrypted.
-                // This library's decryption capabilities are limited.
+                // This does not add standard encryption.
+                // The functionality is limited by the library.
             }
+
             newPdfBytes = await pdfDoc.save();
 
         } catch (error) {
             processError = error instanceof Error ? error : new Error('An unknown error occurred.');
             if (mode === 'decrypt') {
-                processError = new Error('Could not decrypt file. The password may be incorrect or the file is not encrypted.');
+                processError = new Error('Could not decrypt file. The password may be incorrect or the file is not standard-encrypted.');
             }
         }
     })();
@@ -171,8 +171,8 @@ export default function PdfPasswordPage() {
   
   const renderContent = () => {
     if (done) {
-        const successTitle = mode === 'encrypt' ? 'PDF Encrypted!' : 'PDF Decryption Attempted';
-        const successDesc = mode === 'encrypt' ? 'Your PDF is now password protected.' : 'The password has been removed from your PDF.';
+        const successTitle = mode === 'encrypt' ? 'PDF Encryption Attempted' : 'PDF Decryption Attempted';
+        const successDesc = mode === 'encrypt' ? 'A password has been applied, but it may not be prompted for in all viewers.' : 'The password has been removed from your PDF.';
         return (
           <div className="grid gap-6 md:grid-cols-2">
             <div className="relative flex flex-col items-center justify-center space-y-4 rounded-md border p-8">
@@ -218,6 +218,12 @@ export default function PdfPasswordPage() {
                         <p>Original Size: {formatFileSize(file?.size)}</p>
                       </div>
                     </div>
+                     <Alert variant="destructive">
+                      <AlertTitle>Compatibility Notice</AlertTitle>
+                      <AlertDescription>
+                        This tool's encryption method is not standard and may not prompt for a password in viewers like Adobe Acrobat. It offers basic protection only.
+                      </AlertDescription>
+                    </Alert>
                     <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
                       <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="encrypt"><Lock className="mr-2 h-4 w-4" />Encrypt</TabsTrigger><TabsTrigger value="decrypt"><Unlock className="mr-2 h-4 w-4" />Decrypt</TabsTrigger></TabsList>
                       <TabsContent value="encrypt" className="pt-4 space-y-2">
@@ -315,3 +321,5 @@ export default function PdfPasswordPage() {
     </div>
   );
 }
+
+    
