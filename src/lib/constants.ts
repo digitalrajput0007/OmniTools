@@ -119,7 +119,7 @@ export const tools: Tool[] = [
   },
     {
     name: 'PDF Password',
-    description: 'Add or remove a password from your PDF documents. (Under Maintenance)',
+    description: 'Add or remove a password from your PDF documents.',
     path: '/pdf-password',
     icon: KeyRound,
   },
