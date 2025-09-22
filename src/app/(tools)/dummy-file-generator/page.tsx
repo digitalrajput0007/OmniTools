@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Download, FilePlus2 } from 'lucide-react';
+import { Download, FilePlus2, RefreshCcw, FileText, FileSpreadsheet, FileImage } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
@@ -29,6 +29,15 @@ import * as XLSX from 'xlsx';
 
 type FileType = 'pdf' | 'jpg' | 'png' | 'docx' | 'xlsx';
 type SizeUnit = 'KB' | 'MB';
+
+const getFileIcon = (fileType: FileType) => {
+    switch(fileType) {
+        case 'pdf': return <FileText className="h-24 w-24 text-red-500" />;
+        case 'docx': return <FileText className="h-24 w-24 text-blue-500" />;
+        case 'xlsx': return <FileSpreadsheet className="h-24 w-24 text-green-500" />;
+        default: return <FileImage className="h-24 w-24 text-gray-500" />;
+    }
+}
 
 
 const generateDummyPdf = async (sizeInBytes: number, onProgress: (p: number) => void): Promise<Blob> => {
@@ -133,7 +142,7 @@ export default function DummyFileGeneratorPage() {
   const [sizeUnit, setSizeUnit] = useState<SizeUnit>('KB');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [generatedFile, setGeneratedFile] = useState<{ blob: Blob; name: string } | null>(null);
+  const [generatedFile, setGeneratedFile] = useState<{ blob: Blob; name: string; type: FileType } | null>(null);
 
   const { toast } = useToast();
   
@@ -173,30 +182,48 @@ export default function DummyFileGeneratorPage() {
     const onProgress = (p: number) => {
         setProgress(p);
     };
-    
-    // Give UI time to update before blocking the main thread
-    await new Promise(resolve => setTimeout(resolve, 50));
 
-    try {
-        switch (fileType) {
-            case 'pdf': blob = await generateDummyPdf(sizeInBytes, onProgress); break;
-            case 'jpg': blob = await generateDummyImage(sizeInBytes, 'jpg'); break;
-            case 'png': blob = await generateDummyImage(sizeInBytes, 'png'); break;
-            case 'docx': blob = generateDummyDocx(sizeInBytes); break;
-            case 'xlsx': blob = generateDummyXlsx(sizeInBytes); break;
+    let generationError: Error | null = null;
+    const startTime = Date.now();
+    const minDuration = 3000;
+    
+    const generationPromise = (async () => {
+        try {
+            switch (fileType) {
+                case 'pdf': blob = await generateDummyPdf(sizeInBytes, onProgress); break;
+                case 'jpg': blob = await generateDummyImage(sizeInBytes, 'jpg'); break;
+                case 'png': blob = await generateDummyImage(sizeInBytes, 'png'); break;
+                case 'docx': blob = generateDummyDocx(sizeInBytes); break;
+                case 'xlsx': blob = generateDummyXlsx(sizeInBytes); break;
+            }
+        } catch (error) {
+            generationError = error instanceof Error ? error : new Error('Could not generate the file.');
         }
-        setProgress(100);
-        if (blob) {
-          setGeneratedFile({ blob, name: fileName });
-        } else {
-            throw new Error('File generation resulted in an empty blob.');
+    })();
+
+    const progressInterval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        const currentProgress = Math.min((elapsedTime / minDuration) * 100, 100);
+        // Only update progress from the timer if the generation function isn't providing it
+        if (fileType !== 'pdf') {
+            setProgress(currentProgress);
         }
-    } catch (error) {
-        console.error(error);
-        toast({ title: 'Generation Error', description: error instanceof Error ? error.message : 'Could not generate the file.', variant: 'destructive' });
+    }, 50);
+
+    await Promise.all([generationPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
+    clearInterval(progressInterval);
+    setProgress(100);
+    setIsGenerating(false);
+
+    if (generationError) {
+        console.error(generationError);
+        toast({ title: 'Generation Error', description: generationError.message, variant: 'destructive' });
         resetState();
-    } finally {
-        setIsGenerating(false);
+    } else if (blob) {
+        setGeneratedFile({ blob, name: fileName, type: fileType });
+    } else {
+        toast({ title: 'Generation Error', description: 'File generation resulted in an empty file.', variant: 'destructive' });
+        resetState();
     }
   };
   
@@ -204,7 +231,7 @@ export default function DummyFileGeneratorPage() {
     if (!generatedFile) return;
     const url = URL.createObjectURL(generatedFile.blob);
     const a = document.createElement('a');
-    a.href = url;
+a.href = url;
     a.download = generatedFile.name;
     document.body.appendChild(a);
     a.click();
@@ -212,6 +239,67 @@ export default function DummyFileGeneratorPage() {
     document.body.removeChild(a);
   };
   
+  const renderInitialOrProgress = () => {
+     if (isGenerating) {
+        return (
+            <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
+                <CircularProgress progress={progress} />
+                <p className="text-center text-sm text-muted-foreground">Generating your dummy file...</p>
+                 <Button onClick={() => window.location.reload()} variant="outline">Cancel</Button>
+            </div>
+        );
+     }
+     
+     return (
+        <div className='mx-auto max-w-lg space-y-6'>
+            <div className="space-y-2">
+                <Label htmlFor="file-type">File Type</Label>
+                <Select value={fileType} onValueChange={(v) => setFileType(v as FileType)}>
+                <SelectTrigger id="file-type">
+                    <SelectValue placeholder="Select file type" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="pdf">PDF (.pdf)</SelectItem>
+                    <SelectItem value="jpg">JPG (.jpg)</SelectItem>
+                    <SelectItem value="png">PNG (.png)</SelectItem>
+                    <SelectItem value="docx">Word (.docx)</SelectItem>
+                    <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
+                </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="file-size">File Size</Label>
+                <div className="flex items-center gap-2">
+                   <Input
+                    id="file-size"
+                    type="number"
+                    value={fileSize}
+                    onChange={(e) => setFileSize(e.target.value)}
+                    placeholder="e.g., 100"
+                    min="1"
+                   />
+                   <Select value={sizeUnit} onValueChange={(v) => setSizeUnit(v as SizeUnit)}>
+                     <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                        <SelectItem value="KB">KB</SelectItem>
+                        <SelectItem value="MB">MB</SelectItem>
+                     </SelectContent>
+                   </Select>
+                </div>
+                 <p className="text-xs text-muted-foreground">
+                    Note: The final file size will be an approximation.
+                </p>
+            </div>
+            
+            <Button onClick={handleGenerate} className="w-full" size="lg">
+                Generate File
+            </Button>
+        </div>
+     );
+  }
 
   return (
     <div className="grid gap-6">
@@ -224,76 +312,29 @@ export default function DummyFileGeneratorPage() {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="mx-auto max-w-lg space-y-8">
-            {isGenerating ? (
-                <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
-                    <CircularProgress progress={progress} />
-                    <p className="text-center text-sm text-muted-foreground">Generating your dummy file...</p>
-                </div>
-            ) : generatedFile ? (
-                 <div className="flex flex-col items-center space-y-6 rounded-md border p-8">
-                    <FilePlus2 className="h-24 w-24 text-primary" />
-                    <div className='text-center'>
-                        <p className="font-medium">{generatedFile.name}</p>
-                        <p className="text-sm text-muted-foreground">Final Size: {formatFileSize(generatedFile.blob.size)}</p>
-                    </div>
-                    <div className='flex w-full gap-2'>
-                        <Button onClick={handleDownload} className="w-full">
-                            <Download className="mr-2 h-4 w-4" /> Download File
-                        </Button>
-                        <Button onClick={resetState} variant="outline" className="w-full">Generate Another</Button>
-                    </div>
-                     <SharePrompt toolName="Dummy File Generator" />
-                </div>
-            ) : (
-                <div className='space-y-6'>
-                    <div className="space-y-2">
-                        <Label htmlFor="file-type">File Type</Label>
-                        <Select value={fileType} onValueChange={(v) => setFileType(v as FileType)}>
-                        <SelectTrigger id="file-type">
-                            <SelectValue placeholder="Select file type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="pdf">PDF (.pdf)</SelectItem>
-                            <SelectItem value="jpg">JPG (.jpg)</SelectItem>
-                            <SelectItem value="png">PNG (.png)</SelectItem>
-                            <SelectItem value="docx">Word (.docx)</SelectItem>
-                            <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
-                        </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="file-size">File Size</Label>
-                        <div className="flex items-center gap-2">
-                           <Input
-                            id="file-size"
-                            type="number"
-                            value={fileSize}
-                            onChange={(e) => setFileSize(e.target.value)}
-                            placeholder="e.g., 100"
-                            min="1"
-                           />
-                           <Select value={sizeUnit} onValueChange={(v) => setSizeUnit(v as SizeUnit)}>
-                             <SelectTrigger className="w-[100px]">
-                                <SelectValue />
-                             </SelectTrigger>
-                             <SelectContent>
-                                <SelectItem value="KB">KB</SelectItem>
-                                <SelectItem value="MB">MB</SelectItem>
-                             </SelectContent>
-                           </Select>
+        <CardContent>
+            {generatedFile ? (
+                 <div className="grid gap-6 md:grid-cols-2">
+                    <div className="flex flex-col items-center justify-center space-y-4 rounded-md border p-8 bg-muted/20">
+                        {getFileIcon(generatedFile.type)}
+                        <div className='text-center'>
+                            <p className="font-medium">{generatedFile.name}</p>
+                            <p className="text-sm text-muted-foreground">Final Size: {formatFileSize(generatedFile.blob.size)}</p>
                         </div>
-                         <p className="text-xs text-muted-foreground">
-                            Note: The final file size will be an approximation.
-                        </p>
                     </div>
-                    
-                    <Button onClick={handleGenerate} className="w-full" size="lg">
-                        Generate File
-                    </Button>
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                        <div className='flex w-full max-w-sm flex-col gap-2'>
+                            <Button onClick={handleDownload} size="lg">
+                                <Download className="mr-2 h-4 w-4" /> Download File
+                            </Button>
+                            <Button onClick={resetState} variant="outline" size="lg">
+                                <RefreshCcw className="mr-2 h-4 w-4" /> Generate Another
+                            </Button>
+                        </div>
+                         <SharePrompt toolName="Dummy File Generator" />
+                    </div>
                 </div>
-            )}
+            ) : renderInitialOrProgress() }
         </CardContent>
       </Card>
       <Card>
