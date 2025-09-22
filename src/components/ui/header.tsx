@@ -31,7 +31,7 @@ import React from 'react';
 const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover', 'Images to PDF'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF to Images', 'PDF Merger', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF', 'PDF Password'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
-const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
+const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
 
 export const AppLogo = ({ className }: { className?: string }) => (
@@ -69,6 +69,12 @@ export const AppLogo = ({ className }: { className?: string }) => (
 
 
 export default function Header() {
+    const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({});
+
+    const handleOpenChange = (menu: string, open: boolean) => {
+        setOpenMenus(prev => ({ ...prev, [menu]: open }));
+    };
+
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 font-headline text-lg font-semibold" aria-label="Home">
@@ -80,13 +86,13 @@ export default function Header() {
                   <Braces className="mr-2" /> JSON Beautifier
                 </Link>
             </Button>
-            <DropdownMenu>
+            <DropdownMenu open={openMenus['data']} onOpenChange={(open) => handleOpenChange('data', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
+                <Button variant="ghost" className="cursor-pointer">
                   <Database className="mr-2" /> Data Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent onMouseLeave={() => handleOpenChange('data', false)}>
                 {dataTools.map(tool => (
                    <DropdownMenuItem key={tool.name} asChild>
                     <Link href={tool.path}>
@@ -98,13 +104,13 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
+            <DropdownMenu open={openMenus['image']} onOpenChange={(open) => handleOpenChange('image', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
+                <Button variant="ghost" className="cursor-pointer">
                   <ImageIcon className="mr-2" /> Image Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent onMouseLeave={() => handleOpenChange('image', false)}>
                 {imageTools.map(tool => (
                    <DropdownMenuItem key={tool.name} asChild>
                     <Link href={tool.path}>
@@ -116,13 +122,13 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-             <DropdownMenu>
+             <DropdownMenu open={openMenus['pdf']} onOpenChange={(open) => handleOpenChange('pdf', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
+                <Button variant="ghost" className="cursor-pointer">
                   <FileText className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent onMouseLeave={() => handleOpenChange('pdf', false)}>
                 {pdfTools.map(tool => (
                    <DropdownMenuItem key={tool.name} asChild>
                     <Link href={tool.path}>
@@ -134,13 +140,13 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-             <DropdownMenu>
+             <DropdownMenu open={openMenus['text']} onOpenChange={(open) => handleOpenChange('text', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
+                <Button variant="ghost" className="cursor-pointer">
                   <ALargeSmall className="mr-2" /> Text Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent onMouseLeave={() => handleOpenChange('text', false)}>
                 {textToolsList.map(tool => (
                    <DropdownMenuItem key={tool.name} asChild>
                     <Link href={tool.path}>
@@ -153,13 +159,13 @@ export default function Header() {
             </DropdownMenu>
 
             {otherTools.length > 0 && (
-                <DropdownMenu>
+                <DropdownMenu open={openMenus['other']} onOpenChange={(open) => handleOpenChange('other', open)}>
                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">
+                    <Button variant="ghost" className="cursor-pointer">
                       <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent>
+                  <DropdownMenuContent onMouseLeave={() => handleOpenChange('other', false)}>
                     {otherTools.map(tool => (
                        <DropdownMenuItem key={tool.name} asChild>
                         <Link href={tool.path}>
