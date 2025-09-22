@@ -70,10 +70,21 @@ export const AppLogo = ({ className }: { className?: string }) => (
 
 
 export default function Header() {
-    const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({});
+    const [activeMenu, setActiveMenu] = React.useState<string | null>(null);
+    const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    const handleOpenChange = (menu: string, open: boolean) => {
-        setOpenMenus(prev => ({ ...prev, [menu]: open }));
+    const handleMouseEnter = (menu: string) => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+        setActiveMenu(menu);
+    };
+
+    const handleMouseLeave = () => {
+        hoverTimeoutRef.current = setTimeout(() => {
+            setActiveMenu(null);
+        }, 100);
     };
 
     return (
@@ -89,95 +100,105 @@ export default function Header() {
                     </Link>
                 </Button>
              )}
-            <DropdownMenu open={openMenus['data']} onOpenChange={(open) => handleOpenChange('data', open)}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('data', true)}>
-                  <Database className="mr-2" /> Data Tools <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onMouseLeave={() => handleOpenChange('data', false)}>
-                {dataTools.map(tool => (
-                   <DropdownMenuItem key={tool.name} asChild>
-                    <Link href={tool.path}>
-                      <tool.icon className="mr-2" />
-                      <span>{tool.name}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
+            <DropdownMenu open={activeMenu === 'data'} onOpenChange={(open) => !open && setActiveMenu(null)}>
+              <div onMouseLeave={handleMouseLeave}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleMouseEnter('data')}>
+                    <Database className="mr-2" /> Data Tools <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent onMouseEnter={() => handleMouseEnter('data')}>
+                  {dataTools.map(tool => (
+                     <DropdownMenuItem key={tool.name} asChild>
+                      <Link href={tool.path}>
+                        <tool.icon className="mr-2" />
+                        <span>{tool.name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </div>
             </DropdownMenu>
 
-            <DropdownMenu open={openMenus['image']} onOpenChange={(open) => handleOpenChange('image', open)}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('image', true)}>
-                  <ImageIcon className="mr-2" /> Image Tools <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onMouseLeave={() => handleOpenChange('image', false)}>
-                {imageTools.map(tool => (
-                   <DropdownMenuItem key={tool.name} asChild>
-                    <Link href={tool.path}>
-                      <tool.icon className="mr-2" />
-                      <span>{tool.name}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
+            <DropdownMenu open={activeMenu === 'image'} onOpenChange={(open) => !open && setActiveMenu(null)}>
+              <div onMouseLeave={handleMouseLeave}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleMouseEnter('image')}>
+                    <ImageIcon className="mr-2" /> Image Tools <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent onMouseEnter={() => handleMouseEnter('image')}>
+                  {imageTools.map(tool => (
+                     <DropdownMenuItem key={tool.name} asChild>
+                      <Link href={tool.path}>
+                        <tool.icon className="mr-2" />
+                        <span>{tool.name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </div>
             </DropdownMenu>
 
-             <DropdownMenu open={openMenus['pdf']} onOpenChange={(open) => handleOpenChange('pdf', open)}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('pdf', true)}>
-                  <FileText className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onMouseLeave={() => handleOpenChange('pdf', false)}>
-                {pdfTools.map(tool => (
-                   <DropdownMenuItem key={tool.name} asChild>
-                    <Link href={tool.path}>
-                      <tool.icon className="mr-2" />
-                      <span>{tool.name}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
+             <DropdownMenu open={activeMenu === 'pdf'} onOpenChange={(open) => !open && setActiveMenu(null)}>
+              <div onMouseLeave={handleMouseLeave}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleMouseEnter('pdf')}>
+                    <FileText className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent onMouseEnter={() => handleMouseEnter('pdf')}>
+                  {pdfTools.map(tool => (
+                     <DropdownMenuItem key={tool.name} asChild>
+                      <Link href={tool.path}>
+                        <tool.icon className="mr-2" />
+                        <span>{tool.name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </div>
             </DropdownMenu>
 
-             <DropdownMenu open={openMenus['text']} onOpenChange={(open) => handleOpenChange('text', open)}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('text', true)}>
-                  <ALargeSmall className="mr-2" /> Text Tools <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onMouseLeave={() => handleOpenChange('text', false)}>
-                {textToolsList.map(tool => (
-                   <DropdownMenuItem key={tool.name} asChild>
-                    <Link href={tool.path}>
-                      <tool.icon className="mr-2" />
-                      <span>{tool.name}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
+             <DropdownMenu open={activeMenu === 'text'} onOpenChange={(open) => !open && setActiveMenu(null)}>
+              <div onMouseLeave={handleMouseLeave}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleMouseEnter('text')}>
+                    <ALargeSmall className="mr-2" /> Text Tools <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent onMouseEnter={() => handleMouseEnter('text')}>
+                  {textToolsList.map(tool => (
+                     <DropdownMenuItem key={tool.name} asChild>
+                      <Link href={tool.path}>
+                        <tool.icon className="mr-2" />
+                        <span>{tool.name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </div>
             </DropdownMenu>
 
             {otherTools.length > 0 && (
-                <DropdownMenu open={openMenus['other']} onOpenChange={(open) => handleOpenChange('other', open)}>
-                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('other', true)}>
-                      <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent onMouseLeave={() => handleOpenChange('other', false)}>
-                    {otherTools.map(tool => (
-                       <DropdownMenuItem key={tool.name} asChild>
-                        <Link href={tool.path}>
-                          <tool.icon className="mr-2" />
-                          <span>{tool.name}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
+                <DropdownMenu open={activeMenu === 'other'} onOpenChange={(open) => !open && setActiveMenu(null)}>
+                  <div onMouseLeave={handleMouseLeave}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleMouseEnter('other')}>
+                        <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onMouseEnter={() => handleMouseEnter('other')}>
+                      {otherTools.map(tool => (
+                         <DropdownMenuItem key={tool.name} asChild>
+                          <Link href={tool.path}>
+                            <tool.icon className="mr-2" />
+                            <span>{tool.name}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </div>
                 </DropdownMenu>
             )}
         </nav>
