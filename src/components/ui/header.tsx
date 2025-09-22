@@ -34,68 +34,64 @@ const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', '
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
 
 export const AppLogo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    {...props}
-    viewBox="0 0 100 80"
-    xmlns="http://www.w3.org/2000/svg"
-    className={cn(className)}
-  >
-    <defs>
-      <linearGradient id="jpgGradient" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#FFA500" />
-        <stop offset="100%" stopColor="#FF8C00" />
-      </linearGradient>
-      <linearGradient id="pdfGradient" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#3B82F6" />
-        <stop offset="100%" stopColor="#2563EB" />
-      </linearGradient>
-    </defs>
-    
-    <g transform="translate(0, -5)">
-      {/* JPG Icon */}
-      <g transform="translate(5, 5)">
-        <path
-          d="M10,0 H40 A10,10 0 0 1 50,10 V60 A10,10 0 0 1 40,70 H10 A10,10 0 0 1 0,60 V10 A10,10 0 0 1 10,0 Z"
-          fill="url(#jpgGradient)"
-        />
-        <path d="M40,0 H30 L50,20 V10 A10,10 0 0 0 40,0 Z" fill="white" opacity="0.3" />
-        {/* Sun */}
-        <circle cx="15" cy="18" r="5" fill="white" />
-        <g transform="translate(15, 18)">
-          {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
-            <line key={angle} x1="0" y1="0" x2="0" y2="-7" stroke="white" strokeWidth="1.5" transform={`rotate(${angle})`} />
-          ))}
+    <svg
+        {...props}
+        viewBox="0 0 160 52"
+        xmlns="http://www.w3.org/2000/svg"
+        className={cn("w-auto", className)}
+        {...props}
+    >
+        <defs>
+            <linearGradient id="jpgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#f9a147', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#ff7e0a', stopOpacity: 1 }} />
+            </linearGradient>
+            <linearGradient id="pdfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#3993dd', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#2065d1', stopOpacity: 1 }} />
+            </linearGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+                <feOffset dx="1" dy="1" result="offsetblur"/>
+                <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.5"/>
+                </feComponentTransfer>
+                <feMerge> 
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+
+        <g filter="url(#shadow)">
+            {/* JPG Icon */}
+            <g transform="translate(10, 0)">
+                <rect width="60" height="36" rx="8" ry="8" fill="url(#jpgGradient)" />
+                <path d="M10 10.5 L 14 6.5 L 18 10.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
+                <path d="M6 14 L 11 9 L 18 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
+                <circle cx="10.5" cy="9.5" r="2" fill="white"  transform="translate(15.5 13) scale(0.6)"/>
+
+                <text x="30" y="30" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">JPG</text>
+            </g>
+
+            {/* PDF Icon */}
+            <g transform="translate(50, 0)">
+                <rect width="60" height="36" rx="8" ry="8" fill="url(#pdfGradient)" />
+                <path d="M48,0 L48,10 A2,2 0 0 1 46,12 L38,12" stroke="white" strokeWidth="2" fill="none" transform="translate(10 2)" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 18 H32" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M18 24 H26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                <text x="30" y="30" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">PDF</text>
+            </g>
+            
+            {/* Swoosh */}
+            <path d="M55 18 C 65 10, 75 26, 85 18" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round"/>
         </g>
-        {/* Mountains */}
-        <path d="M8,35 L18,25 L25,32 L33,22 L42,35 Z" fill="white" />
-        <text x="25" y="60" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" fontFamily="sans-serif">JPG</text>
-      </g>
-      
-      {/* PDF Icon */}
-      <g transform="translate(45, 5)">
-        <path
-          d="M10,0 H40 A10,10 0 0 1 50,10 V60 A10,10 0 0 1 40,70 H10 A10,10 0 0 1 0,60 V10 A10,10 0 0 1 10,0 Z"
-          fill="url(#pdfGradient)"
-        />
-        <path d="M40,0 H30 L50,20 V10 A10,10 0 0 0 40,0 Z" fill="white" opacity="0.3" />
-        {/* Document lines */}
-        <rect x="10" y="40" width="30" height="3" rx="1.5" fill="white" />
-        <rect x="10" y="48" width="20" height="3" rx="1.5" fill="white" />
-        {/* Document symbol */}
-        <path d="M12,20 h16 a4,4 0 0 1 4,4 v4" stroke="white" strokeWidth="3" fill="none" />
-        <text x="25" y="60" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" fontFamily="sans-serif">PDF</text>
-      </g>
-      
-      {/* Wave */}
-      <path
-        d="M35,45 Q50,30 65,45 T95,45"
-        stroke="white"
-        strokeWidth="4"
-        fill="none"
-        strokeLinecap="round"
-      />
-    </g>
-  </svg>
+        
+        {/* Text */}
+        <text x="80" y="48" textAnchor="middle" fontSize="10" fontFamily="sans-serif" fontWeight="bold" fill="hsl(var(--foreground))">
+            onlinejpgpdf.com
+        </text>
+    </svg>
 );
 
 
@@ -104,7 +100,7 @@ export default function Header() {
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
         <Link href="/" aria-label="Home">
-            <AppLogo className="h-10 w-auto" />
+            <AppLogo className="h-10" />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
              <Button variant="ghost" asChild>
@@ -214,7 +210,7 @@ export default function Header() {
             <SheetContent side="left">
                 <nav className="grid gap-6 text-lg font-medium">
                     <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-                        <AppLogo className="h-8 w-8" />
+                        <AppLogo className="h-8 w-auto" />
                         <span className="sr-only">{AppName}</span>
                     </Link>
                     {tools.map((tool) => (

@@ -40,6 +40,46 @@ export const viewport: Viewport = {
   ],
 }
 
+const faviconSvg = `
+    <svg
+        viewBox="0 0 160 52"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <defs>
+            <linearGradient id="jpgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color: #f9a147; stop-opacity: 1" />
+                <stop offset="100%" style="stop-color: #ff7e0a; stop-opacity: 1" />
+            </linearGradient>
+            <linearGradient id="pdfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color: #3993dd; stop-opacity: 1" />
+                <stop offset="100%" style="stop-color: #2065d1; stop-opacity: 1" />
+            </linearGradient>
+        </defs>
+        <g>
+            <g transform="translate(10, 0)">
+                <rect width="60" height="36" rx="8" ry="8" fill="url(#jpgGradient)" />
+                <path d="M10 10.5 L 14 6.5 L 18 10.5" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(15.5 13) scale(0.6)"/>
+                <path d="M6 14 L 11 9 L 18 16" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(15.5 13) scale(0.6)"/>
+                <circle cx="10.5" cy="9.5" r="2" fill="white"  transform="translate(15.5 13) scale(0.6)"/>
+                <text x="30" y="30" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="sans-serif">JPG</text>
+            </g>
+            <g transform="translate(50, 0)">
+                <rect width="60" height="36" rx="8" ry="8" fill="url(#pdfGradient)" />
+                <path d="M48,0 L48,10 A2,2 0 0 1 46,12 L38,12" stroke="white" stroke-width="2" fill="none" transform="translate(10 2)" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 18 H32" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M18 24 H26" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <text x="30" y="30" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="sans-serif">PDF</text>
+            </g>
+            <path d="M55 18 C 65 10, 75 26, 85 18" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+        <text x="80" y="48" text-anchor="middle" font-size="10" font-family="sans-serif" font-weight="bold" fill="black">
+            onlinejpgpdf.com
+        </text>
+    </svg>
+`.trim();
+
+const faviconDataUrl = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+
 
 export default function RootLayout({
   children,
@@ -49,7 +89,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${ptSans.variable}`}>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href={faviconDataUrl} type="image/svg+xml" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
