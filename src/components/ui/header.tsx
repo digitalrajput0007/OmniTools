@@ -28,7 +28,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover', 'Images to PDF'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF to Images', 'PDF Merger', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
@@ -91,7 +91,7 @@ export default function Header() {
              )}
             <DropdownMenu open={openMenus['data']} onOpenChange={(open) => handleOpenChange('data', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer">
+                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('data', true)}>
                   <Database className="mr-2" /> Data Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -109,7 +109,7 @@ export default function Header() {
 
             <DropdownMenu open={openMenus['image']} onOpenChange={(open) => handleOpenChange('image', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer">
+                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('image', true)}>
                   <ImageIcon className="mr-2" /> Image Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -127,7 +127,7 @@ export default function Header() {
 
              <DropdownMenu open={openMenus['pdf']} onOpenChange={(open) => handleOpenChange('pdf', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer">
+                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('pdf', true)}>
                   <FileText className="mr-2" /> PDF Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -145,7 +145,7 @@ export default function Header() {
 
              <DropdownMenu open={openMenus['text']} onOpenChange={(open) => handleOpenChange('text', open)}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="cursor-pointer">
+                <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('text', true)}>
                   <ALargeSmall className="mr-2" /> Text Tools <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -164,7 +164,7 @@ export default function Header() {
             {otherTools.length > 0 && (
                 <DropdownMenu open={openMenus['other']} onOpenChange={(open) => handleOpenChange('other', open)}>
                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="cursor-pointer">
+                    <Button variant="ghost" className="cursor-pointer" onMouseEnter={() => handleOpenChange('other', true)}>
                       <Globe className="mr-2" /> Other Tools <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
