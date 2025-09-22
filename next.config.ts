@@ -44,6 +44,19 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  sitemap: async () => {
+    const { tools } = await import('./src/lib/constants');
+    const toolPages = tools.map(tool => ({
+      url: `https://onlinejpgpdf.com${tool.path}`,
+      lastModified: new Date(),
+    }));
+    return [
+      { url: 'https://onlinejpgpdf.com', lastModified: new Date() },
+      { url: 'https://onlinejpgpdf.com/about', lastModified: new Date() },
+      { url: 'https://onlinejpgpdf.com/contact', lastModified: new Date() },
+      ...toolPages,
+    ];
+  },
 };
 
 export default nextConfig;
