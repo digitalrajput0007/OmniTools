@@ -66,8 +66,6 @@ export const AppLogo = ({ className }: { className?: string }) => (
 
 
 export default function Header() {
-    const [openMenu, setOpenMenu] = React.useState<string | null>(null);
-
     const navItems = [
         {
             name: 'Image Tools',
@@ -110,12 +108,12 @@ export default function Header() {
                     </Button>
                 )}
                 {navItems.map((item) => (
-                    <DropdownMenu key={item.name} open={openMenu === item.name} onOpenChange={(isOpen) => setOpenMenu(isOpen ? item.name : null)}>
-                        <div onMouseEnter={() => setOpenMenu(item.name)} onMouseLeave={() => setOpenMenu(null)}>
+                    <div className="group relative" key={item.name}>
+                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="cursor-pointer">
+                                <Button variant="ghost">
                                     <item.icon className="mr-2" /> {item.name}
-                                    <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", openMenu === item.name && "rotate-180")} />
+                                    <ChevronDown className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
@@ -128,8 +126,8 @@ export default function Header() {
                                     </DropdownMenuItem>
                                 ))}
                             </DropdownMenuContent>
-                        </div>
-                    </DropdownMenu>
+                        </DropdownMenu>
+                    </div>
                 ))}
             </nav>
             <Sheet>
@@ -156,3 +154,5 @@ export default function Header() {
         </header>
     );
 }
+
+    
