@@ -26,9 +26,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import React from 'react';
+import React, { useState } from 'react';
 
-const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover', 'Images to PDF'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF to Images', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
@@ -66,6 +66,8 @@ export const AppLogo = ({ className }: { className?: string }) => (
 
 
 export default function Header() {
+    const [openMenu, setOpenMenu] = useState<string | null>(null);
+
     const navItems = [
         {
             name: 'Image Tools',
@@ -95,7 +97,7 @@ export default function Header() {
     ];
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
             <Link href="/" className="flex items-center gap-2 font-headline text-lg font-semibold" aria-label="Home">
                 <AppLogo className="h-8" />
             </Link>
@@ -108,12 +110,12 @@ export default function Header() {
                     </Button>
                 )}
                 {navItems.map((item) => (
-                    <div className="group relative" key={item.name}>
-                        <DropdownMenu>
+                    <DropdownMenu key={item.name} open={openMenu === item.name} onOpenChange={(isOpen) => setOpenMenu(isOpen ? item.name : null)}>
+                        <div onMouseEnter={() => setOpenMenu(item.name)} onMouseLeave={() => setOpenMenu(null)}>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost">
+                                <Button variant="ghost" className="cursor-pointer">
                                     <item.icon className="mr-2" /> {item.name}
-                                    <ChevronDown className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" />
+                                    <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", openMenu === item.name && "rotate-180")} />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
@@ -126,8 +128,8 @@ export default function Header() {
                                     </DropdownMenuItem>
                                 ))}
                             </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                        </div>
+                    </DropdownMenu>
                 ))}
             </nav>
             <Sheet>
@@ -154,5 +156,3 @@ export default function Header() {
         </header>
     );
 }
-
-    
