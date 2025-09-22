@@ -24,82 +24,86 @@ import { Download, FilePlus2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-import { PDFDocument, PDFString } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 
 type FileType = 'pdf' | 'jpg' | 'png' | 'docx' | 'xlsx';
 type SizeUnit = 'KB' | 'MB';
 
-const generateDataBuffer = (sizeInBytes: number): Uint8Array => {
-  const buffer = new Uint8Array(sizeInBytes);
-  for (let i = 0; i < sizeInBytes; i++) {
-    buffer[i] = Math.floor(Math.random() * 256);
-  }
-  return buffer;
-};
 
-const generateDummyPdf = async (sizeInBytes: number): Promise<Blob> => {
+const generateDummyPdf = async (sizeInBytes: number, onProgress: (p: number) => void): Promise<Blob> => {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([612, 792]);
-  page.drawText('This is a dummy PDF file.', { x: 50, y: 700 });
-  
-  let currentBytes = await pdfDoc.save();
-  const remainingBytes = sizeInBytes - currentBytes.length;
-  
-  if (remainingBytes > 0) {
-      // Embed a custom object with random data to reach the target size.
-      // This is more reliable than adding pages for size.
-      const data = generateDataBuffer(remainingBytes);
-      const customObj = pdfDoc.context.stream(data);
-      const ref = pdfDoc.context.assign(customObj);
-      // We can attach this to the document's info dictionary.
-      pdfDoc.getInfoDict().set(PDFString.of('DummyData'), ref);
-  }
+  let currentBytes = new Uint8Array(0);
 
-  const finalBytes = await pdfDoc.save();
-  return new Blob([finalBytes], { type: 'application/pdf' });
+  // Add pages with random text until the size is met
+  while (currentBytes.length < sizeInBytes) {
+    const page = pdfDoc.addPage([600, 800]);
+    // Add a chunk of text. The size is an approximation.
+    page.drawText('Random dummy content for file size. '.repeat(200), {
+        x: 50,
+        y: 750,
+        size: 12,
+    });
+    currentBytes = await pdfDoc.save();
+    onProgress(Math.min(99, (currentBytes.length / sizeInBytes) * 100));
+  }
+  
+  return new Blob([currentBytes], { type: 'application/pdf' });
 };
 
 
-const generateDummyImage = (sizeInKb: number, format: 'jpg' | 'png'): Promise<Blob> => {
+const generateDummyImage = (sizeInBytes: number, format: 'jpg' | 'png'): Promise<Blob> => {
     return new Promise((resolve, reject) => {
-        const targetSizeBytes = sizeInKb * 1024;
-        const dimension = Math.sqrt(targetSizeBytes / (format === 'jpg' ? 0.2 : 0.8)) * 2;
+        // Estimate canvas dimensions. This is a heuristic.
+        // JPG is more compressed, PNG is less so.
+        const compressionFactor = format === 'jpg' ? 0.15 : 0.7;
+        const dimension = Math.ceil(Math.sqrt(sizeInBytes / compressionFactor));
+        
         const canvas = document.createElement('canvas');
-        canvas.width = Math.ceil(dimension);
-        canvas.height = Math.ceil(dimension);
+        canvas.width = Math.min(dimension, 8000); // Cap dimensions to avoid browser crashes
+        canvas.height = Math.min(dimension, 8000);
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject(new Error("Could not get canvas context."));
 
+        // Fill with random noise for less compressibility
         const imageData = ctx.createImageData(canvas.width, canvas.height);
         const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
+        for (let i = 0; i < data.length; i++) {
             data[i] = Math.floor(Math.random() * 256);
-            data[i + 1] = Math.floor(Math.random() * 256);
-            data[i + 2] = Math.floor(Math.random() * 256);
-            data[i + 3] = 255;
         }
         ctx.putImageData(imageData, 0, 0);
 
-        canvas.toBlob((blob) => {
-            if (blob) {
+        // Export with variable quality for JPG to better match size
+        let quality = 0.9;
+        const tryExport = () => {
+            canvas.toBlob((blob) => {
+                if (!blob) return reject(new Error("Failed to create blob."));
+
+                // For JPG, try to get closer to the target size by adjusting quality
+                if (format === 'jpg' && blob.size < sizeInBytes * 0.8 && quality > 0.2) {
+                    quality -= 0.1;
+                    tryExport();
+                    return;
+                }
+                
                 resolve(blob);
-            } else {
-                reject(new Error("Failed to create blob from canvas."));
-            }
-        }, `image/${format}`, 0.9);
+
+            }, `image/${format}`, quality);
+        };
+        tryExport();
     });
 };
 
 const generateDummyDocx = (sizeInBytes: number): Blob => {
-  const content = `This is a dummy .docx file of approximately ${formatFileSize(sizeInBytes)}.`;
-  const paddingSize = Math.max(0, sizeInBytes - content.length);
-  const padding = new Uint8Array(paddingSize);
-  return new Blob([content, padding], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const baseContent = `This is a dummy .docx file. To reach the target size, we are adding padding content. `;
+  const repeatCount = Math.floor(sizeInBytes / baseContent.length);
+  const finalContent = baseContent.repeat(repeatCount);
+  return new Blob([finalContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 };
 
 const generateDummyXlsx = (sizeInBytes: number): Blob => {
-    const rows = Math.ceil(sizeInBytes / 150); // Heuristic
+    // Heuristic: Estimate rows needed. A simple row is ~100-200 bytes.
+    const rows = Math.ceil(sizeInBytes / 150);
     const data = Array(rows).fill(null).map((_, r) => ({
         ID: r + 1,
         UUID: `dummy-uuid-${r+1}-${Math.random().toString(36).substring(2)}`,
@@ -149,47 +153,50 @@ export default function DummyFileGeneratorPage() {
       });
       return;
     }
+
+    if (sizeUnit === 'MB' && size > 200) {
+        toast({
+            title: 'Size Limit Exceeded',
+            description: 'Please choose a size under 200MB to avoid browser instability.',
+            variant: 'destructive',
+        });
+        return;
+    }
     
     resetState();
     setIsGenerating(true);
 
     let blob: Blob | null = null;
-    const sizeInKb = sizeUnit === 'MB' ? size * 1024 : size;
-    const sizeInBytes = sizeInKb * 1024;
+    const sizeInBytes = sizeUnit === 'MB' ? size * 1024 * 1024 : size * 1024;
     const fileName = `dummy-${size}${sizeUnit}.${fileType}`;
-
-    const generationPromise = (async () => {
-        try {
-            switch (fileType) {
-                case 'pdf': blob = await generateDummyPdf(sizeInBytes); break;
-                case 'jpg': blob = await generateDummyImage(sizeInKb, 'jpg'); break;
-                case 'png': blob = await generateDummyImage(sizeInKb, 'png'); break;
-                case 'docx': blob = generateDummyDocx(sizeInBytes); break;
-                case 'xlsx': blob = generateDummyXlsx(sizeInBytes); break;
-            }
-        } catch (error) {
-            console.error(error);
-            toast({ title: 'Generation Error', description: error instanceof Error ? error.message : 'Could not generate the file.', variant: 'destructive' });
-        }
-    })();
-
-
-    const minDuration = 2000;
-    const startTime = Date.now();
-
-    const progressInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        const p = Math.min((elapsedTime / minDuration) * 100, 100);
-        setProgress(p);
-    }, 50);
-
-    await Promise.all([generationPromise, new Promise(resolve => setTimeout(resolve, minDuration))]);
-
-    clearInterval(progressInterval);
-    setIsGenerating(false);
     
-    if (blob) {
-      setGeneratedFile({ blob, name: fileName });
+    const onProgress = (p: number) => {
+        setProgress(p);
+    };
+    
+    // Give UI time to update before blocking the main thread
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    try {
+        switch (fileType) {
+            case 'pdf': blob = await generateDummyPdf(sizeInBytes, onProgress); break;
+            case 'jpg': blob = await generateDummyImage(sizeInBytes, 'jpg'); break;
+            case 'png': blob = await generateDummyImage(sizeInBytes, 'png'); break;
+            case 'docx': blob = generateDummyDocx(sizeInBytes); break;
+            case 'xlsx': blob = generateDummyXlsx(sizeInBytes); break;
+        }
+        setProgress(100);
+        if (blob) {
+          setGeneratedFile({ blob, name: fileName });
+        } else {
+            throw new Error('File generation resulted in an empty blob.');
+        }
+    } catch (error) {
+        console.error(error);
+        toast({ title: 'Generation Error', description: error instanceof Error ? error.message : 'Could not generate the file.', variant: 'destructive' });
+        resetState();
+    } finally {
+        setIsGenerating(false);
     }
   };
   
@@ -338,5 +345,3 @@ export default function DummyFileGeneratorPage() {
     </div>
   );
 }
-
-    
