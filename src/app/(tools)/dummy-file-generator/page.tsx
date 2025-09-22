@@ -24,42 +24,36 @@ import { Download, FilePlus2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFString } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 
 type FileType = 'pdf' | 'jpg' | 'png' | 'docx' | 'xlsx';
+type SizeUnit = 'KB' | 'MB';
 
-// Function to generate a buffer of a specific size
-const generateDataBuffer = (sizeInKb: number): Uint8Array => {
-  const sizeInBytes = sizeInKb * 1024;
+const generateDataBuffer = (sizeInBytes: number): Uint8Array => {
   const buffer = new Uint8Array(sizeInBytes);
-  // Fill with random data for better compression resistance
   for (let i = 0; i < sizeInBytes; i++) {
     buffer[i] = Math.floor(Math.random() * 256);
   }
   return buffer;
 };
 
-
-const generateDummyPdf = async (sizeInKb: number): Promise<Blob> => {
+const generateDummyPdf = async (sizeInBytes: number): Promise<Blob> => {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([612, 792]); // Standard US Letter size
+  const page = pdfDoc.addPage([612, 792]);
   page.drawText('This is a dummy PDF file.', { x: 50, y: 700 });
   
-  const targetSizeInBytes = sizeInKb * 1024;
   let currentBytes = await pdfDoc.save();
+  const remainingBytes = sizeInBytes - currentBytes.length;
   
-  // Embed random data to reach the target size
-  if (currentBytes.length < targetSizeInBytes) {
-      const dataToEmbed = generateDataBuffer(sizeInKb - (currentBytes.length / 1024));
-      pdfDoc.embedBytes(dataToEmbed);
-  }
-
-  // This is an approximation. We'll add content until we are over the size.
-  // Then we can't easily remove content to get closer.
-   while (currentBytes.length < targetSizeInBytes) {
-    pdfDoc.addPage();
-    currentBytes = await pdfDoc.save();
+  if (remainingBytes > 0) {
+      // Embed a custom object with random data to reach the target size.
+      // This is more reliable than adding pages for size.
+      const data = generateDataBuffer(remainingBytes);
+      const customObj = pdfDoc.context.stream(data);
+      const ref = pdfDoc.context.assign(customObj);
+      // We can attach this to the document's info dictionary.
+      pdfDoc.getInfoDict().set(PDFString.of('DummyData'), ref);
   }
 
   const finalBytes = await pdfDoc.save();
@@ -68,52 +62,48 @@ const generateDummyPdf = async (sizeInKb: number): Promise<Blob> => {
 
 
 const generateDummyImage = (sizeInKb: number, format: 'jpg' | 'png'): Promise<Blob> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const targetSizeBytes = sizeInKb * 1024;
-        // Estimate canvas dimensions - this is a rough heuristic
-        const dimension = Math.sqrt(targetSizeBytes / (format === 'jpg' ? 0.1 : 0.5)) * 2;
+        const dimension = Math.sqrt(targetSizeBytes / (format === 'jpg' ? 0.2 : 0.8)) * 2;
         const canvas = document.createElement('canvas');
         canvas.width = Math.ceil(dimension);
         canvas.height = Math.ceil(dimension);
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!ctx) return reject(new Error("Could not get canvas context."));
 
         const imageData = ctx.createImageData(canvas.width, canvas.height);
         const data = imageData.data;
         for (let i = 0; i < data.length; i += 4) {
-            data[i] = Math.floor(Math.random() * 256); // R
-            data[i + 1] = Math.floor(Math.random() * 256); // G
-            data[i + 2] = Math.floor(Math.random() * 256); // B
-            data[i + 3] = 255; // Alpha
+            data[i] = Math.floor(Math.random() * 256);
+            data[i + 1] = Math.floor(Math.random() * 256);
+            data[i + 2] = Math.floor(Math.random() * 256);
+            data[i + 3] = 255;
         }
         ctx.putImageData(imageData, 0, 0);
 
         canvas.toBlob((blob) => {
             if (blob) {
-                // This is a one-shot generation, size is approximate.
-                // A loop to refine size would be slow.
                 resolve(blob);
+            } else {
+                reject(new Error("Failed to create blob from canvas."));
             }
-        }, `image/${format}`, 0.8); // Use quality for JPG
+        }, `image/${format}`, 0.9);
     });
 };
 
-const generateDummyDocx = (sizeInKb: number): Blob => {
-  // A simple DOCX file is a zip with specific XML files.
-  // We can't use JSZip here easily because it's not in dependencies.
-  // Instead, we create a very simple text-based "mock" docx.
-  const content = `This is a dummy .docx file of approximately ${sizeInKb}KB.`;
-  const padding = ' '.repeat(Math.max(0, sizeInKb * 1024 - content.length));
+const generateDummyDocx = (sizeInBytes: number): Blob => {
+  const content = `This is a dummy .docx file of approximately ${formatFileSize(sizeInBytes)}.`;
+  const paddingSize = Math.max(0, sizeInBytes - content.length);
+  const padding = new Uint8Array(paddingSize);
   return new Blob([content, padding], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 };
 
-const generateDummyXlsx = (sizeInKb: number): Blob => {
-    const targetSizeBytes = sizeInKb * 1024;
-    const rows = Math.ceil(targetSizeBytes / 100); // Estimate rows
+const generateDummyXlsx = (sizeInBytes: number): Blob => {
+    const rows = Math.ceil(sizeInBytes / 150); // Heuristic
     const data = Array(rows).fill(null).map((_, r) => ({
         ID: r + 1,
         UUID: `dummy-uuid-${r+1}-${Math.random().toString(36).substring(2)}`,
-        Content: `This is sample content for row ${r+1} to add weight to the file.`,
+        Content: `This is sample content for row ${r+1} to add weight to the file. Lorem ipsum dolor sit amet.`,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -123,10 +113,20 @@ const generateDummyXlsx = (sizeInKb: number): Blob => {
     return new Blob([wbout], {type: 'application/octet-stream'});
 };
 
+const formatFileSize = (bytes: number | null | undefined): string => {
+  if (!bytes) return '0 KB';
+  if (bytes >= 1024 * 1024) {
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  } else {
+    return (bytes / 1024).toFixed(2) + ' KB';
+  }
+};
+
 
 export default function DummyFileGeneratorPage() {
   const [fileType, setFileType] = useState<FileType>('pdf');
   const [fileSize, setFileSize] = useState('100');
+  const [sizeUnit, setSizeUnit] = useState<SizeUnit>('KB');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [generatedFile, setGeneratedFile] = useState<{ blob: Blob; name: string } | null>(null);
@@ -144,7 +144,7 @@ export default function DummyFileGeneratorPage() {
     if (isNaN(size) || size <= 0) {
       toast({
         title: 'Invalid Size',
-        description: 'Please enter a valid file size in KB greater than 0.',
+        description: 'Please enter a valid file size greater than 0.',
         variant: 'destructive',
       });
       return;
@@ -154,20 +154,22 @@ export default function DummyFileGeneratorPage() {
     setIsGenerating(true);
 
     let blob: Blob | null = null;
-    const fileName = `dummy-${size}kb.${fileType}`;
+    const sizeInKb = sizeUnit === 'MB' ? size * 1024 : size;
+    const sizeInBytes = sizeInKb * 1024;
+    const fileName = `dummy-${size}${sizeUnit}.${fileType}`;
 
     const generationPromise = (async () => {
         try {
             switch (fileType) {
-                case 'pdf': blob = await generateDummyPdf(size); break;
-                case 'jpg': blob = await generateDummyImage(size, 'jpg'); break;
-                case 'png': blob = await generateDummyImage(size, 'png'); break;
-                case 'docx': blob = generateDummyDocx(size); break;
-                case 'xlsx': blob = generateDummyXlsx(size); break;
+                case 'pdf': blob = await generateDummyPdf(sizeInBytes); break;
+                case 'jpg': blob = await generateDummyImage(sizeInKb, 'jpg'); break;
+                case 'png': blob = await generateDummyImage(sizeInKb, 'png'); break;
+                case 'docx': blob = generateDummyDocx(sizeInBytes); break;
+                case 'xlsx': blob = generateDummyXlsx(sizeInBytes); break;
             }
         } catch (error) {
             console.error(error);
-            toast({ title: 'Generation Error', description: 'Could not generate the file.', variant: 'destructive' });
+            toast({ title: 'Generation Error', description: error instanceof Error ? error.message : 'Could not generate the file.', variant: 'destructive' });
         }
     })();
 
@@ -203,14 +205,6 @@ export default function DummyFileGeneratorPage() {
     document.body.removeChild(a);
   };
   
-  const formatFileSize = (bytes: number | null | undefined): string => {
-    if (!bytes) return '0 KB';
-    if (bytes >= 1024 * 1024) {
-      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-    } else {
-      return (bytes / 1024).toFixed(2) + ' KB';
-    }
-  };
 
   return (
     <div className="grid gap-6">
@@ -234,7 +228,7 @@ export default function DummyFileGeneratorPage() {
                     <FilePlus2 className="h-24 w-24 text-primary" />
                     <div className='text-center'>
                         <p className="font-medium">{generatedFile.name}</p>
-                        <p className="text-sm text-muted-foreground">Approx. Size: {formatFileSize(generatedFile.blob.size)}</p>
+                        <p className="text-sm text-muted-foreground">Final Size: {formatFileSize(generatedFile.blob.size)}</p>
                     </div>
                     <div className='flex w-full gap-2'>
                         <Button onClick={handleDownload} className="w-full">
@@ -263,15 +257,26 @@ export default function DummyFileGeneratorPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="file-size">File Size (in KB)</Label>
-                        <Input
-                        id="file-size"
-                        type="number"
-                        value={fileSize}
-                        onChange={(e) => setFileSize(e.target.value)}
-                        placeholder="e.g., 100"
-                        min="1"
-                        />
+                        <Label htmlFor="file-size">File Size</Label>
+                        <div className="flex items-center gap-2">
+                           <Input
+                            id="file-size"
+                            type="number"
+                            value={fileSize}
+                            onChange={(e) => setFileSize(e.target.value)}
+                            placeholder="e.g., 100"
+                            min="1"
+                           />
+                           <Select value={sizeUnit} onValueChange={(v) => setSizeUnit(v as SizeUnit)}>
+                             <SelectTrigger className="w-[100px]">
+                                <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent>
+                                <SelectItem value="KB">KB</SelectItem>
+                                <SelectItem value="MB">MB</SelectItem>
+                             </SelectContent>
+                           </Select>
+                        </div>
                          <p className="text-xs text-muted-foreground">
                             Note: The final file size will be an approximation.
                         </p>
@@ -306,7 +311,7 @@ export default function DummyFileGeneratorPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Select File Type:</strong> Choose the desired format for your dummy file (e.g., PDF, JPG, XLSX).</li>
-                  <li><strong>Enter File Size:</strong> Specify the target size of the file in kilobytes (KB). For example, to generate a 1MB file, enter "1024".</li>
+                  <li><strong>Enter File Size:</strong> Specify the target size of the file and select the unit (KB or MB).</li>
                   <li><strong>Generate:</strong> Click the "Generate File" button. The tool will create the file in your browser.</li>
                   <li><strong>Download:</strong> Once complete, click the "Download File" button to save it to your device.</li>
                 </ol>
@@ -319,9 +324,8 @@ export default function DummyFileGeneratorPage() {
                   Generating a file to an exact byte-for-byte size is complex due to compression and file structure overhead. This tool uses various techniques to create a file that is as close as possible to the target size.
                 </p>
                  <ul className="list-disc list-inside space-y-2">
-                  <li><strong>PDF/Word:</strong> Size is approximated by adding pages or padding until the target is met.</li>
-                  <li><strong>Images (JPG/PNG):</strong> Size is approximated by creating a canvas with random data. The final size is heavily influenced by the format's compression algorithm.</li>
-                  <li><strong>Excel (XLSX):</strong> Size is approximated by adding rows of dummy data.</li>
+                  <li><strong>PDF/Word/Excel:</strong> Size is approximated by adding dummy data or content until the target is met. These are generally quite accurate.</li>
+                  <li><strong>Images (JPG/PNG):</strong> Size is approximated by creating a canvas with random pixel data. The final size is heavily influenced by the format's compression algorithm and can vary.</li>
                 </ul>
                 <p>
                   The downloaded file's size should be very close to your requested size, making it perfect for most testing scenarios.
@@ -334,3 +338,5 @@ export default function DummyFileGeneratorPage() {
     </div>
   );
 }
+
+    
