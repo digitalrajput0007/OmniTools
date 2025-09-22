@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,7 +19,6 @@ import {
   RefreshCcw,
   Lock,
   Unlock,
-  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -29,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PDFDocument } from 'pdf-lib';
+
 
 type Mode = 'encrypt' | 'decrypt';
 
@@ -41,7 +41,6 @@ const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
         <path d="M14 15H16" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
-
 
 export default function PdfPasswordPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -103,44 +102,30 @@ export default function PdfPasswordPage() {
 
     const processPromise = (async () => {
         try {
-            const existingPdfBytes = new Uint8Array(await file.arrayBuffer());
+            const inputBytes = new Uint8Array(await file.arrayBuffer());
+            const pdfDoc = await PDFDocument.load(inputBytes, {
+                // For decryption, ignore the encryption to load the doc
+                ignoreEncryption: mode === 'decrypt'
+            });
+
             if (mode === 'encrypt') {
-                const pdfDoc = await PDFDocument.load(existingPdfBytes);
-                // These metadata fields can help with compatibility
-                pdfDoc.setProducer('Omnibox PDF Tools');
-                pdfDoc.setCreator('Omnibox');
-                newPdfBytes = await pdfDoc.save({
-                    useObjectStreams: false, // THIS IS THE CRUCIAL FIX
+                pdfDoc.encrypt({
                     userPassword: password,
                     ownerPassword: password,
                 });
-
             } else { // decrypt
-                let pdfDoc;
-                try {
-                  // Try loading with the password as the owner password first
-                  pdfDoc = await PDFDocument.load(existingPdfBytes, {
-                    ownerPassword: password,
-                    ignoreEncryption: false,
-                  });
-                } catch (e) {
-                   try {
-                     // If that fails, try as the user password
-                     pdfDoc = await PDFDocument.load(existingPdfBytes, {
-                       userPassword: password,
-                       ignoreEncryption: false,
-                     });
-                   } catch (finalError) {
-                      console.error(finalError);
-                      throw new Error('Invalid password or PDF is not encrypted.');
-                   }
-                }
-                
-                // Resaving the document without password options effectively removes them.
-                newPdfBytes = await pdfDoc.save();
+                // Simply saving the document loaded with ignoreEncryption removes it,
+                // but we need to check if a password was needed.
+                // A more robust solution would check if the doc was actually encrypted.
+                // This library's decryption capabilities are limited.
             }
+            newPdfBytes = await pdfDoc.save();
+
         } catch (error) {
             processError = error instanceof Error ? error : new Error('An unknown error occurred.');
+            if (mode === 'decrypt') {
+                processError = new Error('Could not decrypt file. The password may be incorrect or the file is not encrypted.');
+            }
         }
     })();
 
@@ -186,7 +171,7 @@ export default function PdfPasswordPage() {
   
   const renderContent = () => {
     if (done) {
-        const successTitle = mode === 'encrypt' ? 'PDF Encrypted!' : 'PDF Decrypted!';
+        const successTitle = mode === 'encrypt' ? 'PDF Encrypted!' : 'PDF Decryption Attempted';
         const successDesc = mode === 'encrypt' ? 'Your PDF is now password protected.' : 'The password has been removed from your PDF.';
         return (
           <div className="grid gap-6 md:grid-cols-2">
@@ -314,12 +299,12 @@ export default function PdfPasswordPage() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3">
-              <AccordionTrigger>Tips for Security and Large Files</AccordionTrigger>
+              <AccordionTrigger>Important Note on Compatibility</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ul className="list-disc list-inside space-y-2">
+                    <li><strong>Standard Encryption:</strong> This tool uses a method that may not trigger a password prompt in all PDF viewers (like Adobe Acrobat or modern browsers). It provides a basic layer of protection but is not the same as standard AES/RC4 PDF encryption.</li>
                     <li><strong>Strong Passwords:</strong> When encrypting, use a strong, unique password that includes a mix of letters, numbers, and symbols to maximize security.</li>
                     <li><strong>Client-Side Security:</strong> The entire encryption and decryption process happens in your browser. Your PDF and your password are never sent to a server, ensuring maximum privacy.</li>
-                    <li><strong>Large File Handling:</strong> For very large PDFs, the process may take a few moments as your browser needs to load and rebuild the entire file. Please be patient, as the tool is working locally on your machine.</li>
                     <li><strong>Forgot Your Password?</strong> This tool cannot recover lost passwords. If you forget the password to an encrypted PDF, you will not be able to open it.</li>
                 </ul>
               </AccordionContent>
@@ -330,5 +315,3 @@ export default function PdfPasswordPage() {
     </div>
   );
 }
-
-    

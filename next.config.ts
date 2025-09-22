@@ -37,26 +37,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Exclude qpdf-wasm from server-side bundle
-    if (isServer) {
-      config.externals.push('qpdf-wasm');
-    }
-    return config;
-  },
-  sitemap: async () => {
-    const { tools } = await import('./src/lib/constants');
-    const toolPages = tools.map(tool => ({
-      url: `https://onlinejpgpdf.com${tool.path}`,
-      lastModified: new Date(),
-    }));
-    return [
-      { url: 'https://onlinejpgpdf.com', lastModified: new Date() },
-      { url: 'https://onlinejpgpdf.com/about', lastModified: new Date() },
-      { url: 'https://onlinejpgpdf.com/contact', lastModified: new Date() },
-      ...toolPages,
-    ];
-  },
 };
 
 export default nextConfig;
