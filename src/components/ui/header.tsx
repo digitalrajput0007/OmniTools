@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover', 'Images to PDF'].includes(t.name));
-const pdfTools = tools.filter(t => ['PDF to Images', 'PDF Merger', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF'].includes(t.name));
+const pdfTools = tools.filter(t => ['PDF to Images', 'PDF Merger', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF', 'PDF Password'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));

@@ -116,6 +116,12 @@ export const tools: Tool[] = [
     path: '/watermark-pdf',
     icon: Droplets,
   },
+    {
+    name: 'PDF Password',
+    description: 'Add or remove a password from your PDF documents.',
+    path: '/pdf-password',
+    icon: KeyRound,
+  },
   {
     name: 'QR Code Generator',
     description: 'Create custom QR codes for URLs, text, and more.',
