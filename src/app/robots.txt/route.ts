@@ -1,7 +1,7 @@
 
 // 'use server' is not needed here as this is a route handler
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com';
 
 export async function GET(request: Request) {
   const content = `
