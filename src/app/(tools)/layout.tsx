@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -14,13 +13,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { AppName, tools } from '@/lib/constants';
 import { AppLogo } from '@/components/ui/header';
+import Footer from '@/components/ui/footer';
+import { Button } from '@/components/ui/button';
+import { PanelLeft } from 'lucide-react';
 
-// This is not how you generate dynamic metadata in the app router.
-// Each page should export its own metadata object.
-// However, since this is a client component, we can update the document title.
 
 export default function ToolLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,8 +30,6 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!currentTool) {
-      // Redirect to home if the tool is not found.
-      // A more robust solution might show a 404 page.
       router.replace('/');
     } else {
       document.title = `${currentTool.name} | ${AppName}`;
@@ -47,10 +45,7 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
       <Sidebar>
         <SidebarHeader>
           <Link href="/" className="flex items-center gap-2">
-            <AppLogo className="h-7 w-7" />
-            <span className="font-headline text-lg font-semibold text-foreground group-data-[collapsible=icon]:hidden">
-              {AppName}
-            </span>
+            <AppLogo className="h-7 w-auto" />
           </Link>
         </SidebarHeader>
         <SidebarContent>
@@ -73,7 +68,19 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:hidden">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <AppLogo className="h-6 w-auto" />
+          </Link>
+          <SidebarTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <PanelLeft />
+              <span className="sr-only">Toggle Sidebar</span>
+            </Button>
+          </SidebarTrigger>
+        </header>
         <div className="flex-1 p-4 md:p-6">{children}</div>
+        <Footer />
       </SidebarInset>
     </SidebarProvider>
   );
