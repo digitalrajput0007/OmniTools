@@ -33,17 +33,71 @@ const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includ
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
 
-export const AppLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
+export const AppLogo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg
     {...props}
-    className={cn(
-      'flex items-center justify-center rounded-full bg-primary',
-      className
-    )}
+    viewBox="0 0 100 80"
+    xmlns="http://www.w3.org/2000/svg"
+    className={cn(className)}
   >
-    <span className="font-bold text-primary-foreground">OJP</span>
-  </div>
+    <defs>
+      <linearGradient id="jpgGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#FFA500" />
+        <stop offset="100%" stopColor="#FF8C00" />
+      </linearGradient>
+      <linearGradient id="pdfGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#3B82F6" />
+        <stop offset="100%" stopColor="#2563EB" />
+      </linearGradient>
+    </defs>
+    
+    <g transform="translate(0, -5)">
+      {/* JPG Icon */}
+      <g transform="translate(5, 5)">
+        <path
+          d="M10,0 H40 A10,10 0 0 1 50,10 V60 A10,10 0 0 1 40,70 H10 A10,10 0 0 1 0,60 V10 A10,10 0 0 1 10,0 Z"
+          fill="url(#jpgGradient)"
+        />
+        <path d="M40,0 H30 L50,20 V10 A10,10 0 0 0 40,0 Z" fill="white" opacity="0.3" />
+        {/* Sun */}
+        <circle cx="15" cy="18" r="5" fill="white" />
+        <g transform="translate(15, 18)">
+          {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+            <line key={angle} x1="0" y1="0" x2="0" y2="-7" stroke="white" strokeWidth="1.5" transform={`rotate(${angle})`} />
+          ))}
+        </g>
+        {/* Mountains */}
+        <path d="M8,35 L18,25 L25,32 L33,22 L42,35 Z" fill="white" />
+        <text x="25" y="60" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" fontFamily="sans-serif">JPG</text>
+      </g>
+      
+      {/* PDF Icon */}
+      <g transform="translate(45, 5)">
+        <path
+          d="M10,0 H40 A10,10 0 0 1 50,10 V60 A10,10 0 0 1 40,70 H10 A10,10 0 0 1 0,60 V10 A10,10 0 0 1 10,0 Z"
+          fill="url(#pdfGradient)"
+        />
+        <path d="M40,0 H30 L50,20 V10 A10,10 0 0 0 40,0 Z" fill="white" opacity="0.3" />
+        {/* Document lines */}
+        <rect x="10" y="40" width="30" height="3" rx="1.5" fill="white" />
+        <rect x="10" y="48" width="20" height="3" rx="1.5" fill="white" />
+        {/* Document symbol */}
+        <path d="M12,20 h16 a4,4 0 0 1 4,4 v4" stroke="white" strokeWidth="3" fill="none" />
+        <text x="25" y="60" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" fontFamily="sans-serif">PDF</text>
+      </g>
+      
+      {/* Wave */}
+      <path
+        d="M35,45 Q50,30 65,45 T95,45"
+        stroke="white"
+        strokeWidth="4"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </g>
+  </svg>
 );
+
 
 
 export default function Header() {
