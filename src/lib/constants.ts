@@ -117,12 +117,6 @@ export const tools: Tool[] = [
     path: '/watermark-pdf',
     icon: Droplets,
   },
-    {
-    name: 'PDF Password',
-    description: 'This feature is currently unavailable due to technical limitations.',
-    path: '/pdf-password',
-    icon: KeyRound,
-  },
   {
     name: 'Dummy File Generator',
     description: 'Create dummy files (PDF, Word, Excel) of a specific size.',
