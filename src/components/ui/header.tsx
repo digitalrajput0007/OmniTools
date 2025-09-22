@@ -99,8 +99,8 @@ export const AppLogo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) 
 export default function Header() {
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
-        <Link href="/" aria-label="Home">
-            <AppLogo className="h-10" />
+        <Link href="/" className="font-headline text-lg font-semibold" aria-label="Home">
+            {AppName}
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
              <Button variant="ghost" asChild>
@@ -210,7 +210,6 @@ export default function Header() {
             <SheetContent side="left">
                 <nav className="grid gap-6 text-lg font-medium">
                     <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-                        <AppLogo className="h-8 w-auto" />
                         <span className="sr-only">{AppName}</span>
                     </Link>
                     {tools.map((tool) => (

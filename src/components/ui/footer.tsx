@@ -8,8 +8,8 @@ export default function Footer() {
         <footer className="border-t bg-secondary">
             <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row md:px-6">
                 <div className="flex flex-col items-center gap-2 sm:items-start">
-                    <Link href="/" aria-label="Home">
-                        <AppLogo className="h-12 w-auto" />
+                    <Link href="/" className="font-headline text-xl font-semibold" aria-label="Home">
+                        {AppName}
                     </Link>
                     <p className="text-xs text-muted-foreground">
                         &copy; {new Date().getFullYear()} {AppName}. All rights reserved.
