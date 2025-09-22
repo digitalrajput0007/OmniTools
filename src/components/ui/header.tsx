@@ -72,7 +72,7 @@ export default function Header() {
         {
             name: 'Image Tools',
             icon: ImageIcon,
-            tools: [...imageTools, ...(imagesToPdfTool ? [imagesToPdfTool] : [])]
+            tools: imageTools
         },
         {
             name: 'PDF Tools',
@@ -102,12 +102,13 @@ export default function Header() {
                 <AppLogo className="h-8" />
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
-                <Button variant="ghost" asChild>
-                    <Link href="/json-beautifier">
-                        <Braces className="mr-2" /> JSON Beautifier
-                    </Link>
-                </Button>
-
+                {imagesToPdfTool && (
+                    <Button variant="ghost" asChild>
+                        <Link href={imagesToPdfTool.path}>
+                            <imagesToPdfTool.icon className="mr-2" /> {imagesToPdfTool.name}
+                        </Link>
+                    </Button>
+                )}
                 {navItems.map((item) => (
                     <DropdownMenu key={item.name} open={openMenu === item.name} onOpenChange={(isOpen) => setOpenMenu(isOpen ? item.name : null)}>
                         <div onMouseEnter={() => setOpenMenu(item.name)} onMouseLeave={() => setOpenMenu(null)}>
