@@ -62,33 +62,43 @@ export const AppLogo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) 
             </filter>
         </defs>
 
-        <g filter="url(#shadow)">
+        <g>
             {/* JPG Icon */}
             <g transform="translate(10, 0)">
-                <rect width="60" height="36" rx="8" ry="8" fill="url(#jpgGradient)" />
+                <rect width="60" height="36" rx="8" ry="8" fill="#f06924" />
                 <path d="M10 10.5 L 14 6.5 L 18 10.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
                 <path d="M6 14 L 11 9 L 18 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
                 <circle cx="10.5" cy="9.5" r="2" fill="white"  transform="translate(15.5 13) scale(0.6)"/>
-
                 <text x="30" y="30" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">JPG</text>
             </g>
 
             {/* PDF Icon */}
-            <g transform="translate(50, 0)">
-                <rect width="60" height="36" rx="8" ry="8" fill="url(#pdfGradient)" />
-                <path d="M48,0 L48,10 A2,2 0 0 1 46,12 L38,12" stroke="white" strokeWidth="2" fill="none" transform="translate(10 2)" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M18 18 H32" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M18 24 H26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <g transform="translate(90, 0)">
+                <rect width="60" height="36" rx="8" ry="8" fill="#009bdb" />
+                <path d="M42 12h-4v-2h4v-2h-6v10h6v-2h-4v-2h4z" fill="white" transform="translate(-18 7)" />
+                <path d="M49 6h6v2h-4v2h4v2h-4v2h4v2h-6z" fill="white" transform="translate(-18 7)" />
+                <path d="M69 6h-6v10h6v-2h-4v-2h4v-2h-4v-2h4z" fill="white" transform="translate(-18 7)" />
                 <text x="30" y="30" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">PDF</text>
             </g>
             
-            {/* Swoosh */}
-            <path d="M55 18 C 65 10, 75 26, 85 18" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round"/>
+            {/* Arrows */}
+            <g transform="translate(80, 18)" strokeWidth="4" fill="none">
+                <path d="M 0, -14 A 14,14 0 1 1 -12, 6" stroke="#f06924" />
+                <path d="M -11 10 L -16 5 L -10 2" stroke="#f06924" fill="#f06924" strokeLinejoin="round" strokeLinecap="round"/>
+                
+                <path d="M 0, 14 A 14,14 0 1 1 12, -6" stroke="#009bdb" />
+                 <path d="M 11 -10 L 16 -5 L 10 -2" stroke="#009bdb" fill="#009bdb" strokeLinejoin="round" strokeLinecap="round"/>
+            </g>
         </g>
         
         {/* Text */}
         <text x="80" y="48" textAnchor="middle" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
-            <tspan fill="#2065d1">online</tspan><tspan fill="#555555">jpgpdf.com</tspan>
+            <tspan fill="#009bdb">online</tspan>
+            <tspan fill="#f06924">j</tspan>
+            <tspan fill="#f58ca8">p</tspan>
+            <tspan fill="#f06924">g</tspan>
+            <tspan fill="#009bdb">pdf</tspan>
+            <tspan fill="#8dc63f">.com</tspan>
         </text>
     </svg>
 );
