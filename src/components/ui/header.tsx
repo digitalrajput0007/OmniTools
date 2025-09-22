@@ -35,20 +35,56 @@ const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', '
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
 
 export const AppLogo = () => (
-  <Image
-    src="/logo.png"
-    alt="onlinejpgpdf.com logo"
-    width={200}
-    height={45}
-    priority
-  />
+    <svg
+        viewBox="0 0 160 52"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-auto w-40"
+    >
+        <defs>
+            <linearGradient id="jpgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#f9a147', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#ff7e0a', stopOpacity: 1 }} />
+            </linearGradient>
+            <linearGradient id="pdfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#3993dd', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#2065d1', stopOpacity: 1 }} />
+            </linearGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
+                <feOffset dx="1" dy="1" result="offsetblur"/>
+                <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.5"/>
+                </feComponentTransfer>
+                <feMerge> 
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+
+        <g filter="url(#shadow)">
+            {/* OJP Icon */}
+            <g transform="translate(0, 0)">
+                <rect width="60" height="36" rx="8" ry="8" fill="url(#jpgGradient)" />
+                <path d="M10 10.5 L 14 6.5 L 18 10.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
+                <path d="M6 14 L 11 9 L 18 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(15.5 13) scale(0.6)"/>
+                <circle cx="10.5" cy="9.5" r="2" fill="white"  transform="translate(15.5 13) scale(0.6)"/>
+                <text x="30" y="30" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="sans-serif">OJP</text>
+            </g>
+        </g>
+        
+        {/* Text */}
+        <text x="68" y="32" textAnchor="start" fontSize="12" fontFamily="sans-serif" fontWeight="bold">
+            <tspan fill="#2065d1">online</tspan><tspan fill="#555555">jpgpdf.com</tspan>
+        </text>
+    </svg>
 );
 
 
 
 export default function Header() {
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b px-4 md:px-6">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-secondary px-4 md:px-6">
         <Link href="/" className="font-headline text-lg font-semibold" aria-label="Home">
             <AppLogo />
         </Link>
