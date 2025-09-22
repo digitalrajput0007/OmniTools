@@ -28,11 +28,12 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover', 'Images to PDF'].includes(t.name));
+const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converter', 'Image Resizer/Cropper', 'Background Remover'].includes(t.name));
 const pdfTools = tools.filter(t => ['PDF to Images', 'PDF Merger', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
-const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator'].includes(t.name));
+const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
 const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
+const imagesToPdfTool = tools.find(t => t.name === 'Images to PDF');
 
 export const AppLogo = ({ className }: { className?: string }) => (
     <svg
@@ -81,11 +82,13 @@ export default function Header() {
             <AppLogo />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
-             <Button variant="ghost" asChild>
-                <Link href="/json-beautifier">
-                  <Braces className="mr-2" /> JSON Beautifier
-                </Link>
-            </Button>
+             {imagesToPdfTool && (
+                <Button variant="ghost" asChild>
+                    <Link href={imagesToPdfTool.path}>
+                        <imagesToPdfTool.icon className="mr-2" /> {imagesToPdfTool.name}
+                    </Link>
+                </Button>
+             )}
             <DropdownMenu open={openMenus['data']} onOpenChange={(open) => handleOpenChange('data', open)}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="cursor-pointer">
