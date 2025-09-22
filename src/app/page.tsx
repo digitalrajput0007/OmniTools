@@ -16,7 +16,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Header, { AppLogo } from '@/components/ui/header';
+import Header from '@/components/ui/header';
 import Footer from '@/components/ui/footer';
 
 
