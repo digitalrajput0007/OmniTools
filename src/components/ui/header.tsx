@@ -2,7 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   AppName,
   tools
@@ -32,7 +31,7 @@ const imageTools = tools.filter(t => ['Image Compressor', 'Image Format Converte
 const pdfTools = tools.filter(t => ['PDF Merger', 'PDF to Images', 'PDF Splitter', 'Compress PDF', 'Reorder / Rotate Pages', 'Add Signature / Fill Form', 'Extract Text', 'Watermark PDF'].includes(t.name));
 const textToolsList = tools.filter(t => ['Text Tools', 'Text Difference'].includes(t.name));
 const dataTools = tools.filter(t => ['Random Data Generator', 'Random Picker', 'Credit Card Generator', 'JSON Beautifier'].includes(t.name));
-const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator'].includes(t.name));
+const otherTools = tools.filter(t => ['Unit Converter', 'QR Code Generator', 'Dummy File Generator'].includes(t.name));
 const imagesToPdfTool = tools.find(t => t.name === 'Images to PDF');
 
 
@@ -110,7 +109,7 @@ export default function Header() {
                 {navItems.map((item) => (
                     <DropdownMenu key={item.name}>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost">
+                            <Button variant="ghost" className="group">
                                 <item.icon className="mr-2" /> {item.name}
                                 <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                             </Button>
