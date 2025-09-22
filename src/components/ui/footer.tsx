@@ -1,21 +1,14 @@
 
 import Link from 'next/link';
-import { AppName } from '@/lib/constants';
-import { AppLogo } from '@/components/ui/header';
 
 export default function Footer() {
     return (
         <footer className="border-t bg-secondary">
             <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row md:px-6">
                 <div className="flex flex-col items-center gap-2 sm:items-start">
-                    <Link href="/" className="font-headline text-xl font-semibold" aria-label="Home">
-                        <AppLogo className="h-12" />
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                        &copy; {new Date().getFullYear()} {AppName}. All rights reserved.
-                    </p>
+                    {/* Logo and copyright text removed as per request */}
                 </div>
-                <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-center sm:ml-auto sm:gap-6 sm:text-left">
+                <nav className="flex w-full flex-wrap justify-center gap-x-4 gap-y-2 text-center sm:ml-auto sm:justify-end sm:gap-6">
                     <Link
                         className="text-xs underline-offset-4 hover:underline"
                         href="/about"
