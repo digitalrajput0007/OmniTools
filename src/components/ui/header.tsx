@@ -109,7 +109,7 @@ export default function Header() {
                 {navItems.map((item) => (
                     <DropdownMenu key={item.name}>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="group">
+                            <Button variant="ghost" className="group cursor-pointer data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                                 <item.icon className="mr-2" /> {item.name}
                                 <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                             </Button>
