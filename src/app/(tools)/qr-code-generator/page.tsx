@@ -17,6 +17,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { FileDown, Link as LinkIcon } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 export default function QrCodeGeneratorPage() {
   const [text, setText] = useState('https://omnibox.dev');
@@ -145,6 +146,7 @@ export default function QrCodeGeneratorPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/qr-code-generator" />
     </div>
   );
 }

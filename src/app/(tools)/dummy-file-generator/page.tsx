@@ -26,6 +26,7 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { PDFDocument } from 'pdf-lib';
 import * as XLSX from 'xlsx';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 type FileType = 'pdf' | 'docx' | 'xlsx';
 type SizeUnit = 'KB' | 'MB';
@@ -335,6 +336,7 @@ a.href = url;
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/dummy-file-generator" />
     </div>
   );
 }

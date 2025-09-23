@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -208,9 +209,9 @@ export default function ImageFormatConverterPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Online Image Converter</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Format Converter</CardTitle>
             <CardDescription className="text-base mt-2">
-              Change your image format to JPG, PNG, or WEBP instantly.
+              Convert your image to JPG, PNG, or WEBP instantly.
             </CardDescription>
           </div>
         </CardHeader>
@@ -422,6 +423,7 @@ export default function ImageFormatConverterPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/image-format-converter" />
     </div>
   );
 }

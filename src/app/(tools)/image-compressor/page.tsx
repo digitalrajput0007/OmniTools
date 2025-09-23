@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -442,6 +443,7 @@ a.click();
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/image-compressor" />
     </div>
   );
 }

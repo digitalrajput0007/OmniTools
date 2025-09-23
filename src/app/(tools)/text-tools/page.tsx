@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -261,6 +262,7 @@ export default function TextToolsPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/text-tools" />
     </div>
   );
 }

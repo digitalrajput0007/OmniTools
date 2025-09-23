@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 let pdfjs: any;
 
@@ -536,6 +537,7 @@ export default function WatermarkPdfPage() {
             </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/watermark-pdf" />
     </div>
   );
 }

@@ -30,6 +30,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 type Color = { r: number; g: number; b: number };
 
@@ -510,6 +511,7 @@ export default function BackgroundRemoverPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/background-remover" />
     </div>
   );
 }

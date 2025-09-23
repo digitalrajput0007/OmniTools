@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Braces, Copy, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 export default function JsonBeautifierPage() {
   const [jsonInput, setJsonInput] = useState('');
@@ -173,6 +174,7 @@ export default function JsonBeautifierPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/json-beautifier" />
     </div>
   );
 }

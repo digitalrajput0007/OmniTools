@@ -30,6 +30,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import Image from 'next/image';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 let pdfjs: any;
 
@@ -294,9 +295,9 @@ export default function PdfSplitterPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">PDF Splitter</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free PDF Splitter</CardTitle>
             <CardDescription className="text-base mt-2">
-              Extract specific pages or ranges from a PDF file.
+              Extract specific pages or ranges from a PDF file online.
             </CardDescription>
           </div>
         </CardHeader>
@@ -503,6 +504,7 @@ export default function PdfSplitterPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/pdf-splitter" />
     </div>
   );
 }

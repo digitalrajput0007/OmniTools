@@ -43,6 +43,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 
 let pdfjs: any;
@@ -921,7 +922,7 @@ export default function PdfSignaturePage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-             <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add Signature / Fill Form</CardTitle>
+             <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add Signature to PDF or Fill Form</CardTitle>
              <CardDescription className="text-base mt-2">
               Draw, type, or upload a signature and place it on your PDF. Add text to fill out forms.
             </CardDescription>
@@ -945,6 +946,7 @@ export default function PdfSignaturePage() {
           </ol>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/pdf-signature" />
     </div>
   );
 }

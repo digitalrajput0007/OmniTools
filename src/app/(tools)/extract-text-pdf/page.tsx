@@ -24,6 +24,7 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 let pdfjs: any;
 
@@ -201,6 +202,7 @@ export default function ExtractTextPdfPage() {
           {renderContent()}
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/extract-text-pdf" />
     </div>
   );
 }

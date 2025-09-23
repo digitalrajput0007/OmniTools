@@ -29,6 +29,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Label } from '@/components/ui/label';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 let pdfjs: any;
 
@@ -431,6 +432,7 @@ export default function PdfToImagesPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/pdf-to-images" />
     </div>
   );
 }

@@ -26,6 +26,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -332,6 +333,7 @@ export default function PdfMergerPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/pdf-merger" />
     </div>
   );
 }

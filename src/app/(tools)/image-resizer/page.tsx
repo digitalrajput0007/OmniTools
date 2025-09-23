@@ -35,6 +35,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -543,6 +544,7 @@ a.click();
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/image-resizer" />
     </div>
   );
 }

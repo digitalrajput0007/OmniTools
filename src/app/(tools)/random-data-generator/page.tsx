@@ -30,6 +30,7 @@ import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];
@@ -364,6 +365,7 @@ export default function RandomDataGeneratorPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/random-data-generator" />
     </div>
   );
 }

@@ -25,6 +25,7 @@ import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 const JpgIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -306,7 +307,7 @@ export default function ImagesToPdfPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Convert Images to PDF Online</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Images to PDF Converter</CardTitle>
             <CardDescription className="text-base mt-2">
               Combine multiple JPG, PNG, and other images into a single PDF document.
             </CardDescription>
@@ -359,6 +360,7 @@ export default function ImagesToPdfPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/images-to-pdf" />
     </div>
   );
 }

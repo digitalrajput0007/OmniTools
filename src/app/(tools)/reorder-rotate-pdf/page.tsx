@@ -27,6 +27,7 @@ import Image from 'next/image';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 
 let pdfjs: any;
@@ -57,6 +58,10 @@ export default function ReorderRotatePdfPage() {
   const [done, setDone] = useState(false);
   const [processedFileBlob, setProcessedFileBlob] = useState<Blob | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<PagePreview | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [selectedPage, setSelectedPage] = useState<number | null>(null);
+
   const { toast } = useToast();
   
   const dragItem = useRef<number | null>(null);
@@ -81,6 +86,9 @@ export default function ReorderRotatePdfPage() {
     setDone(false);
     setIsSaving(false);
     setProcessedFileBlob(null);
+    setDraggedItem(null);
+    setDraggedIndex(null);
+    setSelectedPage(null);
   };
 
   const handleFileSelect = async (selectedFile: File) => {
@@ -148,24 +156,82 @@ export default function ReorderRotatePdfPage() {
   const handleRotate = (index: number) => {
     setPreviews(prev => prev.map((p, i) => i === index ? { ...p, rotation: (p.rotation + 90) % 360 } : p));
   };
-  
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
-    dragItem.current = position;
-  };
-  
-  const handleDragEnterDiv = (e: React.DragEvent<HTMLDivElement>, position: number) => {
-    dragOverItem.current = position;
-  };
 
-  const handleDropDiv = () => {
-    if (dragItem.current === null || dragOverItem.current === null) return;
-    const newPreviews = [...previews];
-    const draggedItem = newPreviews.splice(dragItem.current, 1)[0];
-    newPreviews.splice(dragOverItem.current, 0, draggedItem);
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    dragItem.current = index;
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
     dragItem.current = null;
     dragOverItem.current = null;
+  };
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    if (dragItem.current === null || dragItem.current === index) return;
+    dragOverItem.current = index;
+    const newPreviews = [...previews];
+    const dragged = newPreviews.splice(dragItem.current, 1)[0];
+    newPreviews.splice(index, 0, dragged);
+    dragItem.current = index;
     setPreviews(newPreviews);
   };
+  
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>, index: number) => {
+    dragItem.current = index;
+    setDraggedIndex(index);
+    const touchLocation = e.targetTouches[0];
+    const draggedElement = (e.currentTarget as HTMLElement).cloneNode(true) as HTMLElement;
+    draggedElement.style.position = 'absolute';
+    draggedElement.style.left = `${touchLocation.pageX - 50}px`;
+    draggedElement.style.top = `${touchLocation.pageY - 70}px`;
+    draggedElement.style.opacity = '0.8';
+    draggedElement.style.pointerEvents = 'none';
+    draggedElement.id = 'drag-clone';
+    document.body.appendChild(draggedElement);
+    setDraggedItem(previews[index]);
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (dragItem.current === null) return;
+    const clone = document.getElementById('drag-clone');
+    if (clone) {
+      const touchLocation = e.targetTouches[0];
+      clone.style.left = `${touchLocation.pageX - 50}px`;
+      clone.style.top = `${touchLocation.pageY - 70}px`;
+      
+      const elements = document.elementsFromPoint(touchLocation.clientX, touchLocation.clientY);
+      const dropZone = elements.find(el => el.getAttribute('data-droppable-index'));
+      
+      if (dropZone) {
+        const index = parseInt(dropZone.getAttribute('data-droppable-index') || '0', 10);
+        if (dragItem.current !== index) {
+            const newPreviews = [...previews];
+            const dragged = newPreviews.splice(dragItem.current, 1)[0];
+            newPreviews.splice(index, 0, dragged);
+            dragItem.current = index;
+            setPreviews(newPreviews);
+        }
+      }
+    }
+  };
+  
+  const handleTouchEnd = () => {
+    const clone = document.getElementById('drag-clone');
+    if (clone) {
+      document.body.removeChild(clone);
+    }
+    setDraggedIndex(null);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    setDraggedItem(null);
+    setSelectedPage(null);
+  };
+  
 
   const handleSaveChanges = async () => {
       if (!file) return;
@@ -286,18 +352,38 @@ export default function ReorderRotatePdfPage() {
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`}
-                        className="relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow cursor-grab active:cursor-grabbing"
+                        data-droppable-index={index}
+                        className={cn(
+                            "relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow cursor-grab active:cursor-grabbing",
+                            draggedIndex === index && "opacity-30",
+                            selectedPage === index && "ring-2 ring-primary"
+                        )}
                         draggable
+                        onClick={() => setSelectedPage(index)}
+                        onTouchStart={(e) => setSelectedPage(index)}
                         onDragStart={(e) => handleDragStart(e, index)}
-                        onDragEnd={handleDropDiv}
-                        onDragEnter={(e) => handleDragEnterDiv(e, index)}
-                        onDragOver={(e) => e.preventDefault()}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, index)}
                       >
                           <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={() => handleRotate(index)}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
+                          <div 
+                              className={cn(
+                                "absolute top-1 left-1 h-7 w-7 items-center justify-center",
+                                "md:opacity-0 md:group-hover:opacity-100",
+                                selectedPage === index ? "flex" : "hidden md:flex"
+                              )}
+                              onTouchStart={(e) => handleTouchStart(e, index)}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                          >
+                            <Button size="icon" variant="outline" className="cursor-move h-7 w-7">
+                                <Move className="h-4 w-4"/>
+                            </Button>
+                          </div>
                       </div>
                   ))}
               </div>
@@ -332,7 +418,7 @@ export default function ReorderRotatePdfPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Reorder &amp; Rotate PDF</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Reorder &amp; Rotate PDF Pages</CardTitle>
             <CardDescription className="text-base mt-2">
               Visually reorder pages and rotate them as needed.
             </CardDescription>
@@ -385,6 +471,7 @@ export default function ReorderRotatePdfPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/reorder-rotate-pdf" />
     </div>
   );
 }

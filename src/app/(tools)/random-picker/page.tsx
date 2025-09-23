@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 const confettiConfig = {
   angle: 90,
@@ -371,6 +372,7 @@ setIsPicking(false);
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/random-picker" />
     </div>
   );
 }

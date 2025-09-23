@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 type DiffPart = {
   value: string;
@@ -211,6 +212,7 @@ export default function TextDiffPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/text-diff" />
     </div>
   );
 }

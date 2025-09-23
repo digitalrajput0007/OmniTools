@@ -22,6 +22,7 @@ import {
 import { ArrowRightLeft } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+import { RelatedTools } from '@/components/ui/related-tools';
 
 type UnitCategory = 'length' | 'weight' | 'temperature';
 
@@ -120,7 +121,7 @@ export default function UnitConverterPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Online Unit Converter</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Online Unit Converter</CardTitle>
             <CardDescription className="text-base mt-2">
               Convert between length, weight, temperature, and more.
             </CardDescription>
@@ -241,6 +242,7 @@ export default function UnitConverterPage() {
           </Accordion>
         </CardContent>
       </Card>
+      <RelatedTools toolPath="/unit-converter" />
     </div>
   );
 }
