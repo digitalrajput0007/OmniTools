@@ -367,14 +367,14 @@ export default function ReorderRotatePdfPage() {
     if (previews.length > 0) {
       return (
           <div className="space-y-6">
-              <p className="text-center text-muted-foreground">Tap a page to select it, then drag the move icon to reorder. Use the button to rotate.</p>
+              <p className="text-center text-muted-foreground">Drag and drop pages to reorder them. Use the buttons to rotate.</p>
               <div ref={containerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`}
                         data-index={index}
                         className={cn(
-                            "relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow", 
+                            "relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow cursor-grab active:cursor-grabbing", 
                             selectedPageIndex === index ? "ring-2 ring-primary" : ""
                         )}
                         draggable
@@ -388,19 +388,20 @@ export default function ReorderRotatePdfPage() {
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
-                          {selectedPageIndex === index && (
-                            <Button 
-                              size="icon" 
-                              variant="secondary" 
-                              className="absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing"
-                              onTouchStart={(e) => handleTouchStart(e, index)}
-                              onTouchMove={handleTouchMove}
-                              onTouchEnd={handleTouchEnd}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                                <Move className="h-4 w-4"/>
-                            </Button>
-                          )}
+                          <Button 
+                            size="icon" 
+                            variant="secondary" 
+                            className={cn(
+                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100",
+                              selectedPageIndex === index && "opacity-100" // Always show on mobile when selected
+                            )}
+                            onTouchStart={(e) => handleTouchStart(e, index)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                              <Move className="h-4 w-4"/>
+                          </Button>
                       </div>
                   ))}
               </div>
@@ -481,7 +482,7 @@ export default function ReorderRotatePdfPage() {
                   <li><strong>Fix Scanning Errors:</strong> This is the perfect tool for correcting documents that were scanned out of order or with incorrect page orientations.</li>
                   <li><strong>Combine with Other Tools:</strong> First, use the "PDF Merger" to combine several documents, then use this tool to arrange all the pages into a final, coherent order.</li>
                   <li><strong>Visual Confirmation:</strong> The live previews ensure you know exactly how your document will look before you save it.</li>
-                  <li><strong>Secure and Private:</strong> All page manipulation happens directly in your browser. Your document is never sent to a server, keeping your information secure.</li>
+                  <li><strong>Secure and Private:</strong> All page manipulation happens entirely in your browser. Your document is never sent to a server, keeping your information secure.</li>
                 </ul>
               </AccordionContent>
             </AccordionItem>
