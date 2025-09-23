@@ -178,13 +178,14 @@ export default function ReorderRotatePdfPage() {
         return;
     }
     
-    const newPreviews = [...previews];
-    const dragItemContent = newPreviews.splice(dragItem.current, 1)[0];
-    newPreviews.splice(dragOverItem.current, 0, dragItemContent);
-    
-    dragItem.current = null;
-    dragOverItem.current = null;
-    setPreviews(newPreviews);
+    setPreviews(prev => {
+        const newPreviews = [...prev];
+        const dragItemContent = newPreviews.splice(dragItem.current!, 1)[0];
+        newPreviews.splice(dragOverItem.current!, 0, dragItemContent);
+        dragItem.current = null;
+        dragOverItem.current = null;
+        return newPreviews;
+    });
   };
   
   const handleTouchStart = (e: React.TouchEvent<HTMLButtonElement>, index: number) => {
@@ -222,8 +223,8 @@ export default function ReorderRotatePdfPage() {
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
-    e.preventDefault();
     if (!touchDragState.current || !touchDragState.current.clone) return;
+    e.preventDefault();
     
     const touch = e.touches[0];
     const dx = touch.clientX - touchDragState.current.initialX;
@@ -388,12 +389,11 @@ export default function ReorderRotatePdfPage() {
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
-                          <Button 
-                            size="icon" 
-                            variant="secondary" 
+                          <button 
                             className={cn(
-                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100",
-                              selectedPageIndex === index && "opacity-100" // Always show on mobile when selected
+                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 items-center justify-center flex rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                              "md:hidden",
+                              selectedPageIndex === index && "opacity-100"
                             )}
                             onTouchStart={(e) => handleTouchStart(e, index)}
                             onTouchMove={handleTouchMove}
@@ -401,7 +401,7 @@ export default function ReorderRotatePdfPage() {
                             onClick={(e) => e.stopPropagation()}
                           >
                               <Move className="h-4 w-4"/>
-                          </Button>
+                          </button>
                       </div>
                   ))}
               </div>
