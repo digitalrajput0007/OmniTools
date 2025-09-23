@@ -37,7 +37,7 @@ export function RelatedTools({ toolPath }: RelatedToolsProps) {
               <Link
                 href={tool.path}
                 key={tool.path}
-                className="group flex items-center justify-between rounded-md border p-4 transition-colors hover:bg-accent"
+                className="group flex items-center justify-between rounded-md border p-4 transition-all duration-300 hover:border-primary hover:shadow-lg"
               >
                 <div className="flex items-center gap-4">
                   <div className="rounded-md bg-muted p-2">
