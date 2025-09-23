@@ -180,8 +180,8 @@ export default function ReorderRotatePdfPage() {
     
     setPreviews(prev => {
         const newPreviews = [...prev];
-        const dragItemContent = newPreviews.splice(dragItem.current!, 1)[0];
-        newPreviews.splice(dragOverItem.current!, 0, dragItemContent);
+        const [draggedItem] = newPreviews.splice(dragItem.current!, 1);
+        newPreviews.splice(dragOverItem.current!, 0, draggedItem);
         dragItem.current = null;
         dragOverItem.current = null;
         return newPreviews;
@@ -391,9 +391,9 @@ export default function ReorderRotatePdfPage() {
                           </Button>
                           <button 
                             className={cn(
-                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 items-center justify-center flex rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing items-center justify-center flex rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80",
                               "md:hidden",
-                              selectedPageIndex === index && "opacity-100"
+                              selectedPageIndex === index ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                             )}
                             onTouchStart={(e) => handleTouchStart(e, index)}
                             onTouchMove={handleTouchMove}
@@ -424,7 +424,7 @@ export default function ReorderRotatePdfPage() {
             onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
         >
             <UploadCloud className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
+            <p className="mt-4 text-muted-foreground">Drag &amp; drop your PDF here, or click to browse</p>
             <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
             <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
         </label>
@@ -436,7 +436,7 @@ export default function ReorderRotatePdfPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Reorder & Rotate PDF</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Reorder &amp; Rotate PDF</CardTitle>
             <CardDescription className="text-base mt-2">
               Visually reorder pages and rotate them as needed.
             </CardDescription>
