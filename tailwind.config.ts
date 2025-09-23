@@ -1,12 +1,19 @@
 
 import type {Config} from 'tailwindcss';
 
+const colorNames = ['rose', 'sky', 'emerald', 'amber', 'violet', 'lime', 'pink', 'cyan', 'fuchsia', 'orange', 'teal', 'indigo', 'red', 'blue', 'yellow'];
+const colorSafelist = colorNames.flatMap((color) => [`hover:border-${color}-500`, `text-${color}-500`]);
+
+
 export default {
   darkMode: ['class', '[data-theme="dark"]'],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  safelist: [
+    ...colorSafelist,
   ],
   theme: {
     extend: {

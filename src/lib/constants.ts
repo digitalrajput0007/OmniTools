@@ -199,3 +199,21 @@ export const tools: Tool[] = [
 
 export const AppName = 'Online JPG PDF';
 export const ShareIcon = Share2;
+
+export const iconColors = [
+    { bg: 'bg-rose-500/10', text: 'text-rose-500', tw: 'rose-500' },
+    { bg: 'bg-sky-500/10', text: 'text-sky-500', tw: 'sky-500' },
+    { bg: 'bg-emerald-500/10', text: 'text-emerald-500', tw: 'emerald-500' },
+    { bg: 'bg-amber-500/10', text: 'text-amber-500', tw: 'amber-500' },
+    { bg: 'bg-violet-500/10', text: 'text-violet-500', tw: 'violet-500' },
+    { bg: 'bg-lime-500/10', text: 'text-lime-500', tw: 'lime-500' },
+    { bg: 'bg-pink-500/10', text: 'text-pink-500', tw: 'pink-500' },
+    { bg: 'bg-cyan-500/10', text: 'text-cyan-500', tw: 'cyan-500' },
+    { bg: 'bg-fuchsia-500/10', text: 'text-fuchsia-500', tw: 'fuchsia-500' },
+    { bg: 'bg-orange-500/10', text: 'text-orange-500', tw: 'orange-500' },
+    { bg: 'bg-teal-500/10', text: 'text-teal-500', tw: 'teal-500' },
+    { bg: 'bg-indigo-500/10', text: 'text-indigo-500', tw: 'indigo-500' },
+    { bg: 'bg-red-500/10', text: 'text-red-500', tw: 'red-500' },
+    { bg: 'bg-blue-500/10', text: 'text-blue-500', tw: 'blue-500' },
+    { bg: 'bg-yellow-500/10', text: 'text-yellow-500', tw: 'yellow-500' },
+  ];
