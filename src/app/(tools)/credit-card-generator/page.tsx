@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,17 +23,6 @@ import { Copy, RefreshCw, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Free Credit Card Number Generator - Dummy Card Numbers',
-  description: 'Generate valid, but fake, credit card numbers for testing and development purposes. Supports Visa, Mastercard, Amex, and Discover. Ideal for testing forms.',
-  openGraph: {
-    title: 'Free Credit Card Number Generator - Dummy Card Numbers',
-    description: 'Generate valid, but fake, credit card numbers for testing and development purposes. Supports Visa, Mastercard, Amex, and Discover. Ideal for testing forms.',
-    url: '/credit-card-generator',
-    type: 'website',
-  },
-};
 
 type CardType = 'visa' | 'mastercard' | 'amex' | 'discover';
 

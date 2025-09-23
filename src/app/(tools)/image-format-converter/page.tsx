@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,17 +25,6 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Free Image Converter - Convert JPG, PNG, WEBP Online',
-  description: 'Easily convert your images to different formats like JPG, PNG, and WEBP for free. Our online image format converter is fast, secure, and easy to use.',
-  openGraph: {
-    title: 'Free Image Converter - Convert JPG, PNG, WEBP Online',
-    description: 'Easily convert your images to different formats like JPG, PNG, and WEBP for free. Our online image format converter is fast, secure, and easy to use.',
-    url: '/image-format-converter',
-    type: 'website',
-  },
-};
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 

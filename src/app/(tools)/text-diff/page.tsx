@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useMemo } from 'react';
 import { diffChars } from 'diff';
 import { Button } from '@/components/ui/button';
@@ -20,17 +19,6 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Text Difference Checker - Online Diff Tool',
-  description: 'Compare two blocks of text and highlight the differences for free. Our online diff tool helps you easily spot changes, additions, and removals in your text or code.',
-  openGraph: {
-    title: 'Text Difference Checker - Online Diff Tool',
-    description: 'Compare two blocks of text and highlight the differences for free. Our online diff tool helps you easily spot changes, additions, and removals in your text or code.',
-    url: '/text-diff',
-    type: 'website',
-  },
-};
 
 type DiffPart = {
   value: string;

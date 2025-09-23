@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -31,17 +30,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Free Background Remover - Remove BG from Image Online',
-  description: 'Easily remove the background from any image for free. Our online tool lets you make backgrounds transparent or replace them with a solid color instantly.',
-  openGraph: {
-    title: 'Free Background Remover - Remove BG from Image Online',
-    description: 'Easily remove the background from any image for free. Our online tool lets you make backgrounds transparent or replace them with a solid color instantly.',
-    url: '/background-remover',
-    type: 'website',
-  },
-};
 
 type Color = { r: number; g: number; b: number };
 

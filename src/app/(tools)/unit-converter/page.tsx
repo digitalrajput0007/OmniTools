@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,17 +22,6 @@ import {
 import { ArrowRightLeft } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Free Unit Converter - Length, Weight, Temperature',
-  description: 'A fast and free online unit converter for length, weight, temperature, and more. Easily convert between metric and imperial units (meters, feet, kg, pounds, etc.).',
-  openGraph: {
-    title: 'Free Unit Converter - Length, Weight, Temperature',
-    description: 'A fast and free online unit converter for length, weight, temperature, and more. Easily convert between metric and imperial units (meters, feet, kg, pounds, etc.).',
-    url: '/unit-converter',
-    type: 'website',
-  },
-};
 
 type UnitCategory = 'length' | 'weight' | 'temperature';
 

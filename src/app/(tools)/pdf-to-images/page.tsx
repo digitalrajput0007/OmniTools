@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
@@ -30,17 +29,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Label } from '@/components/ui/label';
-
-export const metadata: Metadata = {
-  title: 'PDF to Images Converter - Free Online Tool',
-  description: 'Convert each page of a PDF document into high-quality JPG images for free. Fast, secure, and easy to use online PDF to image converter.',
-  openGraph: {
-    title: 'PDF to Images Converter - Free Online Tool',
-    description: 'Convert each page of a PDF document into high-quality JPG images for free. Fast, secure, and easy to use online PDF to image converter.',
-    url: '/pdf-to-images',
-    type: 'website',
-  },
-};
 
 let pdfjs: any;
 

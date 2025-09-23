@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,17 +20,6 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Random Picker - Free Online Winner Picker Tool',
-  description: 'A fun and easy-to-use random picker tool for drawings, giveaways, and contests. Enter a list of names and pick one or more random winners instantly.',
-  openGraph: {
-    title: 'Random Picker - Free Online Winner Picker Tool',
-    description: 'A fun and easy-to-use random picker tool for drawings, giveaways, and contests. Enter a list of names and pick one or more random winners instantly.',
-    url: '/random-picker',
-    type: 'website',
-  },
-};
 
 const confettiConfig = {
   angle: 90,
@@ -219,7 +207,7 @@ setIsPicking(false);
               </div>
                <Button onClick={handleSetup} className="w-full" size="lg" disabled={itemList.length === 0}>
                   <UserPlus className="mr-2" /> Start Drawing
-              </Button>
+               </Button>
           </CardContent>
         </Card>
       );

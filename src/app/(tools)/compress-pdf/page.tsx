@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
@@ -27,17 +26,6 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-
-export const metadata: Metadata = {
-  title: 'Compress PDF Online Free - Reduce PDF File Size',
-  description: 'Reduce the file size of your PDF documents for free. Our online PDF compressor makes your files smaller for easy sharing and storage without compromising quality.',
-  openGraph: {
-    title: 'Compress PDF Online Free - Reduce PDF File Size',
-    description: 'Reduce the file size of your PDF documents for free. Our online PDF compressor makes your files smaller for easy sharing and storage without compromising quality.',
-    url: '/compress-pdf',
-    type: 'website',
-  },
-};
 
 let pdfjs: any;
 

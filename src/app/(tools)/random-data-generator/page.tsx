@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,17 +30,6 @@ import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
-
-export const metadata: Metadata = {
-  title: 'Random Data Generator - Free Dummy Data Creator',
-  description: 'Generate random dummy data for free. Create test data including names, emails, addresses, phone numbers, and UUIDs. Export to PDF, Excel, or copy to clipboard.',
-  openGraph: {
-    title: 'Random Data Generator - Free Dummy Data Creator',
-    description: 'Generate random dummy data for free. Create test data including names, emails, addresses, phone numbers, and UUIDs. Export to PDF, Excel, or copy to clipboard.',
-    url: '/random-data-generator',
-    type: 'website',
-  },
-};
 
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];

@@ -37,16 +37,6 @@ interface PagePreview {
   rotation: number;
 }
 
-interface DragState {
-  index: number;
-  element: HTMLElement | null;
-  clone: HTMLElement | null;
-  initialX: number;
-  initialY: number;
-  dx: number;
-  dy: number;
-}
-
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FADBD8" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -67,13 +57,10 @@ export default function ReorderRotatePdfPage() {
   const [done, setDone] = useState(false);
   const [processedFileBlob, setProcessedFileBlob] = useState<Blob | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedPageIndex, setSelectedPageIndex] = useState<number | null>(null);
   const { toast } = useToast();
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  const touchDragState = useRef<DragState | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
@@ -94,7 +81,6 @@ export default function ReorderRotatePdfPage() {
     setDone(false);
     setIsSaving(false);
     setProcessedFileBlob(null);
-    setSelectedPageIndex(null);
   };
 
   const handleFileSelect = async (selectedFile: File) => {
@@ -172,86 +158,13 @@ export default function ReorderRotatePdfPage() {
   };
 
   const handleDropDiv = () => {
-    if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) {
-        dragItem.current = null;
-        dragOverItem.current = null;
-        return;
-    }
-    
-    setPreviews(prev => {
-        const newPreviews = [...prev];
-        const [draggedItem] = newPreviews.splice(dragItem.current!, 1);
-        newPreviews.splice(dragOverItem.current!, 0, draggedItem);
-        dragItem.current = null;
-        dragOverItem.current = null;
-        return newPreviews;
-    });
-  };
-  
-  const handleTouchStart = (e: React.TouchEvent<HTMLButtonElement>, index: number) => {
-    const touch = e.touches[0];
-    const element = (e.target as HTMLElement).closest<HTMLElement>('[data-index]');
-    if (!element) return;
-    
-    const elementRect = element.getBoundingClientRect();
-    const clone = element.cloneNode(true) as HTMLElement;
-    
-    clone.style.position = 'fixed';
-    clone.style.width = `${elementRect.width}px`;
-    clone.style.height = `${elementRect.height}px`;
-    clone.style.left = `${elementRect.left}px`;
-    clone.style.top = `${elementRect.top}px`;
-    clone.style.pointerEvents = 'none';
-    clone.style.opacity = '0.8';
-    clone.style.transform = 'scale(1.05)';
-    clone.style.zIndex = '1000';
-    
-    document.body.appendChild(clone);
-    element.style.opacity = '0.3';
-
-    touchDragState.current = {
-      index,
-      element,
-      clone,
-      initialX: touch.clientX,
-      initialY: touch.clientY,
-      dx: 0,
-      dy: 0
-    };
-    
-    dragItem.current = index;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
-    if (!touchDragState.current || !touchDragState.current.clone) return;
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    const dx = touch.clientX - touchDragState.current.initialX;
-    const dy = touch.clientY - touchDragState.current.initialY;
-    
-    touchDragState.current.dx = dx;
-    touchDragState.current.dy = dy;
-    
-    const clone = touchDragState.current.clone;
-    const originalRect = touchDragState.current.element!.getBoundingClientRect();
-    clone.style.left = `${originalRect.left + dx}px`;
-    clone.style.top = `${originalRect.top + dy}px`;
-
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('[data-index]');
-    if (dropTarget) {
-        const index = dropTarget.getAttribute('data-index');
-        if (index) dragOverItem.current = parseInt(index, 10);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchDragState.current && touchDragState.current.clone) {
-      document.body.removeChild(touchDragState.current.clone);
-      touchDragState.current.element!.style.opacity = '1';
-    }
-    touchDragState.current = null;
-    handleDropDiv();
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    const newPreviews = [...previews];
+    const draggedItem = newPreviews.splice(dragItem.current, 1)[0];
+    newPreviews.splice(dragOverItem.current, 0, draggedItem);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    setPreviews(newPreviews);
   };
 
   const handleSaveChanges = async () => {
@@ -369,39 +282,22 @@ export default function ReorderRotatePdfPage() {
       return (
           <div className="space-y-6">
               <p className="text-center text-muted-foreground">Drag and drop pages to reorder them. Use the buttons to rotate.</p>
-              <div ref={containerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`}
-                        data-index={index}
-                        className={cn(
-                            "relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow cursor-grab active:cursor-grabbing", 
-                            selectedPageIndex === index ? "ring-2 ring-primary" : ""
-                        )}
+                        className="relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow cursor-grab active:cursor-grabbing"
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDragEnd={handleDropDiv}
                         onDragEnter={(e) => handleDragEnterDiv(e, index)}
                         onDragOver={(e) => e.preventDefault()}
                       >
-                          <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md pointer-events-none" style={{ transform: `rotate(${p.rotation}deg)`}}/>
+                          <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
-                          <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
+                          <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={() => handleRotate(index)}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
-                          <button 
-                            className={cn(
-                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing items-center justify-center flex rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                              "md:hidden",
-                              selectedPageIndex === index ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )}
-                            onTouchStart={(e) => handleTouchStart(e, index)}
-                            onTouchMove={handleTouchMove}
-                            onTouchEnd={handleTouchEnd}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                              <Move className="h-4 w-4"/>
-                          </button>
                       </div>
                   ))}
               </div>
