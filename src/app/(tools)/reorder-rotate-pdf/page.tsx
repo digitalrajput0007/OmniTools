@@ -151,7 +151,7 @@ export default function ReorderRotatePdfPage() {
     setPreviews(prev => prev.map((p, i) => i === index ? { ...p, rotation: (p.rotation + 90) % 360 } : p));
   };
   
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement> | React.TouchEvent<HTMLButtonElement>, position: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>, position: number) => {
     dragItem.current = position;
     if ('touches' in e) {
       const touch = e.touches[0];
@@ -314,38 +314,36 @@ export default function ReorderRotatePdfPage() {
     if (previews.length > 0) {
       return (
           <div className="space-y-6">
-              <p className="text-center text-muted-foreground">Tap a page to select it, then drag the move icon to reorder. Use the button to rotate.</p>
+              <p className="text-center text-muted-foreground">Click and drag a page to reorder it. Use the button to rotate.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`}
                         data-index={index}
-                        className={cn("relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow", selectedPageIndex === index ? "ring-2 ring-primary" : "")}
+                        draggable
+                        onDragStart={(e) => (dragItem.current = index)}
                         onDragEnter={(e) => handleDragEnterDiv(e, index)}
-                        onClick={() => setSelectedPageIndex(index)}
+                        onDragEnd={handleDropDiv}
+                        onDragOver={(e) => e.preventDefault()}
+                        className={cn("relative group border rounded-lg p-2 flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing")}
                       >
-                          <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
+                          <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md pointer-events-none" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
-                          {selectedPageIndex === index && (
-                            <Button 
+                           <Button 
                               size="icon" 
                               variant="secondary" 
-                              className="absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing"
+                              className="absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100"
                               draggable
-                              onDragStart={(e) => handleDragStart(e, index)}
+                              onDragStart={(e) => { e.stopPropagation(); dragItem.current = index; }}
                               onDragEnd={handleDropDiv}
-                              onTouchStart={(e) => handleDragStart(e, index)}
-                              onTouchMove={handleTouchMove}
-                              onTouchEnd={handleDropDiv}
                               onDragOver={(e) => e.preventDefault()}
                               onClick={(e) => e.stopPropagation()}
                             >
                                 <Move className="h-4 w-4"/>
                             </Button>
-                          )}
                       </div>
                   ))}
               </div>
@@ -436,3 +434,5 @@ export default function ReorderRotatePdfPage() {
     </div>
   );
 }
+
+    
