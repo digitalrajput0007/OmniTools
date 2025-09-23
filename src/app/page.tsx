@@ -66,22 +66,22 @@ export default function Home() {
              <div className="mx-auto mt-12 grid max-w-sm grid-cols-1 gap-6 sm:max-w-4xl sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3 xl:max-w-7xl xl:grid-cols-4">
               {tools.map((tool, index) => (
                 <Link href={tool.path} key={tool.name} className="group">
-                  <Card className="flex h-full flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{ '--tool-color-text': `hsl(var(--${iconColors[index % iconColors.length].text.replace('text-','').replace('-500','')}))` } as React.CSSProperties}>
+                  <Card className="flex h-full flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:bg-accent" style={{ '--tool-color-text': `hsl(var(--${iconColors[index % iconColors.length].text.replace('text-','').replace('-500','')}))` } as React.CSSProperties}>
                     <CardHeader className="flex-grow flex-row items-start gap-4">
                       <div className={cn("rounded-md p-3", iconColors[index % iconColors.length].bg)}>
                         <tool.icon className={cn("h-6 w-6", iconColors[index % iconColors.length].text)} />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="font-headline text-lg">
+                        <CardTitle className="font-headline text-lg group-hover:text-accent-foreground">
                           {tool.name}
                         </CardTitle>
-                        <CardDescription className="mt-1 text-sm">
+                        <CardDescription className="mt-1 text-sm group-hover:text-accent-foreground">
                           {tool.description}
                         </CardDescription>
                       </div>
                     </CardHeader>
                     <CardFooter>
-                      <span className={cn("flex items-center gap-1 text-sm font-semibold", iconColors[index % iconColors.length].text)}>
+                      <span className={cn("flex items-center gap-1 text-sm font-semibold", iconColors[index % iconColors.length].text, "group-hover:text-accent-foreground")}>
                         Use Tool{' '}
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </span>
