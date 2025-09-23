@@ -18,7 +18,8 @@ import {
   RotateCw,
   RefreshCcw,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Move
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,7 @@ export default function ReorderRotatePdfPage() {
   const [done, setDone] = useState(false);
   const [processedFileBlob, setProcessedFileBlob] = useState<Blob | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedPageIndex, setSelectedPageIndex] = useState<number | null>(null);
   const { toast } = useToast();
   
   const dragItem = useRef<number | null>(null);
@@ -80,6 +82,7 @@ export default function ReorderRotatePdfPage() {
     setDone(false);
     setIsSaving(false);
     setProcessedFileBlob(null);
+    setSelectedPageIndex(null);
   };
 
   const handleFileSelect = async (selectedFile: File) => {
@@ -148,22 +151,20 @@ export default function ReorderRotatePdfPage() {
     setPreviews(prev => prev.map((p, i) => i === index ? { ...p, rotation: (p.rotation + 90) % 360 } : p));
   };
   
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement> | React.TouchEvent<HTMLButtonElement>, position: number) => {
     dragItem.current = position;
-  };
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>, position: number) => {
-    dragItem.current = position;
-    const touch = e.touches[0];
-    touchStartPosition.current = { x: touch.clientX, y: touch.clientY };
+    if ('touches' in e) {
+      const touch = e.touches[0];
+      touchStartPosition.current = { x: touch.clientX, y: touch.clientY };
+    }
   };
   
   const handleDragEnterDiv = (e: React.DragEvent<HTMLDivElement>, position: number) => {
     dragOverItem.current = position;
   };
   
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Prevent page scrolling
+  const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault(); 
     if (!touchStartPosition.current) return;
     
     const touch = e.touches[0];
@@ -313,27 +314,38 @@ export default function ReorderRotatePdfPage() {
     if (previews.length > 0) {
       return (
           <div className="space-y-6">
-              <p className="text-center text-muted-foreground">Drag and drop pages to reorder them. Use the button to rotate.</p>
+              <p className="text-center text-muted-foreground">Tap a page to select it, then drag the move icon to reorder. Use the button to rotate.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`}
                         data-index={index}
-                        className="relative group border rounded-lg p-2 flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
+                        className={cn("relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow", selectedPageIndex === index ? "ring-2 ring-primary" : "")}
                         onDragEnter={(e) => handleDragEnterDiv(e, index)}
-                        onDragEnd={handleDropDiv}
-                        onDragOver={(e) => e.preventDefault()}
-                        onTouchStart={(e) => handleTouchStart(e, index)}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleDropDiv}
+                        onClick={() => setSelectedPageIndex(index)}
                       >
                           <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
+                          {selectedPageIndex === index && (
+                            <Button 
+                              size="icon" 
+                              variant="secondary" 
+                              className="absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing"
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, index)}
+                              onDragEnd={handleDropDiv}
+                              onTouchStart={(e) => handleDragStart(e, index)}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleDropDiv}
+                              onDragOver={(e) => e.preventDefault()}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                                <Move className="h-4 w-4"/>
+                            </Button>
+                          )}
                       </div>
                   ))}
               </div>
@@ -400,10 +412,10 @@ export default function ReorderRotatePdfPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your PDF:</strong> Drag and drop your file or click to browse. The tool will generate a preview for every page.</li>
-                  <li><strong>Reorder Pages:</strong> Simply click and drag any page preview to a new position in the sequence.</li>
-                  <li><strong>Rotate a Page:</strong> Hover over a page and click the rotate icon (<RotateCw />) in the top-right corner. Each click rotates the page 90 degrees clockwise.</li>
+                  <li><strong>Reorder Pages:</strong> On desktop, click and drag any page to a new position. On mobile, tap a page to select it, then press and drag the move icon (<Move/>) to a new position.</li>
+                  <li><strong>Rotate a Page:</strong> Hover over a page (or tap it on mobile to see the buttons) and click the rotate icon (<RotateCw />) in the top-right corner. Each click rotates the page 90 degrees clockwise.</li>
                   <li><strong>Save Changes:</strong> Once your pages are perfectly arranged and oriented, click the "Save Changes" button.</li>
-                  <li><strong>Download:</strong> Your new PDF with all the changes applied will be downloaded automatically.</li>
+                  <li><strong>Download:</strong> Your new PDF with all the changes applied will be ready for download.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
