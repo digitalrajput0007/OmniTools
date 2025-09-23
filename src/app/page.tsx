@@ -72,16 +72,16 @@ export default function Home() {
                         <tool.icon className={cn("h-6 w-6", iconColors[index % iconColors.length].text)} />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="font-headline text-lg group-hover:text-accent-foreground">
+                        <CardTitle className="font-headline text-lg group-hover:text-white">
                           {tool.name}
                         </CardTitle>
-                        <CardDescription className="mt-1 text-sm group-hover:text-accent-foreground">
+                        <CardDescription className="mt-1 text-sm group-hover:text-white">
                           {tool.description}
                         </CardDescription>
                       </div>
                     </CardHeader>
                     <CardFooter>
-                      <span className={cn("flex items-center gap-1 text-sm font-semibold", iconColors[index % iconColors.length].text, "group-hover:text-accent-foreground")}>
+                      <span className={cn("flex items-center gap-1 text-sm font-semibold", iconColors[index % iconColors.length].text, "group-hover:text-white")}>
                         Use Tool{' '}
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </span>
