@@ -60,6 +60,7 @@ export default function ReorderRotatePdfPage() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  const touchStartPosition = useRef<{ x: number, y: number } | null>(null);
 
   useEffect(() => {
     import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
@@ -150,13 +151,35 @@ export default function ReorderRotatePdfPage() {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
     dragItem.current = position;
   };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>, position: number) => {
+    dragItem.current = position;
+    const touch = e.touches[0];
+    touchStartPosition.current = { x: touch.clientX, y: touch.clientY };
+  };
   
   const handleDragEnterDiv = (e: React.DragEvent<HTMLDivElement>, position: number) => {
     dragOverItem.current = position;
   };
+  
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = element?.closest('[data-index]');
+    if (dropZone) {
+      const index = dropZone.getAttribute('data-index');
+      if (index !== null) {
+        dragOverItem.current = parseInt(index, 10);
+      }
+    }
+  };
 
   const handleDropDiv = () => {
-    if (dragItem.current === null || dragOverItem.current === null) return;
+    if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) {
+        dragItem.current = null;
+        dragOverItem.current = null;
+        return;
+    }
     
     const newPreviews = [...previews];
     const dragItemContent = newPreviews.splice(dragItem.current, 1)[0];
@@ -289,17 +312,21 @@ export default function ReorderRotatePdfPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
-                        key={`${p.id}-${index}`} 
+                        key={`${p.id}-${index}`}
+                        data-index={index}
                         className="relative group border rounded-lg p-2 flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing"
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDragEnter={(e) => handleDragEnterDiv(e, index)}
                         onDragEnd={handleDropDiv}
                         onDragOver={(e) => e.preventDefault()}
+                        onTouchStart={(e) => handleTouchStart(e, index)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleDropDiv}
                       >
                           <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
-                          <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={() => handleRotate(index)}>
+                          <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
                       </div>
