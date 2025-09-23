@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +36,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Free Image Resizer and Cropper - Resize & Crop Images Online',
+  description: 'Easily resize and crop your images online for free. Adjust dimensions, maintain aspect ratio, and crop with a live preview. Perfect for social media and websites.',
+  openGraph: {
+    title: 'Free Image Resizer and Cropper - Resize & Crop Images Online',
+    description: 'Easily resize and crop your images online for free. Adjust dimensions, maintain aspect ratio, and crop with a live preview. Perfect for social media and websites.',
+    url: '/image-resizer',
+    type: 'website',
+  },
+};
 
 // Utility to create a file from a data URL
 async function dataUrlToFile(
@@ -488,8 +500,8 @@ a.click();
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Resizer & Cropper</CardTitle>
-            <CardDescription className="text-base mt-2">Resize and crop your images with a live preview.</CardDescription>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Resize and Crop Images Online</CardTitle>
+            <CardDescription className="text-base mt-2">Adjust your image dimensions and crop to perfection with a live preview.</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

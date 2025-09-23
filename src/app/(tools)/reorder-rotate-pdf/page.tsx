@@ -37,6 +37,16 @@ interface PagePreview {
   rotation: number;
 }
 
+interface DragState {
+  index: number;
+  element: HTMLElement | null;
+  clone: HTMLElement | null;
+  initialX: number;
+  initialY: number;
+  dx: number;
+  dy: number;
+}
+
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="#FADBD8" stroke="#E74C3C" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -62,7 +72,9 @@ export default function ReorderRotatePdfPage() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  const touchStartPosition = useRef<{ x: number, y: number } | null>(null);
+  const touchDragState = useRef<DragState | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     import('pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
@@ -151,51 +163,97 @@ export default function ReorderRotatePdfPage() {
     setPreviews(prev => prev.map((p, i) => i === index ? { ...p, rotation: (p.rotation + 90) % 360 } : p));
   };
   
-  const handleDragStart = (e: React.DragEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>, position: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
     dragItem.current = position;
-    if ('touches' in e) {
-      const touch = e.touches[0];
-      touchStartPosition.current = { x: touch.clientX, y: touch.clientY };
-    }
   };
   
   const handleDragEnterDiv = (e: React.DragEvent<HTMLDivElement>, position: number) => {
     dragOverItem.current = position;
-  };
-  
-  const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
-    e.preventDefault(); 
-    if (!touchStartPosition.current) return;
-    
-    const touch = e.touches[0];
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropZone = element?.closest('[data-index]');
-    if (dropZone) {
-      const index = dropZone.getAttribute('data-index');
-      if (index !== null) {
-        dragOverItem.current = parseInt(index, 10);
-      }
-    }
   };
 
   const handleDropDiv = () => {
     if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) {
         dragItem.current = null;
         dragOverItem.current = null;
-        touchStartPosition.current = null;
         return;
     }
     
-    const newPreviews = [...previews];
-    const dragItemContent = newPreviews.splice(dragItem.current, 1)[0];
-    newPreviews.splice(dragOverItem.current, 0, dragItemContent);
-    
-    dragItem.current = null;
-    dragOverItem.current = null;
-    touchStartPosition.current = null;
-    setPreviews(newPreviews);
+    setPreviews(prev => {
+        const newPreviews = [...prev];
+        const [draggedItem] = newPreviews.splice(dragItem.current!, 1);
+        newPreviews.splice(dragOverItem.current!, 0, draggedItem);
+        dragItem.current = null;
+        dragOverItem.current = null;
+        return newPreviews;
+    });
   };
   
+  const handleTouchStart = (e: React.TouchEvent<HTMLButtonElement>, index: number) => {
+    const touch = e.touches[0];
+    const element = (e.target as HTMLElement).closest<HTMLElement>('[data-index]');
+    if (!element) return;
+    
+    const elementRect = element.getBoundingClientRect();
+    const clone = element.cloneNode(true) as HTMLElement;
+    
+    clone.style.position = 'fixed';
+    clone.style.width = `${elementRect.width}px`;
+    clone.style.height = `${elementRect.height}px`;
+    clone.style.left = `${elementRect.left}px`;
+    clone.style.top = `${elementRect.top}px`;
+    clone.style.pointerEvents = 'none';
+    clone.style.opacity = '0.8';
+    clone.style.transform = 'scale(1.05)';
+    clone.style.zIndex = '1000';
+    
+    document.body.appendChild(clone);
+    element.style.opacity = '0.3';
+
+    touchDragState.current = {
+      index,
+      element,
+      clone,
+      initialX: touch.clientX,
+      initialY: touch.clientY,
+      dx: 0,
+      dy: 0
+    };
+    
+    dragItem.current = index;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
+    if (!touchDragState.current || !touchDragState.current.clone) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchDragState.current.initialX;
+    const dy = touch.clientY - touchDragState.current.initialY;
+    
+    touchDragState.current.dx = dx;
+    touchDragState.current.dy = dy;
+    
+    const clone = touchDragState.current.clone;
+    const originalRect = touchDragState.current.element!.getBoundingClientRect();
+    clone.style.left = `${originalRect.left + dx}px`;
+    clone.style.top = `${originalRect.top + dy}px`;
+
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('[data-index]');
+    if (dropTarget) {
+        const index = dropTarget.getAttribute('data-index');
+        if (index) dragOverItem.current = parseInt(index, 10);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchDragState.current && touchDragState.current.clone) {
+      document.body.removeChild(touchDragState.current.clone);
+      touchDragState.current.element!.style.opacity = '1';
+    }
+    touchDragState.current = null;
+    handleDropDiv();
+  };
+
   const handleSaveChanges = async () => {
       if (!file) return;
       setIsSaving(true);
@@ -217,14 +275,10 @@ export default function ReorderRotatePdfPage() {
 
             copiedPages.forEach((page, index) => {
                 const addedPage = newPdfDoc.addPage(page);
-                const previewForThisCopiedPage = previews.find((p) => p.id === pageIndices[index] + 1);
-
-                if (previewForThisCopiedPage) {
-                    const originalPage = pdfDoc.getPage(pageIndices[index]);
-                    const originalRotation = originalPage.getRotation().angle;
-                    const additionalRotation = previews[index].rotation;
-                    addedPage.setRotation(degrees(originalRotation + additionalRotation));
-                }
+                const originalPage = pdfDoc.getPage(pageIndices[index]);
+                const originalRotation = originalPage.getRotation().angle;
+                const additionalRotation = previews[index].rotation;
+                addedPage.setRotation(degrees(originalRotation + additionalRotation));
             });
 
             const pdfBytes = await newPdfDoc.save();
@@ -314,36 +368,40 @@ export default function ReorderRotatePdfPage() {
     if (previews.length > 0) {
       return (
           <div className="space-y-6">
-              <p className="text-center text-muted-foreground">Click and drag a page to reorder it. Use the button to rotate.</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <p className="text-center text-muted-foreground">Drag and drop pages to reorder them. Use the buttons to rotate.</p>
+              <div ref={containerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previews.map((p, index) => (
                       <div 
                         key={`${p.id}-${index}`}
                         data-index={index}
+                        className={cn(
+                            "relative group border rounded-lg p-2 flex flex-col items-center gap-2 transition-shadow cursor-grab active:cursor-grabbing", 
+                            selectedPageIndex === index ? "ring-2 ring-primary" : ""
+                        )}
                         draggable
-                        onDragStart={(e) => (dragItem.current = index)}
-                        onDragEnter={(e) => handleDragEnterDiv(e, index)}
+                        onDragStart={(e) => handleDragStart(e, index)}
                         onDragEnd={handleDropDiv}
+                        onDragEnter={(e) => handleDragEnterDiv(e, index)}
                         onDragOver={(e) => e.preventDefault()}
-                        className={cn("relative group border rounded-lg p-2 flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing")}
                       >
                           <Image src={p.src} alt={`Page ${index + 1}`} width={100} height={141} className="w-full h-auto object-contain shadow-md pointer-events-none" style={{ transform: `rotate(${p.rotation}deg)`}}/>
                           <span className="text-xs font-bold">{index + 1}</span>
                           <Button size="icon" variant="outline" className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); handleRotate(index);}}>
                               <RotateCw className="h-4 w-4"/>
                           </Button>
-                           <Button 
-                              size="icon" 
-                              variant="secondary" 
-                              className="absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100"
-                              draggable
-                              onDragStart={(e) => { e.stopPropagation(); dragItem.current = index; }}
-                              onDragEnd={handleDropDiv}
-                              onDragOver={(e) => e.preventDefault()}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                                <Move className="h-4 w-4"/>
-                            </Button>
+                          <button 
+                            className={cn(
+                              "absolute top-1 left-1 h-7 w-7 cursor-grab active:cursor-grabbing items-center justify-center flex rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                              "md:hidden",
+                              selectedPageIndex === index ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            )}
+                            onTouchStart={(e) => handleTouchStart(e, index)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                              <Move className="h-4 w-4"/>
+                          </button>
                       </div>
                   ))}
               </div>
@@ -366,7 +424,7 @@ export default function ReorderRotatePdfPage() {
             onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
         >
             <UploadCloud className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">Drag & drop your PDF here, or click to browse</p>
+            <p className="mt-4 text-muted-foreground">Drag &amp; drop your PDF here, or click to browse</p>
             <Input id="pdf-upload" type="file" className="sr-only" onChange={handleFileChange} accept="application/pdf" />
             <Button asChild variant="outline" className="mt-4"><span>Browse File</span></Button>
         </label>
@@ -378,7 +436,7 @@ export default function ReorderRotatePdfPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Reorder & Rotate PDF</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Reorder &amp; Rotate PDF</CardTitle>
             <CardDescription className="text-base mt-2">
               Visually reorder pages and rotate them as needed.
             </CardDescription>
@@ -424,7 +482,7 @@ export default function ReorderRotatePdfPage() {
                   <li><strong>Fix Scanning Errors:</strong> This is the perfect tool for correcting documents that were scanned out of order or with incorrect page orientations.</li>
                   <li><strong>Combine with Other Tools:</strong> First, use the "PDF Merger" to combine several documents, then use this tool to arrange all the pages into a final, coherent order.</li>
                   <li><strong>Visual Confirmation:</strong> The live previews ensure you know exactly how your document will look before you save it.</li>
-                  <li><strong>Secure and Private:</strong> All page manipulation happens directly in your browser. Your document is never sent to a server, keeping your information secure.</li>
+                  <li><strong>Secure and Private:</strong> All page manipulation happens entirely in your browser. Your document is never sent to a server, keeping your information secure.</li>
                 </ul>
               </AccordionContent>
             </AccordionItem>
@@ -434,5 +492,3 @@ export default function ReorderRotatePdfPage() {
     </div>
   );
 }
-
-    

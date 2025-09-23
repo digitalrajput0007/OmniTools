@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,17 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Free Image Converter - Convert JPG, PNG, WEBP Online',
+  description: 'Easily convert your images to different formats like JPG, PNG, and WEBP for free. Our online image format converter is fast, secure, and easy to use.',
+  openGraph: {
+    title: 'Free Image Converter - Convert JPG, PNG, WEBP Online',
+    description: 'Easily convert your images to different formats like JPG, PNG, and WEBP for free. Our online image format converter is fast, secure, and easy to use.',
+    url: '/image-format-converter',
+    type: 'website',
+  },
+};
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -208,9 +220,9 @@ export default function ImageFormatConverterPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Format Converter</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Online Image Converter</CardTitle>
             <CardDescription className="text-base mt-2">
-              Change the format of your images (e.g., JPG, PNG, WEBP).
+              Change your image format to JPG, PNG, or WEBP instantly.
             </CardDescription>
           </div>
         </CardHeader>
@@ -425,5 +437,3 @@ export default function ImageFormatConverterPage() {
     </div>
   );
 }
-
-    

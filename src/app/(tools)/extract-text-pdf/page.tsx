@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +25,17 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+
+export const metadata: Metadata = {
+  title: 'Extract Text from PDF Free - Online PDF OCR',
+  description: 'Easily extract all text content from a PDF file using our free online OCR tool. Make text from scanned documents and images copyable and editable.',
+  openGraph: {
+    title: 'Extract Text from PDF Free - Online PDF OCR',
+    description: 'Easily extract all text content from a PDF file using our free online OCR tool. Make text from scanned documents and images copyable and editable.',
+    url: '/extract-text-pdf',
+    type: 'website',
+  },
+};
 
 let pdfjs: any;
 

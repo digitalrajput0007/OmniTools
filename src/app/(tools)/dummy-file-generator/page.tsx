@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,17 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { PDFDocument } from 'pdf-lib';
 import * as XLSX from 'xlsx';
+
+export const metadata: Metadata = {
+  title: 'Dummy File Generator - Create Test Files (PDF, DOCX, XLSX)',
+  description: 'Generate dummy files of a specific size and type (PDF, DOCX, XLSX) for free. Perfect for testing uploads, application limits, and more.',
+  openGraph: {
+    title: 'Dummy File Generator - Create Test Files (PDF, DOCX, XLSX)',
+    description: 'Generate dummy files of a specific size and type (PDF, DOCX, XLSX) for free. Perfect for testing uploads, application limits, and more.',
+    url: '/dummy-file-generator',
+    type: 'website',
+  },
+};
 
 type FileType = 'pdf' | 'docx' | 'xlsx';
 type SizeUnit = 'KB' | 'MB';

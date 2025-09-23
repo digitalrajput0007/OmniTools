@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +17,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Braces, Copy, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'JSON Beautifier & Formatter - Free Online Tool',
+  description: 'Easily format and beautify your messy JSON data for better readability. Our free online tool validates, formats, and pretty-prints your JSON instantly.',
+  openGraph: {
+    title: 'JSON Beautifier & Formatter - Free Online Tool',
+    description: 'Easily format and beautify your messy JSON data for better readability. Our free online tool validates, formats, and pretty-prints your JSON instantly.',
+    url: '/json-beautifier',
+    type: 'website',
+  },
+};
 
 export default function JsonBeautifierPage() {
   const [jsonInput, setJsonInput] = useState('');
@@ -80,7 +92,7 @@ export default function JsonBeautifierPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">JSON Beautifier</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Online JSON Beautifier & Formatter</CardTitle>
             <CardDescription className="text-base mt-2">
               Paste your JSON data to format and beautify it for better readability.
             </CardDescription>

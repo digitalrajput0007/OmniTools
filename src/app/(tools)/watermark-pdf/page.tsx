@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useEffect, useRef } from 'react';
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+export const metadata: Metadata = {
+  title: 'Watermark PDF Free - Add Text or Image to PDF Online',
+  description: 'Add a text or image watermark to your PDF documents for free. Protect your files with a custom watermark. Fast, secure, and easy to use.',
+  openGraph: {
+    title: 'Watermark PDF Free - Add Text or Image to PDF Online',
+    description: 'Add a text or image watermark to your PDF documents for free. Protect your files with a custom watermark. Fast, secure, and easy to use.',
+    url: '/watermark-pdf',
+    type: 'website',
+  },
+};
 
 let pdfjs: any;
 
@@ -486,8 +497,8 @@ export default function WatermarkPdfPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-             <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Watermark PDF</CardTitle>
-             <CardDescription className="text-base mt-2">Add a text or image watermark to your PDF.</CardDescription>
+             <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Add Watermark to PDF</CardTitle>
+             <CardDescription className="text-base mt-2">Add a text or image watermark to your PDF documents to protect and brand them.</CardDescription>
           </div>
         </CardHeader>
         <CardContent>{renderContent()}</CardContent>

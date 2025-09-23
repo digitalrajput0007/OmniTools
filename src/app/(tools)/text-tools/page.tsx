@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +18,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Online Text Tools - Word Counter, Case Converter & More',
+  description: 'A free suite of online text tools. Count words and characters, convert text to uppercase, lowercase, title case, or sentence case, and remove extra spaces.',
+  openGraph: {
+    title: 'Online Text Tools - Word Counter, Case Converter & More',
+    description: 'A free suite of online text tools. Count words and characters, convert text to uppercase, lowercase, title case, or sentence case, and remove extra spaces.',
+    url: '/text-tools',
+    type: 'website',
+  },
+};
 
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -101,7 +113,7 @@ export default function TextToolsPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Text Tools</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Online Text Tools Suite</CardTitle>
             <CardDescription className="text-base mt-2">
               A versatile set of tools to analyze and transform your text.
             </CardDescription>

@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,17 @@ import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Random Data Generator - Free Dummy Data Creator',
+  description: 'Generate random dummy data for free. Create test data including names, emails, addresses, phone numbers, and UUIDs. Export to PDF, Excel, or copy to clipboard.',
+  openGraph: {
+    title: 'Random Data Generator - Free Dummy Data Creator',
+    description: 'Generate random dummy data for free. Create test data including names, emails, addresses, phone numbers, and UUIDs. Export to PDF, Excel, or copy to clipboard.',
+    url: '/random-data-generator',
+    type: 'website',
+  },
+};
 
 // Data sources
 const firstNames = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia"];
@@ -207,7 +219,7 @@ export default function RandomDataGeneratorPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Random Data Generator</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Random Data Generator</CardTitle>
             <CardDescription className="text-base mt-2">
               Create various types of dummy data for your projects and testing needs.
             </CardDescription>
@@ -319,8 +331,7 @@ export default function RandomDataGeneratorPage() {
                 </ScrollArea>
             </CardContent>
              {generatedData.length > 0 && <CardFooter className="pt-4"><SharePrompt toolName="Random Data Generator" /></CardFooter>}
-          </Card>
-        </CardContent>
+          </CardContent>
       </Card>
       <Card>
         <CardHeader>
@@ -368,5 +379,3 @@ export default function RandomDataGeneratorPage() {
     </div>
   );
 }
-
-    

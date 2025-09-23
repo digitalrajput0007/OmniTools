@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,17 @@ import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Convert Images to PDF Free - JPG to PDF Online',
+  description: 'Easily convert JPG, PNG, and other images into a single PDF document for free. Combine multiple images into one PDF for easy sharing and archiving.',
+  openGraph: {
+    title: 'Convert Images to PDF Free - JPG to PDF Online',
+    description: 'Easily convert JPG, PNG, and other images into a single PDF document for free. Combine multiple images into one PDF for easy sharing and archiving.',
+    url: '/images-to-pdf',
+    type: 'website',
+  },
+};
 
 const JpgIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -306,7 +318,7 @@ export default function ImagesToPdfPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Images to PDF</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Convert Images to PDF Online</CardTitle>
             <CardDescription className="text-base mt-2">
               Combine multiple JPG, PNG, and other images into a single PDF document.
             </CardDescription>

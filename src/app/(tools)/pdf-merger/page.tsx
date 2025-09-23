@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+export const metadata: Metadata = {
+  title: 'Merge PDF Files Online – Free PDF Combiner',
+  description: 'Combine multiple PDF documents into a single file with our free online PDF merger. Easy to use, secure, and no installation required.',
+  openGraph: {
+    title: 'Merge PDF Files Online – Free PDF Combiner',
+    description: 'Combine multiple PDF documents into a single file with our free online PDF merger. Easy to use, secure, and no installation required.',
+    url: '/pdf-merger',
+    type: 'website',
+  },
+};
 
 const PdfIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -279,9 +291,9 @@ export default function PdfMergerPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">PDF Merger</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Merge PDF Files Online</CardTitle>
             <CardDescription className="text-base mt-2">
-              Combine multiple PDF files into a single document.
+              Combine multiple PDF files into a single document with our free PDF merger.
             </CardDescription>
           </div>
         </CardHeader>

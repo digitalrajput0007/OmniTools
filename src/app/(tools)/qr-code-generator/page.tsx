@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,17 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { FileDown, Link as LinkIcon } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Free QR Code Generator - Create QR Codes Online',
+  description: 'Generate custom QR codes for URLs, text, contact information, and more for free. Our online QR code generator is fast, easy to use, and works instantly.',
+  openGraph: {
+    title: 'Free QR Code Generator - Create QR Codes Online',
+    description: 'Generate custom QR codes for URLs, text, contact information, and more for free. Our online QR code generator is fast, easy to use, and works instantly.',
+    url: '/qr-code-generator',
+    type: 'website',
+  },
+};
 
 export default function QrCodeGeneratorPage() {
   const [text, setText] = useState('https://omnibox.dev');
@@ -47,7 +59,7 @@ export default function QrCodeGeneratorPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">QR Code Generator</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Online QR Code Generator</CardTitle>
             <CardDescription className="text-base mt-2">
               Enter text or a URL to generate a QR code instantly.
             </CardDescription>

@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,17 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Free Image Compressor – Reduce Image Size Online',
+  description: 'Compress JPG, PNG, and GIF images online to reduce their file size without losing quality. Our free and fast image compressor makes your website faster.',
+  openGraph: {
+    title: 'Free Image Compressor – Reduce Image Size Online',
+    description: 'Compress JPG, PNG, and GIF images online to reduce their file size without losing quality. Our free and fast image compressor makes your website faster.',
+    url: '/image-compressor',
+    type: 'website',
+  },
+};
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -226,10 +238,9 @@ a.click();
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Image Compressor</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Compress Your Images Instantly</CardTitle>
             <CardDescription className="text-base mt-2">
-              Upload an image, adjust the compression level, and download the
-              optimized file.
+              Upload an image to reduce its file size with our free image compressor.
             </CardDescription>
           </div>
         </CardHeader>
@@ -446,5 +457,3 @@ a.click();
     </div>
   );
 }
-
-    

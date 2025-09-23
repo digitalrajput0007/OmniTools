@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SharePrompt } from '@/components/ui/share-prompt';
+
+export const metadata: Metadata = {
+  title: 'Free Background Remover - Remove BG from Image Online',
+  description: 'Easily remove the background from any image for free. Our online tool lets you make backgrounds transparent or replace them with a solid color instantly.',
+  openGraph: {
+    title: 'Free Background Remover - Remove BG from Image Online',
+    description: 'Easily remove the background from any image for free. Our online tool lets you make backgrounds transparent or replace them with a solid color instantly.',
+    url: '/background-remover',
+    type: 'website',
+  },
+};
 
 type Color = { r: number; g: number; b: number };
 
@@ -453,9 +465,9 @@ export default function BackgroundRemoverPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Background Remover</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Online Background Remover</CardTitle>
             <CardDescription className="text-base mt-2">
-              Upload an image, pick a color, adjust tolerance, and optionally apply a new background.
+              Upload an image to make its background transparent or replace it with a new color.
             </CardDescription>
           </div>
         </CardHeader>
@@ -513,5 +525,3 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
-
-    
