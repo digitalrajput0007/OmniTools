@@ -202,7 +202,7 @@ export default function PdfMergerPage() {
          <label
             htmlFor="pdf-upload"
             className={cn(
-              'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+              'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors bg-muted/20',
               { 'border-primary bg-accent/50': isDragging }
             )}
             onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
@@ -337,3 +337,5 @@ export default function PdfMergerPage() {
     </div>
   );
 }
+
+    

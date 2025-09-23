@@ -282,7 +282,7 @@ export default function PdfToImagesPage() {
       return (
         <label
           htmlFor="pdf-upload"
-          className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors', { 'border-primary bg-accent/50': isDragging })}
+          className={cn('flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors bg-muted/20', { 'border-primary bg-accent/50': isDragging })}
           onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragEvents} onDrop={handleDrop}
         >
           <UploadCloud className="h-12 w-12 text-muted-foreground" />
@@ -436,3 +436,5 @@ export default function PdfToImagesPage() {
     </div>
   );
 }
+
+    

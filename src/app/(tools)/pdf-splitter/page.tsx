@@ -306,7 +306,7 @@ export default function PdfSplitterPage() {
             <label
               htmlFor="pdf-upload"
               className={cn(
-                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors',
+                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center transition-colors bg-muted/20',
                 {
                   'border-primary bg-accent/50': isDragging,
                 }
@@ -508,3 +508,5 @@ export default function PdfSplitterPage() {
     </div>
   );
 }
+
+    
