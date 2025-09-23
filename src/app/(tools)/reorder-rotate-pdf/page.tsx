@@ -163,6 +163,9 @@ export default function ReorderRotatePdfPage() {
   };
   
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Prevent page scrolling
+    if (!touchStartPosition.current) return;
+    
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     const dropZone = element?.closest('[data-index]');
@@ -178,6 +181,7 @@ export default function ReorderRotatePdfPage() {
     if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) {
         dragItem.current = null;
         dragOverItem.current = null;
+        touchStartPosition.current = null;
         return;
     }
     
@@ -187,6 +191,7 @@ export default function ReorderRotatePdfPage() {
     
     dragItem.current = null;
     dragOverItem.current = null;
+    touchStartPosition.current = null;
     setPreviews(newPreviews);
   };
   
