@@ -33,6 +33,32 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
       router.replace('/');
     } else {
       document.title = `${currentTool.name} | ${AppName}`;
+      
+      // Remove any existing ld+json script
+      const existingScript = document.head.querySelector('script[type="application/ld+json"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+
+      // Create and inject the new one
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": currentTool.name,
+        "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com'}${currentTool.path}`,
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "All",
+        "offers": {
+          "@type": "Offer",
+          "price": "0"
+        }
+      };
+
+      script.textContent = JSON.stringify(jsonLd);
+      document.head.appendChild(script);
     }
   }, [currentTool, router]);
 
