@@ -21,13 +21,6 @@ import Footer from '@/components/ui/footer';
 import { Button } from '@/components/ui/button';
 import { PanelLeft } from 'lucide-react';
 
-
-export function generateStaticParams() {
-  return tools.map((tool) => ({
-    tool: tool.path.substring(1),
-  }));
-}
-
 export default function ToolLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 

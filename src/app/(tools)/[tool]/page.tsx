@@ -29,6 +29,12 @@ type Props = {
   params: { tool: string };
 };
 
+export function generateStaticParams() {
+  return tools.map((tool) => ({
+    tool: tool.path.substring(1),
+  }));
+}
+
 const toolPageMap: { [key: string]: React.ComponentType } = {
   'background-remover': BackgroundRemoverPage,
   'compress-pdf': CompressPdfPage,
