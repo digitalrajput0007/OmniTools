@@ -29,6 +29,12 @@ type Props = {
   params: { tool: string };
 };
 
+export function generateStaticParams() {
+  return tools.map((tool) => ({
+    tool: tool.path.substring(1),
+  }));
+}
+
 const toolPageMap: { [key: string]: React.ComponentType } = {
   'background-remover': BackgroundRemoverPage,
   'compress-pdf': CompressPdfPage,
@@ -64,6 +70,7 @@ export async function generateMetadata(
   if (!tool) {
     return {
       title: 'Tool Not Found',
+      description: 'The tool you are looking for does not exist.',
     };
   }
   
