@@ -2,38 +2,32 @@
 import { tools } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
-import BackgroundRemoverPage from '../_components/background-remover';
-import CompressPdfPage from '../_components/compress-pdf';
-import CreditCardGeneratorPage from '../_components/credit-card-generator';
-import DummyFileGeneratorPage from '../_components/dummy-file-generator';
-import ExtractTextPdfPage from '../_components/extract-text-pdf';
-import ImageCompressorPage from '../_components/image-compressor';
-import ImageFormatConverterPage from '../_components/image-format-converter';
-import ImageResizerPage from '../_components/image-resizer';
-import ImagesToPdfPage from '../_components/images-to-pdf';
-import JsonBeautifierPage from '../_components/json-beautifier';
-import PdfMergerPage from '../_components/pdf-merger';
-import PdfSignaturePage from '../_components/pdf-signature';
-import PdfSplitterPage from '../_components/pdf-splitter';
-import PdfToImagesPage from '../_components/pdf-to-images';
-import QrCodeGeneratorPage from '../_components/qr-code-generator';
-import RandomDataGeneratorPage from '../_components/random-data-generator';
-import RandomPickerPage from '../_components/random-picker';
-import ReorderRotatePdfPage from '../_components/reorder-rotate-pdf';
-import TextDiffPage from '../_components/text-diff';
-import TextToolsPage from '../_components/text-tools';
-import UnitConverterPage from '../_components/unit-converter';
-import WatermarkPdfPage from '../_components/watermark-pdf';
+import BackgroundRemoverPage from '../background-remover/page';
+import CompressPdfPage from '../compress-pdf/page';
+import CreditCardGeneratorPage from '../credit-card-generator/page';
+import DummyFileGeneratorPage from '../dummy-file-generator/page';
+import ExtractTextPdfPage from '../extract-text-pdf/page';
+import ImageCompressorPage from '../image-compressor/page';
+import ImageFormatConverterPage from '../image-format-converter/page';
+import ImageResizerPage from '../image-resizer/page';
+import ImagesToPdfPage from '../images-to-pdf/page';
+import JsonBeautifierPage from '../json-beautifier/page';
+import PdfMergerPage from '../pdf-merger/page';
+import PdfSignaturePage from '../pdf-signature/page';
+import PdfSplitterPage from '../pdf-splitter/page';
+import PdfToImagesPage from '../pdf-to-images/page';
+import QrCodeGeneratorPage from '../qr-code-generator/page';
+import RandomDataGeneratorPage from '../random-data-generator/page';
+import RandomPickerPage from '../random-picker/page';
+import ReorderRotatePdfPage from '../reorder-rotate-pdf/page';
+import TextDiffPage from '../text-diff/page';
+import TextToolsPage from '../text-tools/page';
+import UnitConverterPage from '../unit-converter/page';
+import WatermarkPdfPage from '../watermark-pdf/page';
 
 type Props = {
   params: { tool: string };
 };
-
-export function generateStaticParams() {
-  return tools.map((tool) => ({
-    tool: tool.path.substring(1),
-  }));
-}
 
 const toolPageMap: { [key: string]: React.ComponentType } = {
   'background-remover': BackgroundRemoverPage,
