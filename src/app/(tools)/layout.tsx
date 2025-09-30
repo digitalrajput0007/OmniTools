@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import {
   Sidebar,
@@ -24,22 +24,17 @@ import { PanelLeft } from 'lucide-react';
 
 export default function ToolLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const currentTool = tools.find((tool) => tool.path === pathname);
 
   useEffect(() => {
-    if (!currentTool) {
-      router.replace('/');
-    } else {
-      document.title = `${currentTool.name} | ${AppName}`;
-      
-      // Remove any existing ld+json script
-      const existingScript = document.head.querySelector('script[type="application/ld+json"]');
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
-
+    // Remove any existing ld+json script
+    const existingScript = document.head.querySelector('script[type="application/ld+json"]');
+    if (existingScript) {
+      document.head.removeChild(existingScript);
+    }
+    
+    if (currentTool) {
       // Create and inject the new one
       const script = document.createElement('script');
       script.type = 'application/ld+json';
@@ -60,11 +55,7 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
       script.textContent = JSON.stringify(jsonLd);
       document.head.appendChild(script);
     }
-  }, [currentTool, router]);
-
-  if (!currentTool) {
-    return null; // Or a loading spinner
-  }
+  }, [currentTool, pathname]);
 
   return (
     <SidebarProvider>

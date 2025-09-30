@@ -454,9 +454,9 @@ export default function BackgroundRemoverPage() {
       <Card>
         <CardHeader>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free Online Background Remover</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">Free AI Background Remover</CardTitle>
             <CardDescription className="text-base mt-2">
-              Upload an image to make its background transparent or replace it with a new color.
+              Automatically remove the background from an image using AI or by picking colors.
             </CardDescription>
           </div>
         </CardHeader>
@@ -515,5 +515,3 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
-
-    
