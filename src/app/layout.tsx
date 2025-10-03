@@ -17,21 +17,14 @@ const ptSans = PT_Sans({
   variable: '--font-body',
 });
 
-export async function generateMetadata({ params }: any): Promise<Metadata> {
-  // find the current tool based on the URL
-  // The root layout does not have access to the pathname, so we can't use that.
-  // This is a common pattern for generating dynamic metadata in Next.js.
-  // We don't have a direct way to know the current tool here, so we will set a default.
-  // Child layouts (like for the tools page) would handle more specific metadata.
-  return {
-    title: {
-      default: `${AppName} - Your All-in-One Utility Hub`,
-      template: `%s | ${AppName}`,
-    },
-    description:
+export const metadata: Metadata = {
+  title: {
+    template: `%s | ${AppName}`,
+    default: `${AppName} - Free Online Tools for Images, PDFs, and More`,
+  },
+  description:
       'A collection of powerful and easy-to-use tools including Image Compressor, Image Format Converter, PDF utilities, QR Code Generator, and more.',
-  };
-}
+};
 
 export const viewport: Viewport = {
   themeColor: [
