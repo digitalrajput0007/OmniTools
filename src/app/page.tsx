@@ -36,9 +36,9 @@ export default function Home() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl">
+                <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl">
                   Your All-in-One Utility Hub
-                </h2>
+                </h1>
                 <p className="mx-auto max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   {AppName} offers a comprehensive suite of free, powerful, and easy-to-use online utilities.
                   Whether you need to compress images, merge PDFs, convert file formats, generate QR codes, or create dummy data for testing, our tools are designed to streamline your daily tasks—all without installation, right in your browser.

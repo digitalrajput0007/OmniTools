@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { AppName, tools } from '@/lib/constants';
+import { AppName } from '@/lib/constants';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -16,15 +16,6 @@ const ptSans = PT_Sans({
   weight: ['400', '700'],
   variable: '--font-body',
 });
-
-export const metadata: Metadata = {
-  title: {
-    template: `%s | ${AppName}`,
-    default: `${AppName} - Free Online Tools for Images, PDFs, and More`,
-  },
-  description:
-      'A collection of powerful and easy-to-use tools including Image Compressor, Image Format Converter, PDF utilities, QR Code Generator, and more.',
-};
 
 export const viewport: Viewport = {
   themeColor: [
