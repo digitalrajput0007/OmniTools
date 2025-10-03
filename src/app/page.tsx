@@ -1,6 +1,5 @@
 
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import {
   AppName,
   tools,
@@ -19,12 +18,6 @@ import {
 import { cn } from '@/lib/utils';
 import Header from '@/components/ui/header';
 import Footer from '@/components/ui/footer';
-
-
-export const metadata: Metadata = {
-  title: `${AppName} - Free Online Tools for Images, PDFs, and More`,
-  description: `Your all-in-one hub for free online utilities. Compress images, convert image formats, merge or split PDFs, generate QR codes, create dummy data, and much more. All tools are private, secure, and work in your browser.`
-};
 
 
 export default function Home() {
