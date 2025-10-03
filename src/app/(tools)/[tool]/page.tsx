@@ -2,28 +2,7 @@
 import { tools } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
-import BackgroundRemoverPage from '../background-remover/page';
-import CompressPdfPage from '../compress-pdf/page';
-import CreditCardGeneratorPage from '../credit-card-generator/page';
-import DummyFileGeneratorPage from '../dummy-file-generator/page';
-import ExtractTextPdfPage from '../extract-text-pdf/page';
-import ImageCompressorPage from '../image-compressor/page';
-import ImageFormatConverterPage from '../image-format-converter/page';
-import ImageResizerPage from '../image-resizer/page';
-import ImagesToPdfPage from '../images-to-pdf/page';
-import JsonBeautifierPage from '../json-beautifier/page';
-import PdfMergerPage from '../pdf-merger/page';
-import PdfSignaturePage from '../pdf-signature/page';
-import PdfSplitterPage from '../pdf-splitter/page';
-import PdfToImagesPage from '../pdf-to-images/page';
-import QrCodeGeneratorPage from '../qr-code-generator/page';
-import RandomDataGeneratorPage from '../random-data-generator/page';
-import RandomPickerPage from '../random-picker/page';
-import ReorderRotatePdfPage from '../reorder-rotate-pdf/page';
-import TextDiffPage from '../text-diff/page';
-import TextToolsPage from '../text-tools/page';
-import UnitConverterPage from '../unit-converter/page';
-import WatermarkPdfPage from '../watermark-pdf/page';
+import ToolClientPage from './client-page';
 
 type Props = {
   params: { tool: string };
@@ -35,31 +14,6 @@ export function generateStaticParams() {
   }));
 }
 
-const toolPageMap: { [key: string]: React.ComponentType } = {
-  'background-remover': BackgroundRemoverPage,
-  'compress-pdf': CompressPdfPage,
-  'credit-card-generator': CreditCardGeneratorPage,
-  'dummy-file-generator': DummyFileGeneratorPage,
-  'extract-text-pdf': ExtractTextPdfPage,
-  'image-compressor': ImageCompressorPage,
-  'image-format-converter': ImageFormatConverterPage,
-  'image-resizer': ImageResizerPage,
-  'images-to-pdf': ImagesToPdfPage,
-  'json-beautifier': JsonBeautifierPage,
-  'pdf-merger': PdfMergerPage,
-  'pdf-signature': PdfSignaturePage,
-  'pdf-splitter': PdfSplitterPage,
-  'pdf-to-images': PdfToImagesPage,
-  'qr-code-generator': QrCodeGeneratorPage,
-  'random-data-generator': RandomDataGeneratorPage,
-  'random-picker': RandomPickerPage,
-  'reorder-rotate-pdf': ReorderRotatePdfPage,
-  'text-diff': TextDiffPage,
-  'text-tools': TextToolsPage,
-  'unit-converter': UnitConverterPage,
-  'watermark-pdf': WatermarkPdfPage,
-};
-
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
@@ -70,11 +24,10 @@ export async function generateMetadata(
   if (!tool) {
     return {
       title: 'Tool Not Found',
-      description: 'The tool you are looking for does not exist.',
     };
   }
-  
-  const toolDescriptions: {[key: string]: string} = {
+
+  const toolDescriptions: { [key: string]: string } = {
     '/image-compressor': 'Compress JPG, PNG, and GIF images online to reduce their file size without losing quality. Our free and fast image compressor makes your website faster.',
     '/image-format-converter': 'Convert images to and from JPG, PNG, WEBP, and more. Free online image converter that works in your browser.',
     '/image-resizer': 'Resize and crop images online for free. Adjust image dimensions for social media, websites, or any other need.',
@@ -100,8 +53,8 @@ export async function generateMetadata(
   };
 
   const title = `${tool.name} - Free Online Tool`;
-  const description = toolDescriptions[tool.path] || (await parent).description || '';
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com'}${tool.path}`;
+  const description = toolDescriptions[tool.path] || tool.description;
+  const previousImages = (await parent).openGraph?.images || [];
 
   return {
     title,
@@ -109,19 +62,31 @@ export async function generateMetadata(
     openGraph: {
       title,
       description,
-      url,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com'}${tool.path}`,
+      siteName: 'Online JPG PDF',
+      images: [...previousImages],
+      locale: 'en_US',
       type: 'website',
     },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [...previousImages],
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com'}${tool.path}`,
+    }
   };
 }
 
 export default function ToolPage({ params }: Props) {
   const toolSlug = params.tool;
-  const ToolComponent = toolPageMap[toolSlug];
+  const tool = tools.find((t) => t.path === `/` + toolSlug);
 
-  if (!ToolComponent) {
+  if (!tool) {
     notFound();
   }
 
-  return <ToolComponent />;
+  return <ToolClientPage toolSlug={toolSlug} />;
 }
