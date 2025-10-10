@@ -36,32 +36,14 @@ export const viewport: Viewport = {
 const faviconSvg = `<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <linearGradient id="backgroundGradient" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-            <stop stop-color="hsl(300, 85%, 60%)"/>
-            <stop offset="1" stop-color="hsl(262, 82%, 56%)"/>
-        </linearGradient>
+            <stop stop-color="#FF00FF"/> <stop offset="1" stop-color="#C700C7"/> </linearGradient>
     </defs>
 
     <rect width="256" height="256" rx="55" fill="url(#backgroundGradient)"/>
 
-    <circle cx="128" cy="128" r="105" stroke="white" stroke-width="4" fill="none"/>
+    <circle cx="128" cy="128" r="105" stroke="white" stroke-width="6" fill="none"/>
 
-    <g stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M175,90 L175,190 C175,195.523 170.523,200 165,200 L91,200 C85.4772,200 81,195.523 81,190 L81,66 C81,60.4772 85.4772,56 91,56 L150,56 L175,90Z" fill="none"/>
-        <path d="M150,56 L150,90 L175,90" fill="none"/>
-    </g>
-
-    <g fill="white" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">
-        <text x="104" y="150" font-size="32" transform="rotate(-90 104 150)">JPG</text>
-        
-        <text x="152" y="134" font-size="32">PDF</text>
-    </g>
-
-    <g stroke="white" stroke-width="4" stroke-linecap="round">
-        <path d="M128 90 V 170"/>
-        
-        <path d="M110 130 H 146"/>
-        <path d="M132 118 L 146 130 L 132 142"/>
-    </g>
+    <text x="128" y="148" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">OJP</text>
 </svg>`;
 
 const faviconDataUrl = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
