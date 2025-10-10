@@ -85,3 +85,4 @@ export function RelatedTools({ toolPath }: RelatedToolsProps) {
     </Card>
   );
 }
+
