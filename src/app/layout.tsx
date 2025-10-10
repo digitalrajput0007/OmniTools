@@ -40,23 +40,9 @@ const faviconSvg = `
             <stop offset="0%" style="stop-color:hsl(var(--primary));stop-opacity:1" />
             <stop offset="100%" style="stop-color:hsl(var(--ring));stop-opacity:1" />
         </linearGradient>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/>
-            <feOffset dx="1" dy="1" result="offsetblur"/>
-            <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
-            <feMerge> 
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
     </defs>
-    <g filter="url(#shadow)">
-        <path d="M4 4 H28 A4 4 0 0 1 32 8 V24 A4 4 0 0 1 28 28 H4 A4 4 0 0 1 0 24 V8 A4 4 0 0 1 4 4 Z" fill="white"/>
-        <path d="M0 16 L16 0 H4 A4 4 0 0 0 0 4 V16 Z" fill="url(#grad1)"/>
-        <path d="M16 32 L32 16 V28 A4 4 0 0 1 28 32 H16 Z" fill="url(#grad1)" />
-        <text x="8" y="21" font-family="sans-serif" font-size="14" font-weight="bold" fill="white">J</text>
-        <text x="18" y="11" font-family="sans-serif" font-size="14" font-weight="bold" fill="white">P</text>
-    </g>
+    <rect width="32" height="32" rx="6" fill="url(#grad1)"/>
+    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="bold" fill="white">O</text>
 </svg>
 `.trim();
 
