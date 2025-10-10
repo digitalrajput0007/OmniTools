@@ -214,6 +214,7 @@ export default function RandomDataGeneratorPage() {
             </CardDescription>
           </div>
         </CardHeader>
+        
         <CardContent className="space-y-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
             <div className="md:col-span-3">
@@ -318,9 +319,14 @@ export default function RandomDataGeneratorPage() {
                       </TableBody>
                     </Table>
                 </ScrollArea>
+                 {generatedData.length > 0 && (
+                   <CardFooter className="pt-4">
+                     <SharePrompt toolName="Random Data Generator" />
+                   </CardFooter>
+                 )}
             </CardContent>
-             {generatedData.length > 0 && <CardFooter className="pt-4"><SharePrompt toolName="Random Data Generator" /></CardFooter>}
-          </CardContent>
+          </Card>
+        </CardContent>
       </Card>
       <Card>
         <CardHeader>
