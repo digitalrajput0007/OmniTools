@@ -55,6 +55,7 @@ export async function generateMetadata(
   const title = `${tool.name} - Free Online Tool`;
   const description = toolDescriptions[tool.path] || tool.description;
   const previousImages = (await parent).openGraph?.images || [];
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com';
 
   return {
     title,
@@ -62,7 +63,7 @@ export async function generateMetadata(
     openGraph: {
       title,
       description,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com'}${tool.path}`,
+      url: `${baseUrl}${tool.path}`,
       siteName: 'Online JPG PDF',
       images: [...previousImages],
       locale: 'en_US',
@@ -75,7 +76,7 @@ export async function generateMetadata(
       images: [...previousImages],
     },
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com'}${tool.path}`,
+      canonical: `${baseUrl}${tool.path}`,
     }
   };
 }
