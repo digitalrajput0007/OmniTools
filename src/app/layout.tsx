@@ -36,8 +36,8 @@ export const viewport: Viewport = {
 const faviconSvg = `<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <linearGradient id="backgroundGradient" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#5BCEF9"/>
-            <stop offset="1" stop-color="#F89A53"/>
+            <stop stop-color="hsl(300, 85%, 60%)"/>
+            <stop offset="1" stop-color="hsl(262, 82%, 56%)"/>
         </linearGradient>
     </defs>
 
