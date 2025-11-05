@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,11 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { PDFDocument } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 import { RelatedTools } from '@/components/ui/related-tools';
+
+export const metadata: Metadata = {
+  title: 'Dummy File Generator - Create Sample Files of Any Size | OmniToolbox',
+  description: 'Generate dummy files of any size and format instantly. Perfect for testing uploads, bandwidth, or file storage applications.',
+};
 
 type FileType = 'pdf' | 'docx' | 'xlsx';
 type SizeUnit = 'KB' | 'MB';
@@ -340,4 +346,3 @@ a.href = url;
     </div>
   );
 }
-

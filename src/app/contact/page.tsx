@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Mail, Copy } from 'lucide-react';
 import Header from '@/components/ui/header';
 import Footer from '@/components/ui/footer';
+import { AppName } from '@/lib/constants';
 
 // Note: We are keeping the Metadata export for Next.js to use static analysis.
 // This page is a client component to support the interactive 'copy' button.
@@ -17,7 +18,7 @@ import Footer from '@/components/ui/footer';
 
 export default function ContactPage() {
   const { toast } = useToast();
-  const email = 'admin@onlinejpgpdf.com';
+  const email = `admin@${AppName.toLowerCase()}.com`;
 
   const copyEmail = () => {
     navigator.clipboard.writeText(email).then(() => {

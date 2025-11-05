@@ -20,9 +20,9 @@ const ptSans = PT_Sans({
 export const metadata: Metadata = {
   title: {
     template: `%s | ${AppName}`,
-    default: `${AppName} - Free Online Tools for Images, PDFs, and More`,
+    default: 'OmniToolbox - Free Online Tools for Images, PDFs, and More',
   },
-  description: `Your all-in-one hub for free online utilities. Compress images, convert image formats, merge or split PDFs, generate QR codes, create dummy data, and much more. All tools are private, secure, and work in your browser.`,
+  description: 'Your all-in-one hub for free online utilities. Compress, convert, and manage images and PDFs easily.',
 };
 
 

@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
+
+export const metadata: Metadata = {
+  title: 'Images to PDF Converter - Merge JPG, PNG to PDF Online | OmniToolbox',
+  description: 'Convert images to PDF files instantly. Free, fast, and secure tool to merge JPG, PNG, and other image formats into a single PDF.',
+};
 
 const JpgIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -364,5 +370,3 @@ export default function ImagesToPdfPage() {
     </div>
   );
 }
-
-    

@@ -197,7 +197,7 @@ export const tools: Tool[] = [
 ];
 
 
-export const AppName = 'Online JPG PDF';
+export const AppName = 'OmniToolbox';
 export const ShareIcon = Share2;
 
 export const iconColors = [

@@ -57,7 +57,7 @@ export const AppLogo = ({ className }: { className?: string }) => (
             fill="url(#logoGradient)"
             letterSpacing="-0.5"
         >
-            Online JPG PDF
+            {AppName}
         </text>
     </svg>
 );

@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
+
+export const metadata: Metadata = {
+  title: 'Image Compressor - Compress JPG, PNG, and WebP Online | OmniToolbox',
+  description: 'Compress images online without losing quality. Reduce image size instantly with OmniToolbox’s free image compressor tool.',
+};
 
 // Helper function to compress image on the client
 async function compressImage(file: File, quality: number): Promise<Blob> {
@@ -447,5 +453,3 @@ export default function ImageCompressorPage() {
     </div>
   );
 }
-
-    

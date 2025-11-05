@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { Metadata } from 'next';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,12 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
+
+export const metadata: Metadata = {
+  title: 'AI Background Remover - Free Tool to Make Backgrounds Transparent | OmniToolbox',
+  description: 'Automatically remove the background from any image with our free AI-powered tool. Get a transparent background in seconds, no sign-up required.',
+};
+
 
 type Color = { r: number; g: number; b: number };
 
@@ -515,4 +522,3 @@ export default function BackgroundRemoverPage() {
     </div>
   );
 }
-

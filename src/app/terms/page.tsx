@@ -50,7 +50,7 @@ export default function TermsOfServicePage() {
                 <p>We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms on this page.</p>
 
                 <h2 className="text-xl font-semibold text-foreground">8. Contact Us</h2>
-                <p>If you have any questions about these Terms, please contact us at admin@onlinejpgpdf.com.</p>
+                <p>If you have any questions about these Terms, please contact us at admin@{AppName.toLowerCase()}.com.</p>
             </CardContent>
           </Card>
         </div>
