@@ -2,13 +2,13 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import BackgroundRemoverPage from '../background-remover/page';
-import CompressPdfPage from '../compress-pdf/page';
+import BackgroundRemoverPage from '../background-remover/client-page';
+import CompressPdfPage from '../compress-pdf/client-page';
 import CreditCardGeneratorPage from '../credit-card-generator/page';
-import DummyFileGeneratorPage from '../dummy-file-generator/page';
+import DummyFileGeneratorPage from '../dummy-file-generator/client-page';
 import ExtractTextPdfPage from '../extract-text-pdf/page';
-import ImageCompressorPage from '../image-compressor/page';
-import ImageFormatConverterPage from '../image-format-converter/page';
+import ImageCompressorPage from '../image-compressor/client-page';
+import ImageFormatConverterPage from '../image-format-converter/client-page';
 import ImageResizerPage from '../image-resizer/page';
 import ImagesToPdfPage from '../images-to-pdf/page';
 import JsonBeautifierPage from '../json-beautifier/page';
