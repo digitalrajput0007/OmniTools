@@ -29,7 +29,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
 
 export const metadata: Metadata = {
-  title: 'Images to PDF Converter - Merge JPG, PNG to PDF Online | OmniToolbox',
+  title: 'Images to PDF Converter - Merge JPG, PNG to PDF Online | Online JPG PDF',
   description: 'Convert images to PDF files instantly. Free, fast, and secure tool to merge JPG, PNG, and other image formats into a single PDF.',
 };
 
@@ -326,41 +326,29 @@ export default function ImagesToPdfPage() {
       <Card>
         <CardHeader>
           <CardTitle>About the Images to PDF Converter</CardTitle>
-          <CardDescription>
-            Learn how to easily compile your images into a portable, shareable PDF file.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="single" collapsible defaultValue="item-1">
+        <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
+          <p>
+            Converting a collection of images into a single PDF is an excellent way to organize, share, and archive them. It's perfect for creating photo albums, portfolios, reports with embedded images, or simply sending a batch of pictures in one convenient file. A PDF ensures that your images are viewed in the order you intend and maintains a consistent look across all devices.
+          </p>
+          <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger>Why Convert Images to PDF?</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <p>
-                  Converting a collection of images into a single PDF is an excellent way to organize, share, and archive them. It's perfect for creating photo albums, portfolios, reports with embedded images, or simply sending a batch of pictures in one convenient file. A PDF ensures that your images are viewed in the order you intend and maintains a consistent look across all devices.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
               <AccordionTrigger>How to Use the Converter</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your Images:</strong> Drag and drop multiple image files (like JPG, PNG, etc.) into the upload area, or click to browse and select them from your device.</li>
                   <li><strong>Add More (Optional):</strong> You can add more images to the queue by dragging them or browsing again.</li>
-                  <li><strong>Arrange Images (Soon):</strong> In a future update, you'll be able to drag and drop the uploaded image previews to reorder them before conversion. For now, they are added to the PDF in the order of upload.</li>
                   <li><strong>Convert:</strong> Click the "Convert to PDF" button to start the process.</li>
                   <li><strong>Download:</strong> Your browser will automatically download the new, combined PDF file.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger>Tips and Privacy</AccordionTrigger>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>Privacy and Security</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Privacy First:</strong> All conversion happens directly in your browser. Your images are never uploaded to a server, ensuring your data remains completely private.</li>
-                  <li><strong>Supported Formats:</strong> The tool works best with standard web formats like JPG and PNG.</li>
-                  <li><strong>Page Size:</strong> Each page in the resulting PDF will be sized to match the dimensions of the corresponding image.</li>
-                  <li><strong>Start Over:</strong> Use the "Convert More Images" button on the success screen to easily start a new conversion without refreshing the page.</li>
-                </ul>
+                <p>
+                  All conversion happens directly in your browser. Your images are never uploaded to a server, ensuring your data remains completely private.
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

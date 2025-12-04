@@ -25,14 +25,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const description = toolDescriptions[tool.path as keyof typeof toolDescriptions] || tool.description;
-  const title = `${tool.name} | OmniToolbox`;
+  const title = `${tool.name} | Online JPG PDF`;
   
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": tool.name,
     "description": description,
-    "url": `https://www.omnibox.dev${tool.path}`,
+    "url": `https://www.onlinejpgpdf.com${tool.path}`,
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "All",
     "offers": {
@@ -45,13 +45,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: `https://www.omnibox.dev${tool.path}`,
+      canonical: `https://www.onlinejpgpdf.com${tool.path}`,
     },
     openGraph: {
       title,
       description,
-      url: `https://www.omnibox.dev${tool.path}`,
-      siteName: 'OmniToolbox',
+      url: `https://www.onlinejpgpdf.com${tool.path}`,
+      siteName: 'Online JPG PDF',
       type: 'website',
     },
     twitter: {

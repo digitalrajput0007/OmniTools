@@ -30,7 +30,7 @@ import * as XLSX from 'xlsx';
 import { RelatedTools } from '@/components/ui/related-tools';
 
 export const metadata: Metadata = {
-  title: 'Dummy File Generator - Create Sample Files of Any Size | OmniToolbox',
+  title: 'Dummy File Generator - Create Sample Files of Any Size | Online JPG PDF',
   description: 'Generate dummy files of any size and format instantly. Perfect for testing uploads, bandwidth, or file storage applications.',
 };
 
@@ -299,21 +299,13 @@ a.href = url;
       <Card>
         <CardHeader>
           <CardTitle>About the Dummy File Generator</CardTitle>
-          <CardDescription>
-            Learn why and how to use placeholder files in your testing workflows.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="single" collapsible defaultValue="item-1">
+        <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
+          <p>
+            Developers and testers often need placeholder files to test application features like file uploads, processing pipelines, or storage limits. A dummy file generator provides a quick and easy way to create files with specific sizes and formats without needing to find or create them manually. This is essential for testing edge cases, like how an application handles a 10MB PDF upload versus a 50KB one.
+          </p>
+          <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger>Why Use a Dummy File Generator?</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <p>
-                  Developers and testers often need placeholder files to test application features like file uploads, processing pipelines, or storage limits. A dummy file generator provides a quick and easy way to create files with specific sizes and formats without needing to find or create them manually. This is essential for testing edge cases, like how an application handles a 10MB PDF upload versus a 50KB one.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
               <AccordionTrigger>How to Use This Tool</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
@@ -324,18 +316,11 @@ a.href = url;
                 </ol>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-3">
+            <AccordionItem value="item-2">
               <AccordionTrigger>A Note on File Size Accuracy</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <p>
-                  Generating a file to an exact byte-for-byte size is complex due to compression and file structure overhead. This tool uses various techniques to create a file that is as close as possible to the target size.
-                </p>
-                 <ul className="list-disc list-inside space-y-2">
-                  <li><strong>PDF/Word/Excel:</strong> Size is approximated by adding dummy data or content until the target is met. These are generally quite accurate.</li>
-                  <li><strong>Images (JPG/PNG):</strong> Size is approximated by creating a canvas with random pixel data. The final size is heavily influenced by the format's compression algorithm and can vary.</li>
-                </ul>
-                <p>
-                  The downloaded file's size should be very close to your requested size, making it perfect for most testing scenarios.
+                  Generating a file to an exact byte-for-byte size is complex due to compression and file structure overhead. This tool uses various techniques to create a file that is as close as possible to the target size. The downloaded file's size should be very close to your requested size, making it perfect for most testing scenarios.
                 </p>
               </AccordionContent>
             </AccordionItem>

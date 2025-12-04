@@ -29,8 +29,8 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
 
 export const metadata: Metadata = {
-  title: 'Image Compressor - Compress JPG, PNG, and WebP Online | OmniToolbox',
-  description: 'Compress images online without losing quality. Reduce image size instantly with OmniToolbox’s free image compressor tool.',
+  title: 'Image Compressor - Compress JPG, PNG, and WebP Online | Online JPG PDF',
+  description: 'Compress images online without losing quality. Reduce image size instantly with Online JPG PDF’s free image compressor tool.',
 };
 
 // Helper function to compress image on the client
@@ -407,43 +407,30 @@ export default function ImageCompressorPage() {
       <Card>
         <CardHeader>
           <CardTitle>About the Image Compressor</CardTitle>
-          <CardDescription>
-            Learn more about how to optimize your images for the web and other uses.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="single" collapsible defaultValue="item-1">
+        <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
+          <p>
+            Our Image Compressor helps you reduce the file size of your images (like JPG, PNG, and WEBP) without sacrificing too much quality. This is essential for speeding up website load times, saving storage space, and making images easier to share.
+          </p>
+          <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger>What is Image Compression?</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <p>
-                  Image compression is the process of reducing the file size of an image without significantly compromising its quality. This is crucial for web performance, as smaller images load faster, improving user experience and saving bandwidth.
-                </p>
-                <p>
-                  Our tool uses a "lossy" compression technique, which means it intelligently removes some data from the image that is least perceptible to the human eye. This allows for a significant reduction in file size.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
               <AccordionTrigger>How to Use the Image Compressor</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
-                  <li><strong>Upload Your Image:</strong> Drag and drop your image file onto the upload area, or click the "Browse File" button to select it from your device.</li>
-                  <li><strong>Adjust Compression Level:</strong> Use the slider to set your desired compression level. A lower percentage results in a smaller file size but may reduce quality more noticeably. A higher percentage preserves more quality at the cost of a larger file.</li>
-                  <li><strong>Compress:</strong> Click the "Compress Image" button to start the process. Our tool will quickly optimize your image.</li>
-                  <li><strong>Download:</strong> Once complete, you'll see a preview of the compressed image along with the new file size. Click the "Download Image" button to save it.</li>
+                  <li><strong>Upload Image:</strong> Drag and drop your image or click to browse.</li>
+                  <li><strong>Adjust Quality:</strong> Use the slider to choose a compression level. A lower value means a smaller file size but lower quality.
+                  </li>
+                  <li><strong>Compress:</strong> Click the "Compress Image" button.</li>
+                  <li><strong>Download:</strong> Preview the result and download your optimized image.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger>Tips for Optimal Compression</AccordionTrigger>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>Why is Image Compression Important?</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Balance is Key:</strong> For websites, a compression level between 40% and 70% usually provides the best balance of quality and file size.</li>
-                  <li><strong>Preview the Result:</strong> Always check the preview of the compressed image to ensure you're happy with the quality before downloading.</li>
-                  <li><strong>Batch Processing:</strong> If you need to compress multiple images, you can use the "Compress another" button to quickly start over without refreshing the page.</li>
-                  <li><strong>Consider the Format:</strong> Our compressor outputs images in JPEG format, which is ideal for photographs. If you have graphics with sharp lines or transparency (like logos), a format like PNG might be better, which you can convert to using our Image Format Converter tool.</li>
-                </ul>
+                <p>
+                  Large image files can significantly slow down your website, leading to a poor user experience and lower search engine rankings. By compressing your images, you make your site faster, which can improve user engagement and SEO. It also saves bandwidth for users on slower internet connections.
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

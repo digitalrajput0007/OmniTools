@@ -34,7 +34,7 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
 
 export const metadata: Metadata = {
-  title: 'AI Background Remover - Free Tool to Make Backgrounds Transparent | OmniToolbox',
+  title: 'AI Background Remover - Free Tool to Make Backgrounds Transparent | Online JPG PDF',
   description: 'Automatically remove the background from any image with our free AI-powered tool. Get a transparent background in seconds, no sign-up required.',
 };
 
@@ -477,10 +477,7 @@ export default function BackgroundRemoverPage() {
         </CardHeader>
         <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
           <p>
-            Background removal is the process of isolating the main subject of an image by erasing its background. This tool uses a color-based approach, often called "chroma keying," which is perfect for images with a solid or mostly uniform background color (like a product shot against a white wall or a person in front of a green screen).
-          </p>
-          <p>
-            By making the background transparent, you can easily place your subject onto any other background, create professional-looking product photos, or design clean graphics for web and print.
+            This tool helps you remove the background from an image. It uses a color-based approach, often called "chroma keying," which is perfect for images with a solid or mostly uniform background color (like a product shot against a white wall or a person in front of a green screen). By making the background transparent, you can easily place your subject onto any other background.
           </p>
           <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
@@ -489,8 +486,7 @@ export default function BackgroundRemoverPage() {
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your Image:</strong> Drag and drop an image or click to browse. Images with a clean, solid-color background work best.</li>
                   <li><strong>Pick Background Colors:</strong> Click anywhere on the background of the original image. The tool will add that color to a list of colors to be removed. You can add multiple colors to handle gradients or variations in lighting.</li>
-                  <li><strong>Manage Colors:</strong> You can see the list of selected colors in the control panel. Click the 'X' next to any color to remove it from the list if you made a mistake.</li>
-                  <li><strong>Adjust Tolerance:</strong> Use the "Tolerance" slider to fine-tune the removal. A higher tolerance will remove a wider range of similar colors, which can help with shadows but may also remove parts of your subject.</li>
+                  <li><strong>Adjust Tolerance:</strong> Use the "Tolerance" slider to fine-tune the removal. A higher tolerance will remove a wider range of similar colors.</li>
                   <li><strong>(Optional) Replace Background:</strong> Toggle the "Replace background with color" switch and select a new color if you want to replace the background instead of making it transparent.</li>
                   <li><strong>Apply & Download:</strong> Click "Apply Changes" to process the image. Once you're satisfied with the result, click "Download Image" to save it.</li>
                 </ol>
@@ -503,7 +499,6 @@ export default function BackgroundRemoverPage() {
                   <li><strong>Use High-Contrast Images:</strong> The tool works best when the subject is clearly distinct from the background. An image of a blue shirt against a blue wall will be difficult to process.</li>
                   <li><strong>Click on Different Shades:</strong> If the background has shadows or gradients, click on both the lighter and darker areas to add them to the removal list.</li>
                   <li><strong>Start with Low Tolerance:</strong> Begin with a low tolerance value and gradually increase it. This helps you remove the background without accidentally erasing parts of your subject.</li>
-                  <li><strong>Lighting is Key:</strong> Even, consistent lighting on your background will make color-picking more accurate and lead to a cleaner result.</li>
                 </ul>
               </AccordionContent>
             </AccordionItem>

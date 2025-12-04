@@ -30,7 +30,7 @@ import { RelatedTools } from '@/components/ui/related-tools';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Compress PDF Online - Reduce PDF File Size for Free | OmniToolbox',
+  title: 'Compress PDF Online - Reduce PDF File Size for Free | Online JPG PDF',
   description: 'Easily compress your PDF files to a smaller size online. Our free tool reduces PDF size while maintaining quality, making them easier to share and store.',
 };
 
@@ -371,7 +371,7 @@ export default function CompressPdfPage() {
         </CardHeader>
         <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
           <p>
-            Compressing a PDF reduces its file size, making it faster to send via email, quicker to upload to websites, and easier to store on your devices. Smaller files consume less bandwidth and storage space. Our tool aims to reduce the file size by optimizing the PDF's internal structure without significantly impacting the visual quality of its content.
+            This PDF Compressor works by converting each page of your PDF into a JPEG image at a specified quality level, then reassembling those images into a new PDF. This method is highly effective at reducing the file size, especially for documents containing many images. However, a key trade-off is that all text within the document will become part of the image and will no longer be selectable or searchable.
           </p>
           <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
@@ -379,20 +379,19 @@ export default function CompressPdfPage() {
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
                   <li><strong>Upload Your PDF:</strong> Drag and drop your PDF file into the upload area, or click to browse and select it from your device.</li>
-                  <li><strong>Choose a Compression Level:</strong> Select the desired level of compression. "Recommended" offers a good balance, while "High" prioritizes smaller file size.</li>
-                  <li><strong>Start Compression:</strong> Click the "Compress PDF" button. Our tool will analyze and rebuild the PDF to reduce its size.</li>
+                  <li><strong>Adjust Compression Quality:</strong> Use the slider to set your desired quality level. A lower quality results in a smaller file size but may make images and text look less sharp.
+                  </li>
+                  <li><strong>Start Compression:</strong> Click the "Compress PDF" button.</li>
                   <li><strong>Download:</strong> Once complete, the tool will show you the original and new file sizes. Click "Download Compressed PDF" to save the optimized file.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-              <AccordionTrigger>Compression and Privacy</AccordionTrigger>
+              <AccordionTrigger>Privacy and Security</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Client-Side Processing:</strong> Your privacy is our priority. The entire compression process happens in your web browser. Your PDF is never uploaded to a server.</li>
-                  <li><strong>How It Works:</strong> This tool renders each page of your PDF into an image and then recompresses that image at a lower quality to save space. This is highly effective for PDFs with many images but will cause text to become non-selectable.</li>
-                  <li><strong>When to Use:</strong> This tool is ideal for PDFs that need to be shared quickly or for meeting file size limits on web portals and email clients.</li>
-                </ul>
+                <p>
+                  Your privacy is our top priority. The entire compression process happens directly in your web browser. Your PDF is never uploaded to our servers, ensuring your data remains completely private and secure.
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

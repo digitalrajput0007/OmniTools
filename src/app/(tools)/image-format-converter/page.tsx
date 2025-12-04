@@ -26,6 +26,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { SharePrompt } from '@/components/ui/share-prompt';
 import { RelatedTools } from '@/components/ui/related-tools';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Image Format Converter - Convert JPG, PNG, and WEBP Online | Online JPG PDF',
+  description: 'Convert images between formats like JPG, PNG, and WEBP. Change image types online for free with our fast and easy-to-use image converter.',
+};
 
 type OutputFormat = 'jpeg' | 'png' | 'webp';
 
@@ -375,12 +381,12 @@ export default function ImageFormatConverterPage() {
       <Card>
         <CardHeader>
           <CardTitle>About the Image Format Converter</CardTitle>
-          <CardDescription>
-            Understand the differences between image formats and choose the best one for your needs.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="single" collapsible defaultValue="item-1">
+        <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
+          <p>
+            This tool allows you to convert your images to different file formats. Each format has its own strengths, and choosing the right one can impact image quality, file size, and features like transparency.
+          </p>
+          <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
               <AccordionTrigger>Which Image Format Should I Choose?</AccordionTrigger>
               <AccordionContent className="space-y-4 text-muted-foreground">
@@ -399,25 +405,11 @@ export default function ImageFormatConverterPage() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-              <AccordionTrigger>How to Use the Image Format Converter</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <ol className="list-decimal list-inside space-y-2">
-                  <li><strong>Upload Image:</strong> Drag and drop your image file or click to browse your device.</li>
-                  <li><strong>Select Output Format:</strong> Choose your desired format (PNG, JPEG, or WEBP) from the dropdown menu.</li>
-                  <li><strong>Convert:</strong> Click the "Convert Image" button to begin the conversion process.</li>
-                  <li><strong>Download:</strong> After processing, a download button will appear. Click it to save your new image file.</li>
-                </ol>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger>Conversion Tips</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>JPEG for Photos:</strong> If you're converting a photograph, JPEG is almost always a good choice for a balance of quality and size.</li>
-                  <li><strong>PNG for Transparency:</strong> If your original image has a transparent background, you must convert it to PNG or WEBP to preserve the transparency. Converting to JPEG will result in a solid (usually white) background.</li>
-                  <li><strong>WEBP for Web:</strong> If your target is a modern website or application, converting to WEBP can significantly improve loading times.</li>
-                  <li><strong>No Quality Loss (PNG):</strong> Converting a high-quality JPEG to a PNG will stop further quality degradation, but it won't restore quality that was already lost. The file size will likely increase.</li>
-                </ul>
+              <AccordionTrigger>Privacy and Security</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">
+                  Your privacy is protected. All image conversions happen directly in your browser, and your files are never uploaded to our servers.
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -427,5 +419,3 @@ export default function ImageFormatConverterPage() {
     </div>
   );
 }
-
-    

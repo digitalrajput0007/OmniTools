@@ -197,7 +197,7 @@ export const tools: Tool[] = [
 ];
 
 
-export const AppName = 'OmniToolbox';
+export const AppName = 'Online JPG PDF';
 export const ShareIcon = Share2;
 
 export const iconColors = [
@@ -217,3 +217,27 @@ export const iconColors = [
     { bg: 'bg-blue-500/10', text: 'text-blue-500', tw: 'blue-500' },
     { bg: 'bg-yellow-500/10', text: 'text-yellow-500', tw: 'yellow-500' },
   ];
+
+export const toolDescriptions: { [key: string]: string } = {
+  '/image-compressor': 'Compress JPG, PNG, and GIF images online to reduce their file size without losing quality. Our free and fast image compressor makes your website faster.',
+  '/image-format-converter': 'Convert images between formats like JPG, PNG, and WEBP. Change image types online for free with our fast and easy-to-use image converter.',
+  '/background-remover': 'Automatically remove the background from your images with our AI-powered tool. Get a transparent background for free and without watermarks.',
+  '/images-to-pdf': 'Combine multiple images (JPG, PNG, etc.) into a single, easy-to-share PDF document. Free and secure online image to PDF converter.',
+  '/pdf-to-images': 'Convert each page of a PDF document into a separate high-quality JPG image. Extract images from your PDF files for free.',
+  '/pdf-merger': 'Merge multiple PDF documents into one single file. Combine reports, invoices, or other documents quickly and securely online.',
+  '/pdf-splitter': 'Extract one or more pages from a PDF file. Split a large PDF into smaller, more manageable documents with our free online tool.',
+  '/compress-pdf': 'Reduce the file size of your PDF documents. Our PDF compressor makes files smaller for easier emailing and sharing, while maintaining quality.',
+  '/reorder-rotate-pdf': 'Easily reorder the pages of your PDF document by dragging and dropping. Rotate individual pages to fix their orientation.',
+  '/pdf-signature': 'Sign PDF documents online for free. Draw, type, or upload your signature to sign documents without printing or scanning.',
+  '/extract-text-pdf': 'Extract text from your PDF files with our free online OCR tool. Make the content of your PDFs editable and searchable.',
+  '/watermark-pdf': 'Add a text or image watermark to your PDF documents to protect your work. Customize the opacity, rotation, and position of your watermark.',
+  '/qr-code-generator': 'Generate QR codes for URLs, text, Wi-Fi networks, and more. Our free QR code generator is fast, easy, and requires no sign-up.',
+  '/unit-converter': 'Convert between various units of measurement for length, weight, temperature, and more. A simple and fast online unit converter for all your needs.',
+  '/text-tools': 'A suite of text utilities including word count, character count, case converter (uppercase, lowercase, title case), and space remover.',
+  '/text-diff': 'Compare two blocks of text to find the differences. Our text difference checker highlights added and removed text for easy comparison.',
+  '/credit-card-generator': 'Generate valid, but fake, credit card numbers for testing and development purposes. Ideal for testing payment forms without using real data.',
+  '/random-data-generator': 'Create sets of random data including names, emails, addresses, and more. Perfect for populating databases or UIs for testing.',
+  '/random-picker': 'A fun and fair tool to randomly pick a winner from a list of names. Use it for contests, giveaways, or any random selection need.',
+  '/json-beautifier': 'Format your messy JSON code to make it readable and pretty. Our JSON beautifier helps you debug and validate your JSON data.',
+  '/dummy-file-generator': 'Create dummy files of a specific size and format (e.g., PDF, DOCX, XLSX) for testing upload functionalities or storage limits.'
+};

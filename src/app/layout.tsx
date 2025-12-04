@@ -20,7 +20,7 @@ const ptSans = PT_Sans({
 export const metadata: Metadata = {
   title: {
     template: `%s | ${AppName}`,
-    default: 'OmniToolbox - Free Online Tools for Images, PDFs, and More',
+    default: 'Online JPG PDF - Free Online Tools for Images, PDFs, and More',
   },
   description: 'Your all-in-one hub for free online utilities. Compress, convert, and manage images and PDFs easily.',
 };
