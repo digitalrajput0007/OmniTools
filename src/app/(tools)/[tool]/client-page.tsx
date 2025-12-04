@@ -10,7 +10,7 @@ import ExtractTextPdfPage from '../extract-text-pdf/page';
 import ImageCompressorPage from '../image-compressor/client-page';
 import ImageFormatConverterPage from '../image-format-converter/client-page';
 import ImageResizerPage from '../image-resizer/page';
-import ImagesToPdfPage from '../images-to-pdf/page';
+import ImagesToPdfPage from '../images-to-pdf/client-page';
 import JsonBeautifierPage from '../json-beautifier/page';
 import PdfMergerPage from '../pdf-merger/page';
 import PdfSignaturePage from '../pdf-signature/page';
