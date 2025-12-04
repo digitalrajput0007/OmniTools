@@ -27,6 +27,13 @@ import { SharePrompt } from '@/components/ui/share-prompt';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { RelatedTools } from '@/components/ui/related-tools';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Compress PDF Online - Reduce PDF File Size for Free | OmniToolbox',
+  description: 'Easily compress your PDF files to a smaller size online. Our free tool reduces PDF size while maintaining quality, making them easier to share and store.',
+};
+
 
 let pdfjs: any;
 
@@ -361,21 +368,13 @@ export default function CompressPdfPage() {
       <Card>
         <CardHeader>
           <CardTitle>About PDF Compression</CardTitle>
-          <CardDescription>
-            Learn how reducing PDF file size can improve sharing and storage.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="single" collapsible defaultValue="item-1">
+        <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
+          <p>
+            Compressing a PDF reduces its file size, making it faster to send via email, quicker to upload to websites, and easier to store on your devices. Smaller files consume less bandwidth and storage space. Our tool aims to reduce the file size by optimizing the PDF's internal structure without significantly impacting the visual quality of its content.
+          </p>
+          <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger>Why Compress a PDF?</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <p>
-                  Compressing a PDF reduces its file size, making it faster to send via email, quicker to upload to websites, and easier to store on your devices. Smaller files consume less bandwidth and storage space. Our tool aims to reduce the file size by optimizing the PDF's internal structure without significantly impacting the visual quality of its content.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
               <AccordionTrigger>How to Use the PDF Compressor</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
@@ -386,7 +385,7 @@ export default function CompressPdfPage() {
                 </ol>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-3">
+            <AccordionItem value="item-2">
               <AccordionTrigger>Compression and Privacy</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ul className="list-disc list-inside space-y-2">
@@ -403,5 +402,3 @@ export default function CompressPdfPage() {
     </div>
   );
 }
-
-    

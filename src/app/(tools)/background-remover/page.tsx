@@ -474,24 +474,16 @@ export default function BackgroundRemoverPage() {
       <Card>
         <CardHeader>
           <CardTitle>About the Background Remover</CardTitle>
-          <CardDescription>
-            Learn how this tool can help you isolate subjects and create stunning graphics.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Accordion type="single" collapsible defaultValue="item-1">
+        <CardContent className="prose prose-sm md:prose-base max-w-none text-muted-foreground space-y-4">
+          <p>
+            Background removal is the process of isolating the main subject of an image by erasing its background. This tool uses a color-based approach, often called "chroma keying," which is perfect for images with a solid or mostly uniform background color (like a product shot against a white wall or a person in front of a green screen).
+          </p>
+          <p>
+            By making the background transparent, you can easily place your subject onto any other background, create professional-looking product photos, or design clean graphics for web and print.
+          </p>
+          <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
-              <AccordionTrigger>What is Background Removal?</AccordionTrigger>
-              <AccordionContent className="space-y-2 text-muted-foreground">
-                <p>
-                  Background removal is the process of isolating the main subject of an image by erasing its background. This tool uses a color-based approach, often called "chroma keying," which is perfect for images with a solid or mostly uniform background color (like a product shot against a white wall or a person in front of a green screen).
-                </p>
-                <p>
-                  By making the background transparent, you can easily place your subject onto any other background, create professional-looking product photos, or design clean graphics for web and print.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
               <AccordionTrigger>How to Use the Background Remover</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ol className="list-decimal list-inside space-y-2">
@@ -504,7 +496,7 @@ export default function BackgroundRemoverPage() {
                 </ol>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-3">
+            <AccordionItem value="item-2">
               <AccordionTrigger>Tips for Best Results</AccordionTrigger>
               <AccordionContent className="space-y-2 text-muted-foreground">
                 <ul className="list-disc list-inside space-y-2">

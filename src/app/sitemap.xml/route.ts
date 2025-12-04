@@ -1,7 +1,7 @@
 // 'use server' is not needed here as this is a route handler
 import { tools } from '@/lib/constants';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://onlinejpgpdf.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.omnibox.dev';
 
 function generateSitemap() {
   const lastModified = new Date().toISOString();
