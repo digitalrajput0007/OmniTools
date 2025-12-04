@@ -1,5 +1,5 @@
 
-import { tools, toolDescriptions } from '@/lib/constants';
+import { tools } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 import ToolClientPage from './client-page';
 import type { Metadata } from 'next';
@@ -24,22 +24,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const description = toolDescriptions[tool.path as keyof typeof toolDescriptions] || tool.description;
-  const title = `${tool.name} | Online JPG PDF`;
-  
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": tool.name,
-    "description": description,
-    "url": `https://www.onlinejpgpdf.com${tool.path}`,
-    "applicationCategory": "UtilitiesApplication",
-    "operatingSystem": "All",
-    "offers": {
-      "@type": "Offer",
-      "price": "0"
+  // Dynamically import the metadata from the specific tool's page
+  try {
+    const toolMetadataModule = await import(`../${toolSlug}/page`);
+    if (toolMetadataModule.metadata) {
+      return toolMetadataModule.metadata;
     }
-  };
+  } catch (error) {
+    console.error(`Could not load metadata for ${toolSlug}:`, error);
+  }
+
+  // Fallback metadata if specific metadata isn't found
+  const title = `${tool.name} | Online JPG PDF`;
+  const description = tool.description;
 
   return {
     title,
@@ -58,9 +55,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-    },
-    other: {
-      'application/ld+json': JSON.stringify(jsonLd, null, 2),
     },
   };
 }
